@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebArcade</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+:root {
+  --primary:#6366f1;
+  --bg:#020617;
+  --text:#e5e7eb;
+}
+
+body {
+  margin:0;
+  height:100vh;
+  font-family:"Segoe UI",sans-serif;
+  background:radial-gradient(circle at top,#1e293b,#020617);
+  color:var(--text);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
+.hero {
+  text-align:center;
+  animation:fade 1s ease;
+}
+
+.hero h1 { font-size:3rem; margin-bottom:10px; }
+.hero p { opacity:.85; }
+
+button {
+  margin-top:25px;
+  padding:14px 28px;
+  font-size:16px;
+  border:none;
+  border-radius:10px;
+  background:var(--primary);
+  color:white;
+  cursor:pointer;
+  transition:.2s;
+}
+button:hover { transform:translateY(-3px); }
+
+@keyframes fade {
+  from {opacity:0; transform:translateY(20px)}
+  to {opacity:1; transform:none}
+}
+</style>
+</head>
+
+<body>
+<div class="hero">
+  <h1>WebArcade</h1>
+  <p>A modern arcade of interactive web games</p>
+  <button onclick="location.href='blog.html'">Enter Arcade</button>
+</div>
+</body>
+</html>

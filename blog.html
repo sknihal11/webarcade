@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>WebArcade – Games</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: #f8fafc;
+}
+
+header {
+  background: linear-gradient(135deg, #6366f1, #818cf8);
+  padding: 40px 20px;
+  color: white;
+  text-align: center;
+}
+
+.container {
+  max-width: 1200px;
+  margin: auto;
+  padding: 40px 20px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 25px;
+}
+
+/* GAME CARD */
+.card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 40px rgba(0,0,0,.1);
+  transition: transform .3s, box-shadow .3s;
+}
+
+.card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 30px 55px rgba(0,0,0,.15);
+}
+
+.card img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+}
+
+.card-content {
+  padding: 20px;
+}
+
+.card-content h3 {
+  margin: 0 0 10px;
+}
+
+.card-content p {
+  font-size: 14px;
+  opacity: 0.85;
+}
+
+.card-content a {
+  display: inline-block;
+  margin-top: 12px;
+  text-decoration: none;
+  font-weight: bold;
+  color: #6366f1;
+}
+
+/* COMING SOON */
+.coming-soon {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.coming-soon span {
+  display: inline-block;
+  margin-top: 12px;
+  font-weight: bold;
+  color: #9ca3af;
+}
+
+footer {
+  text-align: center;
+  padding: 15px;
+  background: #020617;
+  color: #9ca3af;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>WebArcade</h1>
+  <p>A growing collection of interactive web games</p>
+</header>
+
+<div class="container">
+  <div class="grid">
+
+    <!-- GAME 1 -->
+    <div class="card">
+      <img src="assets/2048.jpeg" alt="2048 Game">
+      <div class="card-content">
+        <h3>2048</h3>
+        <p>Merge tiles strategically to reach 2048.</p>
+        <a href="2048.html">Play →</a>
+      </div>
+    </div>
+
+    <!-- GAME 2 (COMING SOON) -->
+    <div class="card coming-soon">
+      <img src="assets/2048.jpeg" alt="Coming Soon">
+      <div class="card-content">
+        <h3>Snake</h3>
+        <p>Classic snake game with modern controls.</p>
+        <span>Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- GAME 3 (COMING SOON) -->
+    <div class="card coming-soon">
+      <img src="assets/2048.jpeg" alt="Coming Soon">
+      <div class="card-content">
+        <h3>Tic Tac Toe</h3>
+        <p>Play against a friend or AI.</p>
+        <span>Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- GAME 4 (COMING SOON) -->
+    <div class="card coming-soon">
+      <img src="assets/2048.jpeg" alt="Coming Soon">
+      <div class="card-content">
+        <h3>Memory Match</h3>
+        <p>Test your memory with card matching.</p>
+        <span>Coming Soon</span>
+      </div>
+    </div>
+
+    <!-- ADD MORE CARDS BELOW (COPY-PASTE) -->
+
+  </div>
+</div>
+
+<footer>
+  © 2026 WebArcade
+</footer>
+
+</body>
+</html>
