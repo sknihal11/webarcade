@@ -8,7 +8,7 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: "Clear Sans", Arial, sans-serif;
   background: #faf8ef;
   display: flex;
   justify-content: center;
@@ -25,8 +25,9 @@ body {
 .header {
   display: flex;
   justify-content: space-between;
-  color: #776e65;
   margin-bottom: 10px;
+  color: #776e65;
+  font-weight: bold;
 }
 
 #grid {
@@ -42,10 +43,22 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   border-radius: 6px;
 }
+
+.tile[data-v="2"]    { background:#eee4da; color:#776e65; }
+.tile[data-v="4"]    { background:#ede0c8; color:#776e65; }
+.tile[data-v="8"]    { background:#f2b179; color:#f9f6f2; }
+.tile[data-v="16"]   { background:#f59563; color:#f9f6f2; }
+.tile[data-v="32"]   { background:#f67c5f; color:#f9f6f2; }
+.tile[data-v="64"]   { background:#f65e3b; color:#f9f6f2; }
+.tile[data-v="128"]  { background:#edcf72; color:#f9f6f2; font-size:24px; }
+.tile[data-v="256"]  { background:#edcc61; color:#f9f6f2; font-size:24px; }
+.tile[data-v="512"]  { background:#edc850; color:#f9f6f2; font-size:24px; }
+.tile[data-v="1024"] { background:#edc53f; color:#f9f6f2; font-size:20px; }
+.tile[data-v="2048"] { background:#edc22e; color:#f9f6f2; font-size:20px; }
 </style>
 </head>
 
@@ -71,7 +84,10 @@ function render() {
   board.forEach(v => {
     const d = document.createElement("div");
     d.className = "tile";
-    d.textContent = v || "";
+    if (v) {
+      d.textContent = v;
+      d.dataset.v = v;
+    }
     grid.appendChild(d);
   });
   scoreEl.textContent = score;
@@ -80,7 +96,8 @@ function render() {
 function addTile() {
   const empty = board.map((v,i)=>v===0?i:null).filter(i=>i!==null);
   if (!empty.length) return;
-  board[empty[Math.floor(Math.random()*empty.length)]] = Math.random() > 0.9 ? 4 : 2;
+  board[empty[Math.floor(Math.random()*empty.length)]] =
+    Math.random() > 0.9 ? 4 : 2;
 }
 
 function slide(arr) {
