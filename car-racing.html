@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Car Racing - WebArcade</title>
+
+<style>
+body {
+  margin: 0;
+  background: #111;
+  font-family: Arial, sans-serif;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.container {
+  position: relative;
+}
+
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  margin-bottom: 6px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+canvas {
+  background: #555;
+  border: 4px solid #fff;
+  display: block;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.8);
+  color: white;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  font-size: 28px;
+}
+
+.overlay button {
+  margin-top: 15px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+  <div class="top-bar">
+    <button class="back-btn" onclick="location.href='index.html'">← Back</button>
+    <div id="hud">Score: 0 | Level: 1 | Nitro: 3</div>
+  </div>
+
+  <canvas id="game" width="360" height="600"></canvas>
+
+  <div class="overlay" id="overlay">
+    <div id="overlayText"></div>
+    <button onclick="restart()">Restart</button>
+  </div>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const hud = document.getElementById("hud");
+const overlay = document.getElementById("overlay");
+const overlayText = document.getElementById("overlayText");
+
+const lanes = [40, 140, 240];
+let running = true;
+let score = 0;
+let level = 1;
+let speed = 4;
+let nitro = 3;
+
+// Player
+const car = {
+  lane: 1,
+  y: 480,
+  w: 40,
+  h: 80
+};
+
+let enemies = [];
+
+// Controls
+let left=false, right=false, boost=false;
+
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") left=true;
+  if (e.key === "ArrowRight") right=true;
+  if (e.key === "ArrowUp") boost=true;
+});
+document.addEventListener("keyup", e => {
+  if (e.key === "ArrowLeft") left=false;
+  if (e.key === "ArrowRight") right=false;
+  if (e.key === "ArrowUp") boost=false;
+});
+
+// Touch
+canvas.addEventListener("touchstart", e => {
+  const x = e.touches[0].clientX;
+  if (x < window.innerWidth / 2) left=true;
+  else right=true;
+});
+canvas.addEventListener("touchend", ()=>{ left=false; right=false; });
+
+// Enemy spawn
+function spawnEnemy(){
+  enemies.push({
+    lane: Math.floor(Math.random()*3),
+    y: -100,
+    w: 40,
+    h: 80
+  });
+}
+
+// Game loop
+function update(){
+  if(!running) return;
+
+  if(left && car.lane>0){ car.lane--; left=false; }
+  if(right && car.lane<2){ car.lane++; right=false; }
+
+  let currentSpeed = speed;
+  if(boost && nitro>0){
+    currentSpeed += 4;
+    nitro -= 0.02;
+    if(nitro<0) nitro=0;
+  }
+
+  enemies.forEach(e => e.y += currentSpeed);
+  enemies = enemies.filter(e => e.y < 700);
+
+  enemies.forEach(e => {
+    if(
+      lanes[car.lane] < lanes[e.lane]+40 &&
+      lanes[car.lane]+40 > lanes[e.lane] &&
+      car.y < e.y+80 &&
+      car.y+80 > e.y
+    ){
+      gameOver();
+    }
+  });
+
+  score++;
+  if(score % 500 === 0){
+    level++;
+    speed++;
+    nitro = Math.min(3, nitro+1);
+  }
+
+  if(Math.random() < 0.03) spawnEnemy();
+
+  hud.textContent = `Score: ${score} | Level: ${level} | Nitro: ${Math.ceil(nitro)}`;
+}
+
+function drawRoad(){
+  ctx.fillStyle="#444";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  ctx.strokeStyle="#fff";
+  ctx.lineWidth=4;
+  ctx.setLineDash([20,20]);
+  lanes.slice(1).forEach(x=>{
+    ctx.beginPath();
+    ctx.moveTo(x+20,0);
+    ctx.lineTo(x+20,600);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+}
+
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawRoad();
+
+  ctx.fillStyle="red";
+  ctx.fillRect(lanes[car.lane], car.y, car.w, car.h);
+
+  ctx.fillStyle="black";
+  enemies.forEach(e=>{
+    ctx.fillRect(lanes[e.lane], e.y, e.w, e.h);
+  });
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+function gameOver(){
+  running=false;
+  overlayText.textContent="Game Over";
+  overlay.style.display="flex";
+}
+
+function restart(){
+  enemies=[];
+  score=0;
+  level=1;
+  speed=4;
+  nitro=3;
+  car.lane=1;
+  running=true;
+  overlay.style.display="none";
+}
+
+loop();
+</script>
+</body>
+</html>
