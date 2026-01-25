@@ -1,215 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>2048 – WebArcade</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>2048</title>
 
 <style>
-body {
-  margin: 0;
-  font-family: "Clear Sans", Arial, sans-serif;
-  background: #faf8ef;
-}
+  body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #faf8ef;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
 
-/* TOP BAR */
-.topbar {
-  display: flex;
-  align-items: center;
-  padding: 15px 25px;
-  background: #020617;
-  color: white;
-}
+  .container {
+    text-align: center;
+  }
 
-.topbar button {
-  background: none;
-  border: 1px solid #64748b;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  margin-right: 15px;
-}
+  .top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
 
-.topbar h1 {
-  font-size: 18px;
-  margin: 0;
-}
+  .title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #776e65;
+  }
 
-/* PAGE LAYOUT */
-.page {
-  display: flex;
-  justify-content: center;
-  padding: 40px 20px;
-}
+  .score {
+    background: #bbada0;
+    color: #fff;
+    padding: 10px 15px;
+    border-radius: 5px;
+    font-weight: bold;
+  }
 
-/* GAME */
-.game {
-  background: #bbada0;
-  padding: 15px;
-  border-radius: 10px;
-}
+  .board {
+    background: #bbada0;
+    padding: 10px;
+    border-radius: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 80px);
+    grid-gap: 10px;
+    touch-action: none;
+  }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  color: #776e65;
-  font-weight: bold;
-}
+  .cell {
+    width: 80px;
+    height: 80px;
+    background: #cdc1b4;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: #776e65;
+  }
 
-#grid {
-  display: grid;
-  grid-template-columns: repeat(4, 80px);
-  gap: 10px;
-}
-
-.tile {
-  width: 80px;
-  height: 80px;
-  background: #cdc1b4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 28px;
-  font-weight: bold;
-  border-radius: 6px;
-}
-
-/* TILE COLORS */
-.tile[data-v="2"]    { background:#eee4da; color:#776e65; }
-.tile[data-v="4"]    { background:#ede0c8; color:#776e65; }
-.tile[data-v="8"]    { background:#f2b179; color:#f9f6f2; }
-.tile[data-v="16"]   { background:#f59563; color:#f9f6f2; }
-.tile[data-v="32"]   { background:#f67c5f; color:#f9f6f2; }
-.tile[data-v="64"]   { background:#f65e3b; color:#f9f6f2; }
-.tile[data-v="128"]  { background:#edcf72; color:#f9f6f2; font-size:24px; }
-.tile[data-v="256"]  { background:#edcc61; color:#f9f6f2; font-size:24px; }
-.tile[data-v="512"]  { background:#edc850; color:#f9f6f2; font-size:24px; }
-.tile[data-v="1024"] { background:#edc53f; color:#f9f6f2; font-size:20px; }
-.tile[data-v="2048"] { background:#edc22e; color:#f9f6f2; font-size:20px; }
+  .cell[data-value="2"]  { background: #eee4da; }
+  .cell[data-value="4"]  { background: #ede0c8; }
+  .cell[data-value="8"]  { background: #f2b179; color: #fff; }
+  .cell[data-value="16"] { background: #f59563; color: #fff; }
+  .cell[data-value="32"] { background: #f67c5f; color: #fff; }
+  .cell[data-value="64"] { background: #f65e3b; color: #fff; }
 </style>
 </head>
 
 <body>
-
-<!-- TOP BAR -->
-<div class="topbar">
-  <button onclick="goBack()">← Back</button>
-  <h1>WebArcade • 2048</h1>
-</div>
-
-<!-- PAGE CONTENT -->
-<div class="page">
-  <div class="game">
-    <div class="header">
-      <div>2048</div>
-      <div>Score: <span id="score">0</span></div>
-    </div>
-    <div id="grid"></div>
+<div class="container">
+  <div class="top-bar">
+    <div class="title">2048</div>
+    <div class="score" id="score">Score: 0</div>
   </div>
+
+  <div class="board" id="board"></div>
 </div>
 
 <script>
-function goBack() {
-  window.location.href = "blog.html";
-}
-
-const grid = document.getElementById("grid");
+const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 
-let board = Array(16).fill(0);
+let board = Array(4).fill().map(() => Array(4).fill(0));
 let score = 0;
 
-function render() {
-  grid.innerHTML = "";
-  board.forEach(v => {
-    const d = document.createElement("div");
-    d.className = "tile";
+function drawBoard() {
+  boardEl.innerHTML = "";
+  board.flat().forEach(v => {
+    const cell = document.createElement("div");
+    cell.className = "cell";
     if (v) {
-      d.textContent = v;
-      d.dataset.v = v;
+      cell.textContent = v;
+      cell.dataset.value = v;
     }
-    grid.appendChild(d);
+    boardEl.appendChild(cell);
   });
-  scoreEl.textContent = score;
+  scoreEl.textContent = "Score: " + score;
 }
 
-function addTile() {
-  const empty = board.map((v,i)=>v===0?i:null).filter(i=>i!==null);
+function addRandom() {
+  const empty = [];
+  board.forEach((r, i) =>
+    r.forEach((v, j) => v === 0 && empty.push([i, j]))
+  );
   if (!empty.length) return;
-  board[empty[Math.floor(Math.random()*empty.length)]] =
-    Math.random() > 0.9 ? 4 : 2;
+  const [x, y] = empty[Math.floor(Math.random() * empty.length)];
+  board[x][y] = Math.random() < 0.9 ? 2 : 4;
 }
 
-function slide(arr) {
-  arr = arr.filter(v=>v);
-  for (let i=0;i<arr.length-1;i++) {
-    if (arr[i] === arr[i+1]) {
-      arr[i] *= 2;
-      score += arr[i];
-      arr[i+1] = 0;
+function slide(row) {
+  row = row.filter(v => v);
+  for (let i = 0; i < row.length - 1; i++) {
+    if (row[i] === row[i + 1]) {
+      row[i] *= 2;
+      score += row[i];
+      row[i + 1] = 0;
     }
   }
-  return arr.filter(v=>v);
+  return row.filter(v => v).concat(Array(4).fill(0)).slice(0, 4);
 }
 
 function moveLeft() {
-  for (let r=0;r<4;r++) {
-    let row = board.slice(r*4, r*4+4);
-    let n = slide(row);
-    while (n.length<4) n.push(0);
-    board.splice(r*4,4,...n);
-  }
+  board = board.map(r => slide(r));
 }
 
 function moveRight() {
-  for (let r=0;r<4;r++) {
-    let row = board.slice(r*4, r*4+4).reverse();
-    let n = slide(row);
-    while (n.length<4) n.push(0);
-    board.splice(r*4,4,...n.reverse());
-  }
+  board = board.map(r => slide(r.reverse()).reverse());
 }
 
 function moveUp() {
-  for (let c=0;c<4;c++) {
-    let col = [board[c],board[c+4],board[c+8],board[c+12]];
-    let n = slide(col);
-    while (n.length<4) n.push(0);
-    for (let r=0;r<4;r++) board[c+r*4]=n[r];
+  for (let c = 0; c < 4; c++) {
+    let col = slide(board.map(r => r[c]));
+    for (let r = 0; r < 4; r++) board[r][c] = col[r];
   }
 }
 
 function moveDown() {
-  for (let c=0;c<4;c++) {
-    let col = [board[c],board[c+4],board[c+8],board[c+12]].reverse();
-    let n = slide(col);
-    while (n.length<4) n.push(0);
-    n.reverse();
-    for (let r=0;r<4;r++) board[c+r*4]=n[r];
+  for (let c = 0; c < 4; c++) {
+    let col = slide(board.map(r => r[c]).reverse()).reverse();
+    for (let r = 0; r < 4; r++) board[r][c] = col[r];
   }
 }
 
-function postMove() {
-  addTile();
-  render();
+function move(dir) {
+  const copy = JSON.stringify(board);
+  if (dir === "left") moveLeft();
+  if (dir === "right") moveRight();
+  if (dir === "up") moveUp();
+  if (dir === "down") moveDown();
+  if (JSON.stringify(board) !== copy) {
+    addRandom();
+    drawBoard();
+  }
 }
 
 document.addEventListener("keydown", e => {
-  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
-    e.preventDefault();
-  }
-  if (e.key==="ArrowLeft") { moveLeft(); postMove(); }
-  if (e.key==="ArrowRight") { moveRight(); postMove(); }
-  if (e.key==="ArrowUp") { moveUp(); postMove(); }
-  if (e.key==="ArrowDown") { moveDown(); postMove(); }
+  if (e.key === "ArrowLeft") move("left");
+  if (e.key === "ArrowRight") move("right");
+  if (e.key === "ArrowUp") move("up");
+  if (e.key === "ArrowDown") move("down");
 });
 
-addTile();
-addTile();
-render();
-</script>
+/* 🔥 SWIPE SUPPORT (FIXED) */
+let sx = 0, sy = 0;
 
+boardEl.addEventListener("touchstart", e => {
+  sx = e.touches[0].clientX;
+  sy = e.touches[0].clientY;
+}, { passive: true });
+
+boardEl.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - sx;
+  const dy = e.changedTouches[0].clientY - sy;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 30) move("right");
+    else if (dx < -30) move("left");
+  } else {
+    if (dy > 30) move("down");
+    else if (dy < -30) move("up");
+  }
+});
+
+addRandom();
+addRandom();
+drawBoard();
+</script>
 </body>
 </html>
