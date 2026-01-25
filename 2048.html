@@ -1,3 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>2048</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #faf8ef;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.game {
+  background: #bbada0;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  color: #776e65;
+  margin-bottom: 10px;
+}
+
+#grid {
+  display: grid;
+  grid-template-columns: repeat(4, 80px);
+  gap: 10px;
+}
+
+.tile {
+  width: 80px;
+  height: 80px;
+  background: #cdc1b4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 24px;
+  font-weight: bold;
+  border-radius: 6px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="game">
+  <div class="header">
+    <div>2048</div>
+    <div>Score: <span id="score">0</span></div>
+  </div>
+  <div id="grid"></div>
+</div>
+
 <script>
 const grid = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
@@ -5,128 +66,91 @@ const scoreEl = document.getElementById("score");
 let board = Array(16).fill(0);
 let score = 0;
 
-/* INIT */
-function init() {
-  addTile();
-  addTile();
-  render();
-}
-
-/* RENDER */
 function render() {
   grid.innerHTML = "";
   board.forEach(v => {
     const d = document.createElement("div");
     d.className = "tile";
-    if (v) {
-      d.textContent = v;
-      d.dataset.v = v;
-    }
+    d.textContent = v || "";
     grid.appendChild(d);
   });
   scoreEl.textContent = score;
 }
 
-/* UTIL */
 function addTile() {
-  const empty = board
-    .map((v, i) => v === 0 ? i : null)
-    .filter(v => v !== null);
-
+  const empty = board.map((v,i)=>v===0?i:null).filter(i=>i!==null);
   if (!empty.length) return;
-
-  board[empty[Math.floor(Math.random() * empty.length)]] =
-    Math.random() > 0.9 ? 4 : 2;
+  board[empty[Math.floor(Math.random()*empty.length)]] = Math.random() > 0.9 ? 4 : 2;
 }
 
 function slide(arr) {
-  arr = arr.filter(v => v);
-  for (let i = 0; i < arr.length - 1; i++) {
-    if (arr[i] === arr[i + 1]) {
+  arr = arr.filter(v=>v);
+  for (let i=0;i<arr.length-1;i++) {
+    if (arr[i] === arr[i+1]) {
       arr[i] *= 2;
       score += arr[i];
-      arr[i + 1] = 0;
+      arr[i+1] = 0;
     }
   }
-  return arr.filter(v => v);
+  return arr.filter(v=>v);
 }
 
-/* MOVES */
 function moveLeft() {
-  for (let r = 0; r < 4; r++) {
-    let row = board.slice(r * 4, r * 4 + 4);
-    let newRow = slide(row);
-    while (newRow.length < 4) newRow.push(0);
-    board.splice(r * 4, 4, ...newRow);
+  for (let r=0;r<4;r++) {
+    let row = board.slice(r*4, r*4+4);
+    let n = slide(row);
+    while (n.length<4) n.push(0);
+    board.splice(r*4,4,...n);
   }
-  postMove();
 }
 
 function moveRight() {
-  for (let r = 0; r < 4; r++) {
-    let row = board.slice(r * 4, r * 4 + 4).reverse();
-    let newRow = slide(row);
-    while (newRow.length < 4) newRow.push(0);
-    board.splice(r * 4, 4, ...newRow.reverse());
+  for (let r=0;r<4;r++) {
+    let row = board.slice(r*4, r*4+4).reverse();
+    let n = slide(row);
+    while (n.length<4) n.push(0);
+    board.splice(r*4,4,...n.reverse());
   }
-  postMove();
 }
 
 function moveUp() {
-  for (let c = 0; c < 4; c++) {
-    let col = [
-      board[c],
-      board[c + 4],
-      board[c + 8],
-      board[c + 12]
-    ];
-    let newCol = slide(col);
-    while (newCol.length < 4) newCol.push(0);
-    for (let r = 0; r < 4; r++) {
-      board[c + r * 4] = newCol[r];
-    }
+  for (let c=0;c<4;c++) {
+    let col = [board[c],board[c+4],board[c+8],board[c+12]];
+    let n = slide(col);
+    while (n.length<4) n.push(0);
+    for (let r=0;r<4;r++) board[c+r*4]=n[r];
   }
-  postMove();
 }
 
 function moveDown() {
-  for (let c = 0; c < 4; c++) {
-    let col = [
-      board[c],
-      board[c + 4],
-      board[c + 8],
-      board[c + 12]
-    ].reverse();
-    let newCol = slide(col);
-    while (newCol.length < 4) newCol.push(0);
-    newCol.reverse();
-    for (let r = 0; r < 4; r++) {
-      board[c + r * 4] = newCol[r];
-    }
+  for (let c=0;c<4;c++) {
+    let col = [board[c],board[c+4],board[c+8],board[c+12]].reverse();
+    let n = slide(col);
+    while (n.length<4) n.push(0);
+    n.reverse();
+    for (let r=0;r<4;r++) board[c+r*4]=n[r];
   }
-  postMove();
 }
 
-/* AFTER MOVE */
 function postMove() {
   addTile();
   render();
 }
 
-/* KEYBOARD */
 document.addEventListener("keydown", e => {
-  if (e.key === "ArrowLeft") moveLeft();
-  if (e.key === "ArrowRight") moveRight();
-  if (e.key === "ArrowUp") moveUp();
-  if (e.key === "ArrowDown") moveDown();
+  if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) {
+    e.preventDefault();
+  }
+  if (e.key==="ArrowLeft") { moveLeft(); postMove(); }
+  if (e.key==="ArrowRight") { moveRight(); postMove(); }
+  if (e.key==="ArrowUp") { moveUp(); postMove(); }
+  if (e.key==="ArrowDown") { moveDown(); postMove(); }
 });
 
-/* RESET (optional button) */
-function reset() {
-  board = Array(16).fill(0);
-  score = 0;
-  init();
-}
-
-init();
+addTile();
+addTile();
+render();
 </script>
+
+</body>
+</html>
