@@ -1,168 +1,132 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>2048 – WebArcade</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<style>
-body {
-  margin:0;
-  background:#faf8ef;
-  font-family:"Segoe UI",sans-serif;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  height:100vh;
-}
-
-.game {
-  background:#bbada0;
-  padding:20px;
-  border-radius:14px;
-}
-
-.header {
-  display:flex;
-  justify-content:space-between;
-  margin-bottom:10px;
-  color:#776e65;
-}
-
-.score {
-  background:#eee4da;
-  padding:10px 15px;
-  border-radius:8px;
-  font-weight:bold;
-}
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(4,90px);
-  gap:10px;
-}
-
-.tile {
-  width:90px;
-  height:90px;
-  background:#cdc1b4;
-  border-radius:6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-size:28px;
-  font-weight:bold;
-  transition:.15s;
-}
-.tile[data-v="2"]{background:#eee4da}
-.tile[data-v="4"]{background:#ede0c8}
-.tile[data-v="8"]{background:#f2b179;color:white}
-.tile[data-v="16"]{background:#f59563;color:white}
-.tile[data-v="32"]{background:#f67c5f;color:white}
-.tile[data-v="64"]{background:#f65e3b;color:white}
-.tile[data-v="128"]{background:#edcf72;color:white}
-.tile[data-v="256"]{background:#edcc61;color:white}
-.tile[data-v="512"]{background:#edc850;color:white}
-.tile[data-v="1024"]{background:#edc53f;color:white}
-.tile[data-v="2048"]{background:#edc22e;color:white}
-
-button {
-  margin-top:10px;
-  width:100%;
-  padding:10px;
-  border:none;
-  border-radius:8px;
-  background:#8f7a66;
-  color:white;
-  cursor:pointer;
-}
-</style>
-</head>
-
-<body tabindex="0">
-
-<div class="game">
-  <div class="header">
-    <h2>2048</h2>
-    <div class="score">Score: <span id="score">0</span></div>
-  </div>
-  <div class="grid" id="grid"></div>
-  <button onclick="reset()">Restart</button>
-  <button onclick="location.href='blog.html'">← Back</button>
-</div>
-
 <script>
-let board = JSON.parse(localStorage.getItem("board")) || Array(16).fill(0);
-let score = Number(localStorage.getItem("score")) || 0;
 const grid = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
 
-function save() {
-  localStorage.setItem("board", JSON.stringify(board));
-  localStorage.setItem("score", score);
+let board = Array(16).fill(0);
+let score = 0;
+
+/* INIT */
+function init() {
+  addTile();
+  addTile();
+  render();
 }
 
+/* RENDER */
 function render() {
-  grid.innerHTML="";
-  board.forEach(v=>{
-    const d=document.createElement("div");
-    d.className="tile";
-    if(v){d.textContent=v; d.dataset.v=v;}
+  grid.innerHTML = "";
+  board.forEach(v => {
+    const d = document.createElement("div");
+    d.className = "tile";
+    if (v) {
+      d.textContent = v;
+      d.dataset.v = v;
+    }
     grid.appendChild(d);
   });
-  scoreEl.textContent=score;
+  scoreEl.textContent = score;
 }
 
+/* UTIL */
 function addTile() {
-  let e=board.map((v,i)=>v?null:i).filter(v=>v!==null);
-  if(!e.length) return;
-  board[e[Math.floor(Math.random()*e.length)]]=Math.random()>0.9?4:2;
+  const empty = board
+    .map((v, i) => v === 0 ? i : null)
+    .filter(v => v !== null);
+
+  if (!empty.length) return;
+
+  board[empty[Math.floor(Math.random() * empty.length)]] =
+    Math.random() > 0.9 ? 4 : 2;
 }
 
-function slide(r){
-  r=r.filter(v=>v);
-  for(let i=0;i<r.length-1;i++){
-    if(r[i]==r[i+1]){
-      r[i]*=2; score+=r[i]; r[i+1]=0;
+function slide(arr) {
+  arr = arr.filter(v => v);
+  for (let i = 0; i < arr.length - 1; i++) {
+    if (arr[i] === arr[i + 1]) {
+      arr[i] *= 2;
+      score += arr[i];
+      arr[i + 1] = 0;
     }
   }
-  return r.filter(v=>v);
+  return arr.filter(v => v);
 }
 
-function move(dir){
-  let moved=false;
-  for(let i=0;i<4;i++){
-    let row=[];
-    for(let j=0;j<4;j++) row.push(board[dir?j*4+i:i*4+j]);
-    if(dir>1) row.reverse();
-    let n=slide(row);
-    while(n.length<4) n.push(0);
-    if(dir>1) n.reverse();
-    for(let j=0;j<4;j++){
-      let idx=dir?j*4+i:i*4+j;
-      if(board[idx]!=n[j]) moved=true;
-      board[idx]=n[j];
+/* MOVES */
+function moveLeft() {
+  for (let r = 0; r < 4; r++) {
+    let row = board.slice(r * 4, r * 4 + 4);
+    let newRow = slide(row);
+    while (newRow.length < 4) newRow.push(0);
+    board.splice(r * 4, 4, ...newRow);
+  }
+  postMove();
+}
+
+function moveRight() {
+  for (let r = 0; r < 4; r++) {
+    let row = board.slice(r * 4, r * 4 + 4).reverse();
+    let newRow = slide(row);
+    while (newRow.length < 4) newRow.push(0);
+    board.splice(r * 4, 4, ...newRow.reverse());
+  }
+  postMove();
+}
+
+function moveUp() {
+  for (let c = 0; c < 4; c++) {
+    let col = [
+      board[c],
+      board[c + 4],
+      board[c + 8],
+      board[c + 12]
+    ];
+    let newCol = slide(col);
+    while (newCol.length < 4) newCol.push(0);
+    for (let r = 0; r < 4; r++) {
+      board[c + r * 4] = newCol[r];
     }
   }
-  if(moved){addTile(); save(); render();}
+  postMove();
 }
 
-document.addEventListener("keydown",e=>{
-  if(e.key=="ArrowLeft")move(0);
-  if(e.key=="ArrowUp")move(1);
-  if(e.key=="ArrowRight")move(2);
-  if(e.key=="ArrowDown")move(3);
+function moveDown() {
+  for (let c = 0; c < 4; c++) {
+    let col = [
+      board[c],
+      board[c + 4],
+      board[c + 8],
+      board[c + 12]
+    ].reverse();
+    let newCol = slide(col);
+    while (newCol.length < 4) newCol.push(0);
+    newCol.reverse();
+    for (let r = 0; r < 4; r++) {
+      board[c + r * 4] = newCol[r];
+    }
+  }
+  postMove();
+}
+
+/* AFTER MOVE */
+function postMove() {
+  addTile();
+  render();
+}
+
+/* KEYBOARD */
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowLeft") moveLeft();
+  if (e.key === "ArrowRight") moveRight();
+  if (e.key === "ArrowUp") moveUp();
+  if (e.key === "ArrowDown") moveDown();
 });
 
-function reset(){
-  board=Array(16).fill(0);
-  score=0;
-  addTile(); addTile();
-  save(); render();
+/* RESET (optional button) */
+function reset() {
+  board = Array(16).fill(0);
+  score = 0;
+  init();
 }
 
-if(!board.some(v=>v)) addTile(),addTile();
-render();
+init();
 </script>
-</body>
-</html>
