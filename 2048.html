@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>2048</title>
+<title>2048 – WebArcade</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -10,12 +10,40 @@ body {
   margin: 0;
   font-family: "Clear Sans", Arial, sans-serif;
   background: #faf8ef;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
 }
 
+/* TOP BAR */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 15px 25px;
+  background: #020617;
+  color: white;
+}
+
+.topbar button {
+  background: none;
+  border: 1px solid #64748b;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 15px;
+}
+
+.topbar h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+/* PAGE LAYOUT */
+.page {
+  display: flex;
+  justify-content: center;
+  padding: 40px 20px;
+}
+
+/* GAME */
 .game {
   background: #bbada0;
   padding: 15px;
@@ -48,6 +76,7 @@ body {
   border-radius: 6px;
 }
 
+/* TILE COLORS */
 .tile[data-v="2"]    { background:#eee4da; color:#776e65; }
 .tile[data-v="4"]    { background:#ede0c8; color:#776e65; }
 .tile[data-v="8"]    { background:#f2b179; color:#f9f6f2; }
@@ -64,22 +93,34 @@ body {
 
 <body>
 
-<div class="game">
-  <div class="header">
-    <div>2048</div>
-    <div>Score: <span id="score">0</span></div>
+<!-- TOP BAR -->
+<div class="topbar">
+  <button onclick="goBack()">← Back</button>
+  <h1>WebArcade • 2048</h1>
+</div>
+
+<!-- PAGE CONTENT -->
+<div class="page">
+  <div class="game">
+    <div class="header">
+      <div>2048</div>
+      <div>Score: <span id="score">0</span></div>
+    </div>
+    <div id="grid"></div>
   </div>
-  <div id="grid"></div>
 </div>
 
 <script>
+function goBack() {
+  window.location.href = "blog.html";
+}
+
 const grid = document.getElementById("grid");
 const scoreEl = document.getElementById("score");
 
 let board = Array(16).fill(0);
 let score = 0;
 
-  
 function render() {
   grid.innerHTML = "";
   board.forEach(v => {
