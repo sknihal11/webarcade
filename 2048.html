@@ -17,15 +17,23 @@ body {
 }
 
 .container {
-  text-align: center;
   position: relative;
+  text-align: center;
 }
 
 .top-bar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: #776e65;
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .title {
@@ -34,10 +42,15 @@ body {
   color: #776e65;
 }
 
-.score {
+.score-box {
+  display: flex;
+  gap: 8px;
+}
+
+.score, .best {
   background: #bbada0;
   color: #fff;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 5px;
   font-weight: bold;
 }
@@ -58,34 +71,35 @@ body {
   background: #cdc1b4;
   border-radius: 5px;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   font-size: 28px;
   font-weight: bold;
   color: #776e65;
 }
 
-.cell[data-value="2"]   { background: #eee4da; }
-.cell[data-value="4"]   { background: #ede0c8; }
-.cell[data-value="8"]   { background: #f2b179; color:#fff; }
-.cell[data-value="16"]  { background: #f59563; color:#fff; }
-.cell[data-value="32"]  { background: #f67c5f; color:#fff; }
-.cell[data-value="64"]  { background: #f65e3b; color:#fff; }
-.cell[data-value="128"] { background: #edcf72; color:#fff; }
-.cell[data-value="256"] { background: #edcc61; color:#fff; }
-.cell[data-value="512"] { background: #edc850; color:#fff; }
-.cell[data-value="1024"]{ background: #edc53f; color:#fff; }
-.cell[data-value="2048"]{ background: #edc22e; color:#fff; }
+.cell[data-value="2"] { background:#eee4da; }
+.cell[data-value="4"] { background:#ede0c8; }
+.cell[data-value="8"] { background:#f2b179;color:#fff; }
+.cell[data-value="16"]{ background:#f59563;color:#fff; }
+.cell[data-value="32"]{ background:#f67c5f;color:#fff; }
+.cell[data-value="64"]{ background:#f65e3b;color:#fff; }
+.cell[data-value="128"]{ background:#edcf72;color:#fff; }
+.cell[data-value="256"]{ background:#edcc61;color:#fff; }
+.cell[data-value="512"]{ background:#edc850;color:#fff; }
+.cell[data-value="1024"]{ background:#edc53f;color:#fff; }
+.cell[data-value="2048"]{ background:#edc22e;color:#fff; }
 
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(238,228,218,0.85);
+  background: rgba(238,228,218,0.9);
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   border-radius: 10px;
+  z-index: 10;
 }
 
 .overlay h1 {
@@ -108,8 +122,12 @@ body {
 <body>
 <div class="container">
   <div class="top-bar">
+    <button class="back-btn" onclick="location.href='index.html'">← Back</button>
     <div class="title">2048</div>
-    <div class="score" id="score">Score: 0</div>
+    <div class="score-box">
+      <div class="score" id="score">0</div>
+      <div class="best" id="best">Best: 0</div>
+    </div>
   </div>
 
   <div class="board" id="board"></div>
@@ -123,15 +141,18 @@ body {
 <script>
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
+const bestEl = document.getElementById("best");
 const overlay = document.getElementById("overlay");
 const overlayText = document.getElementById("overlayText");
 
-let board, score, won;
+let board, score, won, blocked;
+let best = localStorage.getItem("best2048") || 0;
 
 function init() {
   board = Array.from({length:4},()=>Array(4).fill(0));
   score = 0;
   won = false;
+  blocked = false;
   overlay.style.display = "none";
   addRandom();
   addRandom();
@@ -141,15 +162,16 @@ function init() {
 function draw() {
   boardEl.innerHTML = "";
   board.flat().forEach(v=>{
-    const d=document.createElement("div");
-    d.className="cell";
+    const c=document.createElement("div");
+    c.className="cell";
     if(v){
-      d.textContent=v;
-      d.dataset.value=v;
+      c.textContent=v;
+      c.dataset.value=v;
     }
-    boardEl.appendChild(d);
+    boardEl.appendChild(c);
   });
-  scoreEl.textContent = "Score: " + score;
+  scoreEl.textContent = score;
+  bestEl.textContent = "Best: " + best;
 }
 
 function addRandom() {
@@ -174,6 +196,7 @@ function slide(row){
 }
 
 function move(dir){
+  if(blocked) return;
   const old=JSON.stringify(board);
   if(dir==="left") board=board.map(r=>slide(r));
   if(dir==="right") board=board.map(r=>slide(r.reverse()).reverse());
@@ -193,12 +216,17 @@ function move(dir){
     addRandom();
     draw();
     checkGameOver();
+    if(score>best){
+      best=score;
+      localStorage.setItem("best2048",best);
+    }
   }
 }
 
 function win(){
   if(!won){
     won=true;
+    blocked=true;
     overlayText.textContent="You Win!";
     overlay.style.display="flex";
   }
@@ -211,6 +239,7 @@ function checkGameOver(){
       if(c<3&&board[r][c]===board[r][c+1]) return;
       if(r<3&&board[r][c]===board[r+1][c]) return;
     }
+  blocked=true;
   overlayText.textContent="Game Over";
   overlay.style.display="flex";
 }
