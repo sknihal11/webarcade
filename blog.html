@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebArcade – Games</title>
 
 <style>
@@ -11,14 +11,6 @@
   --card:#12182b;
   --text:#ffffff;
   --accent:#6f6cff;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg:#f4f6ff;
-    --card:#ffffff;
-    --text:#0b0f1a;
-  }
 }
 
 body {
@@ -40,50 +32,39 @@ header {
 .logo {
   font-size:20px;
   font-weight:600;
-  color:white;
 }
 
-.auth {
-  display:flex;
-  gap:12px;
-}
-
-button {
-  padding:8px 16px;
+.auth button {
+  padding:8px 18px;
   border-radius:999px;
   border:none;
   cursor:pointer;
   font-weight:500;
 }
 
-.login {
+.logout {
   background:white;
   color:#6f6cff;
 }
 
-.logout {
-  background:transparent;
-  border:1px solid white;
-  color:white;
+/* CONTENT */
+.container {
+  max-width:1100px;
+  margin:auto;
+  padding:40px 24px;
 }
 
-.hidden {
-  display:none;
-}
-
-/* MAIN */
-main {
-  padding:40px;
+.grid {
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
   gap:24px;
 }
 
 .card {
   background:var(--card);
   border-radius:16px;
-  padding:16px;
-  box-shadow:0 10px 30px rgba(0,0,0,.25);
+  overflow:hidden;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
   transition:.25s;
 }
 
@@ -95,18 +76,30 @@ main {
   width:100%;
   height:160px;
   object-fit:cover;
-  border-radius:12px;
+}
+
+.card .content {
+  padding:16px;
+}
+
+.card h3 {
+  margin:0 0 8px;
+}
+
+.card p {
+  opacity:.7;
+  font-size:14px;
 }
 
 .play {
   margin-top:12px;
+  display:inline-block;
+  padding:8px 18px;
+  border-radius:999px;
   background:var(--accent);
   color:white;
-}
-
-.coming {
-  opacity:.6;
-  pointer-events:none;
+  text-decoration:none;
+  font-size:14px;
 }
 
 footer {
@@ -122,30 +115,38 @@ footer {
 <header>
   <div class="logo">WebArcade 🎮</div>
   <div class="auth">
-    <button id="loginBtn" class="login">Login</button>
-    <button id="logoutBtn" class="logout hidden">Logout</button>
+    <button class="logout" id="logoutBtn">Logout</button>
   </div>
 </header>
 
-<main>
+<div class="container">
+  <div class="grid">
 
-  <div class="card">
-    <img src="2048.jpeg" alt="2048">
-    <h3>2048</h3>
-    <p>Merge tiles to reach 2048.</p>
-    <button class="play" onclick="play2048()">Play →</button>
+    <!-- GAME CARD -->
+    <div class="card">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/1/18/2048_logo.svg" alt="2048">
+      <div class="content">
+        <h3>2048</h3>
+        <p>Merge tiles to win.</p>
+        <a class="play" href="games/2048/index.html">Play →</a>
+      </div>
+    </div>
+
+    <!-- PLACEHOLDER -->
+    <div class="card">
+      <img src="https://dummyimage.com/600x400/1e2438/ffffff&text=Coming+Soon">
+      <div class="content">
+        <h3>More Games</h3>
+        <p>Coming soon.</p>
+      </div>
+    </div>
+
   </div>
-
-  <div class="card coming">
-    <h3>More Games</h3>
-    <p>Coming soon</p>
-  </div>
-
-</main>
+</div>
 
 <footer>© 2026 WebArcade</footer>
 
-<!-- FIREBASE AUTH -->
+<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
@@ -163,35 +164,18 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
-loginBtn.onclick = () => {
-  window.location.href = "signup.html";
-};
-
-logoutBtn.onclick = async () => {
-  await signOut(auth);
-};
-
-window.play2048 = () => {
-  if (auth.currentUser) {
-    window.location.href = "2048.html";
-  } else {
-    alert("Please login to play 🎮");
+// AUTH GUARD
+onAuthStateChanged(auth, user => {
+  if (!user) {
     window.location.href = "signup.html";
   }
-};
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginBtn.classList.add("hidden");
-    logoutBtn.classList.remove("hidden");
-  } else {
-    loginBtn.classList.remove("hidden");
-    logoutBtn.classList.add("hidden");
-  }
 });
+
+// LOGOUT
+document.getElementById("logoutBtn").onclick = async () => {
+  await signOut(auth);
+  window.location.href = "index.html";
+};
 </script>
 
 </body>
