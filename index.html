@@ -1,102 +1,119 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>WebArcade</title>
 
 <style>
 :root {
-  --bg:#0b0f1a;
-  --card:#12182b;
-  --text:#ffffff;
-  --accent:#6f6cff;
+  --bg: #020617;
+  --card: #0f172a;
+  --primary: #7c7cff;
+  --text: #e5e7eb;
 }
 
 body {
-  margin:0;
-  font-family:system-ui,sans-serif;
-  background:var(--bg);
-  color:var(--text);
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
+  color: var(--text);
+  min-height: 100vh;
 }
 
 /* HEADER */
 header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:14px 32px;
-  background:linear-gradient(90deg,#6f6cff,#7c7cff);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 32px;
+  background: linear-gradient(90deg, #6d6df6, #7c7cff);
 }
 
-.logo {
-  font-size:20px;
-  font-weight:600;
-  color:white;
+header h1 {
+  margin: 0;
+  font-size: 22px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.auth button {
-  padding:8px 18px;
-  border-radius:999px;
-  border:none;
-  cursor:pointer;
-  font-weight:500;
+header button {
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  background: white;
+  color: #1e1b4b;
+  transition: transform .2s, box-shadow .2s;
 }
 
-.login {
-  background:white;
-  color:#6f6cff;
-}
-
-.logout {
-  background:transparent;
-  border:1px solid white;
-  color:white;
-}
-
-.hidden {
-  display:none;
+header button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0,0,0,.25);
 }
 
 /* HERO */
 .hero {
-  min-height:80vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  gap:24px;
+  text-align: center;
+  padding: 110px 20px 90px;
 }
 
-.hero h1 {
-  font-size:48px;
+.hero h2 {
+  font-size: clamp(36px, 6vw, 56px);
+  margin-bottom: 14px;
 }
 
 .hero p {
-  opacity:.7;
+  opacity: .85;
+  max-width: 500px;
+  margin: 0 auto 36px;
+  font-size: 17px;
 }
 
-.enter {
-  padding:14px 36px;
-  font-size:18px;
-  border-radius:999px;
-  border:none;
-  background:var(--accent);
-  color:white;
-  cursor:pointer;
-  box-shadow:0 10px 30px rgba(111,108,255,.5);
-  transition:.25s;
+/* ENTER BUTTON */
+.enter-btn {
+  display: inline-block;
+  padding: 16px 42px;
+  font-size: 18px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7c7cff, #9f9fff);
+  color: #020617;
+  text-decoration: none;
+  font-weight: 700;
+  box-shadow: 0 25px 60px rgba(124,124,255,.45);
+  transition: transform .25s, box-shadow .25s;
 }
 
-.enter:hover {
-  transform:translateY(-4px) scale(1.05);
+.enter-btn:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 35px 80px rgba(124,124,255,.6);
 }
 
+/* AUTH TEXT */
+.auth {
+  margin-top: 28px;
+  font-size: 14px;
+  opacity: .9;
+}
+
+.auth a {
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.auth a:hover {
+  text-decoration: underline;
+}
+
+/* FOOTER */
 footer {
-  text-align:center;
-  padding:30px;
-  opacity:.6;
+  text-align: center;
+  padding: 18px;
+  font-size: 13px;
+  opacity: .6;
 }
 </style>
 </head>
@@ -104,64 +121,26 @@ footer {
 <body>
 
 <header>
-  <div class="logo">WebArcade 🎮</div>
-  <div class="auth">
-    <button id="loginBtn" class="login">Login</button>
-    <button id="logoutBtn" class="logout hidden">Logout</button>
-  </div>
+  <h1>WebArcade 🎮</h1>
+  <button onclick="location.href='login.html'">Login</button>
 </header>
 
 <section class="hero">
-  <h1>Welcome to WebArcade</h1>
-  <p>Play classic games. No downloads. Pure fun.</p>
-  <button class="enter" onclick="enterArcade()">ENTER ARCADE →</button>
+  <h2>Play. Compete. Chill.</h2>
+  <p>A modern arcade for casual games. No installs. Just fun.</p>
+
+  <a href="blog.html" class="enter-btn">Enter Arcade →</a>
+
+  <div class="auth">
+    New user?
+    <a href="signup.html">Sign up</a> /
+    <a href="login.html">Login</a>
+  </div>
 </section>
 
-<footer>© 2026 WebArcade</footer>
-
-<!-- FIREBASE -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  signOut
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-  authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-const loginBtn = document.getElementById("loginBtn");
-const logoutBtn = document.getElementById("logoutBtn");
-
-loginBtn.onclick = () => {
-  window.location.href = "signup.html";
-};
-
-logoutBtn.onclick = async () => {
-  await signOut(auth);
-};
-
-window.enterArcade = () => {
-  window.location.href = "blog.html";
-};
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    loginBtn.classList.add("hidden");
-    logoutBtn.classList.remove("hidden");
-  } else {
-    loginBtn.classList.remove("hidden");
-    logoutBtn.classList.add("hidden");
-  }
-});
-</script>
+<footer>
+  © 2026 WebArcade
+</footer>
 
 </body>
 </html>
