@@ -1,0 +1,86 @@
+/* ===== CSS RESET ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== THEME VARIABLES ===== */
+:root {
+  --bg: #f7f4ef;
+  --text: #222;
+  --header-bg: #ffffff;
+  --card-bg: #ffffff;
+  --accent: #1e90ff;
+}
+
+/* ===== DARK MODE (AUTO) ===== */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0f1115;
+    --text: #eaeaea;
+    --header-bg: #161a22;
+    --card-bg: #1e2430;
+    --accent: #4da3ff;
+  }
+}
+
+/* ===== GLOBAL STYLES ===== */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* ===== HEADER ===== */
+header {
+  background-color: var(--header-bg);
+  padding: 14px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+header h1 {
+  font-size: 1.4rem;
+}
+
+/* ===== LINKS ===== */
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+/* ===== CONTAINER ===== */
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 24px;
+}
+
+/* ===== BACK BUTTON ===== */
+.back-btn {
+  display: inline-block;
+  margin-bottom: 16px;
+  font-size: 0.95rem;
+}
+
+/* ===== GAME AREA ===== */
+.game-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 600px) {
+  header h1 {
+    font-size: 1.1rem;
+  }
+}
