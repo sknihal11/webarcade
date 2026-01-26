@@ -3,43 +3,80 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>2048 - WebArcade</title>
+<title>2048 – WebArcade</title>
 
 <style>
-body {
+/* ===== RESET ===== */
+* {
   margin: 0;
-  font-family: Arial, sans-serif;
-  background: #faf8ef;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ===== THEME ===== */
+:root {
+  --bg1: #020617;
+  --bg2: #1e293b;
+  --card: #faf8ef;
+  --text: #776e65;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg1: #e0e7ff;
+    --bg2: #f8fafc;
+    --card: #faf8ef;
+    --text: #776e65;
+  }
+}
+
+/* ===== BODY BACKGROUND ===== */
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(99,102,241,0.25), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(34,197,94,0.25), transparent 40%),
+    linear-gradient(135deg, var(--bg1), var(--bg2));
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
 }
 
+/* ===== GLASS WRAPPER ===== */
+.scene {
+  padding: 40px;
+  border-radius: 28px;
+  backdrop-filter: blur(16px);
+  background: rgba(255,255,255,0.08);
+  box-shadow: 0 40px 120px rgba(0,0,0,0.45);
+}
+
+/* ===== GAME CONTAINER ===== */
 .container {
-  position: relative;
   text-align: center;
 }
 
+/* ===== TOP BAR ===== */
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 }
 
 .back-btn {
   background: none;
   border: none;
-  color: #776e65;
+  color: var(--text);
   font-size: 16px;
   cursor: pointer;
 }
 
 .title {
   font-size: 32px;
-  font-weight: bold;
-  color: #776e65;
+  font-weight: 800;
+  color: var(--text);
 }
 
 .score-box {
@@ -51,33 +88,38 @@ body {
   background: #bbada0;
   color: #fff;
   padding: 8px 12px;
-  border-radius: 5px;
+  border-radius: 6px;
   font-weight: bold;
 }
 
+/* ===== BOARD ===== */
 .board {
   background: #bbada0;
-  padding: 10px;
-  border-radius: 10px;
+  padding: 12px;
+  border-radius: 12px;
   display: grid;
   grid-template-columns: repeat(4, 80px);
   gap: 10px;
   touch-action: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
 }
 
+/* ===== CELL ===== */
 .cell {
   width: 80px;
   height: 80px;
   background: #cdc1b4;
-  border-radius: 5px;
+  border-radius: 6px;
   display: flex;
   justify-content: center;
   align-items: center;
   font-size: 28px;
   font-weight: bold;
   color: #776e65;
+  transition: transform 0.1s ease;
 }
 
+/* TILE COLORS */
 .cell[data-value="2"] { background:#eee4da; }
 .cell[data-value="4"] { background:#ede0c8; }
 .cell[data-value="8"] { background:#f2b179;color:#fff; }
@@ -90,51 +132,54 @@ body {
 .cell[data-value="1024"]{ background:#edc53f;color:#fff; }
 .cell[data-value="2048"]{ background:#edc22e;color:#fff; }
 
+/* ===== OVERLAY ===== */
 .overlay {
   position: absolute;
   inset: 0;
-  background: rgba(238,228,218,0.9);
+  background: rgba(250,248,239,0.92);
   display: none;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  border-radius: 10px;
-  z-index: 10;
+  border-radius: 12px;
 }
 
 .overlay h1 {
   color: #776e65;
-  margin-bottom: 15px;
+  margin-bottom: 18px;
 }
 
 .overlay button {
-  padding: 10px 20px;
+  padding: 10px 22px;
   border: none;
   background: #8f7a66;
   color: #fff;
   font-size: 16px;
-  border-radius: 5px;
+  border-radius: 6px;
   cursor: pointer;
 }
 </style>
 </head>
 
 <body>
-<div class="container">
-  <div class="top-bar">
-    <button class="back-btn" onclick="location.href='index.html'">← Back</button>
-    <div class="title">2048</div>
-    <div class="score-box">
-      <div class="score" id="score">0</div>
-      <div class="best" id="best">Best: 0</div>
+
+<div class="scene">
+  <div class="container">
+    <div class="top-bar">
+      <button class="back-btn" onclick="location.href='blog.html'">← Back</button>
+      <div class="title">2048</div>
+      <div class="score-box">
+        <div class="score" id="score">0</div>
+        <div class="best" id="best">Best: 0</div>
+      </div>
     </div>
-  </div>
 
-  <div class="board" id="board"></div>
+    <div class="board" id="board"></div>
 
-  <div class="overlay" id="overlay">
-    <h1 id="overlayText"></h1>
-    <button onclick="restart()">Restart</button>
+    <div class="overlay" id="overlay">
+      <h1 id="overlayText"></h1>
+      <button onclick="restart()">Restart</button>
+    </div>
   </div>
 </div>
 
@@ -154,8 +199,7 @@ function init() {
   won = false;
   blocked = false;
   overlay.style.display = "none";
-  addRandom();
-  addRandom();
+  addRandom(); addRandom();
   draw();
 }
 
@@ -186,8 +230,7 @@ function slide(row){
   row=row.filter(v=>v);
   for(let i=0;i<row.length-1;i++){
     if(row[i]===row[i+1]){
-      row[i]*=2;
-      score+=row[i];
+      row[i]*=2; score+=row[i];
       if(row[i]===2048) win();
       row[i+1]=0;
     }
@@ -213,9 +256,7 @@ function move(dir){
     }
   }
   if(JSON.stringify(board)!==old){
-    addRandom();
-    draw();
-    checkGameOver();
+    addRandom(); draw(); checkGameOver();
     if(score>best){
       best=score;
       localStorage.setItem("best2048",best);
@@ -224,12 +265,9 @@ function move(dir){
 }
 
 function win(){
-  if(!won){
-    won=true;
-    blocked=true;
-    overlayText.textContent="You Win!";
-    overlay.style.display="flex";
-  }
+  won=true; blocked=true;
+  overlayText.textContent="You Win!";
+  overlay.style.display="flex";
 }
 
 function checkGameOver(){
