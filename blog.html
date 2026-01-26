@@ -12,6 +12,7 @@
   --muted:#9aa0aa;
   --accent:#5865f2;
   --border:#22252e;
+  --danger:#ff4d4d;
 }
 
 *{box-sizing:border-box;font-family:Inter,system-ui}
@@ -32,17 +33,28 @@ header{
 header h2{margin:0;font-weight:700}
 header .right{
   display:flex;
-  gap:10px;
+  align-items:center;
+  gap:14px;
 }
-.btn{
+.profile-btn{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  cursor:pointer;
+}
+.profile-btn img{
+  width:36px;height:36px;
+  border-radius:50%;
+}
+.btn-danger{
+  background:var(--danger);
   border:none;
   padding:8px 14px;
   border-radius:8px;
   cursor:pointer;
   font-weight:600;
+  color:#fff;
 }
-.btn-accent{background:var(--accent);color:#fff}
-.btn-danger{background:#ff4d4d;color:#fff}
 
 /* WRAPPER */
 .wrapper{
@@ -73,14 +85,8 @@ header .right{
   background:#222;
   object-fit:cover;
 }
-.name{
-  font-size:18px;
-  font-weight:700;
-}
-.email{
-  font-size:14px;
-  color:var(--muted);
-}
+.name{font-size:18px;font-weight:700}
+.email{font-size:14px;color:var(--muted)}
 
 /* GAMES */
 .games{
@@ -94,10 +100,6 @@ header .right{
   padding:22px;
   text-align:center;
   box-shadow:0 15px 40px rgba(0,0,0,.45);
-  transition:.25s ease;
-}
-.game-card:hover{
-  transform:translateY(-6px);
 }
 .game-thumb{
   width:100%;
@@ -106,13 +108,6 @@ header .right{
   object-fit:cover;
   margin-bottom:14px;
 }
-.game-card h3{margin:0 0 6px}
-.game-card p{
-  font-size:14px;
-  color:var(--muted);
-}
-
-/* PLAY BUTTON (UPGRADED) */
 .play-btn{
   display:inline-block;
   margin-top:14px;
@@ -122,12 +117,61 @@ header .right{
   color:#fff;
   text-decoration:none;
   font-weight:700;
-  letter-spacing:.3px;
-  transition:.25s ease;
 }
-.play-btn:hover{
-  transform:scale(1.05);
-  box-shadow:0 0 18px rgba(88,101,242,.6);
+
+/* PROFILE MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  justify-content:center;
+  align-items:center;
+}
+.modal.active{display:flex}
+.modal-content{
+  background:var(--card);
+  width:420px;
+  border-radius:16px;
+  padding:24px;
+}
+.modal-content h3{margin-top:0}
+.field{
+  margin-bottom:14px;
+}
+.field input{
+  width:100%;
+  padding:10px;
+  border-radius:8px;
+  border:none;
+  outline:none;
+}
+.modal-actions{
+  display:flex;
+  justify-content:space-between;
+  margin-top:16px;
+}
+.btn{
+  border:none;
+  padding:10px 14px;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:600;
+}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-outline{
+  background:none;
+  border:1px solid var(--border);
+  color:#fff;
+}
+.danger-text{color:var(--danger);cursor:pointer;font-size:14px}
+
+/* CAPTCHA */
+.captcha{
+  background:#0b0c10;
+  padding:10px;
+  border-radius:8px;
+  font-size:14px;
 }
 </style>
 </head>
@@ -137,14 +181,15 @@ header .right{
 <header>
   <h2>WebArcade</h2>
   <div class="right">
-    <!-- Removed self-redirect -->
-    <button class="btn btn-danger" onclick="logout()">Logout</button>
+    <div class="profile-btn" onclick="openProfile()">
+      <img id="headerAvatar" src="https://i.imgur.com/8Km9tLL.png">
+      <span id="headerName">User</span>
+    </div>
   </div>
 </header>
 
 <div class="wrapper">
 
-  <!-- USER INFO -->
   <div class="user-card">
     <div class="user">
       <img id="avatar" class="avatar" src="https://i.imgur.com/8Km9tLL.png">
@@ -155,28 +200,47 @@ header .right{
     </div>
   </div>
 
-  <!-- GAMES -->
   <h3>Available Games</h3>
   <div class="games">
-
     <div class="game-card">
-      <img src="2048.jpeg" class="game-thumb" alt="2048 game">
+      <img src="2048.jpeg" class="game-thumb">
       <h3>2048</h3>
       <p>Merge tiles and reach the ultimate number.</p>
       <a href="2048.html" class="play-btn">▶ Play 2048</a>
     </div>
-
-    <div class="game-card">
-      <img src="https://i.imgur.com/8Km9tLL.png" class="game-thumb">
-      <h3>More Games</h3>
-      <p>New arcade titles coming soon.</p>
-      <a href="#" class="play-btn" style="opacity:.4;pointer-events:none">
-        Coming Soon
-      </a>
-    </div>
-
   </div>
 
+</div>
+
+<!-- PROFILE MODAL -->
+<div class="modal" id="profileModal">
+  <div class="modal-content">
+    <h3>Profile Settings</h3>
+
+    <div class="field">
+      <input id="newName" placeholder="New display name">
+    </div>
+
+    <div class="field">
+      <input id="photoURL" placeholder="Profile image URL">
+    </div>
+
+    <div class="field">
+      <input id="newPassword" type="password" placeholder="New password">
+    </div>
+
+    <div class="field captcha">
+      Type <b>DELETE</b> to delete your account
+      <input id="captchaInput" placeholder="Type DELETE">
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-accent" onclick="saveProfile()">Save</button>
+      <button class="btn btn-outline" onclick="closeProfile()">Close</button>
+    </div>
+
+    <p class="danger-text" onclick="deleteAccount()">Delete Account</p>
+  </div>
 </div>
 
 <script type="module">
@@ -184,36 +248,54 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebas
 import {
   getAuth,
   onAuthStateChanged,
-  signOut
+  updateProfile,
+  updatePassword,
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-const firebaseConfig = {
+const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
   authDomain: "webarcade-d4c3d.firebaseapp.com",
   projectId: "webarcade-d4c3d"
-};
-
-const app = initializeApp(firebaseConfig);
+});
 const auth = getAuth(app);
 
-let checked = false;
+let currentUser;
 
-onAuthStateChanged(auth, user => {
-  if (checked) return;
-  checked = true;
-
-  if (!user) {
-    location.replace("index.html");
-    return;
-  }
-
+onAuthStateChanged(auth, user=>{
+  if(!user){ location.replace("index.html"); return; }
+  currentUser=user;
   displayName.textContent = user.displayName || "Player";
   email.textContent = user.email;
-  if (user.photoURL) avatar.src = user.photoURL;
+  headerName.textContent = displayName.textContent;
+  if(user.photoURL){
+    avatar.src = headerAvatar.src = user.photoURL;
+  }
 });
 
-window.logout = async () => {
-  await signOut(auth);
+window.openProfile=()=>profileModal.classList.add("active");
+window.closeProfile=()=>profileModal.classList.remove("active");
+
+window.saveProfile = async()=>{
+  if(newName.value || photoURL.value){
+    await updateProfile(currentUser,{
+      displayName:newName.value || currentUser.displayName,
+      photoURL:photoURL.value || currentUser.photoURL
+    });
+    location.reload();
+  }
+  if(newPassword.value){
+    await updatePassword(currentUser,newPassword.value);
+    alert("Password updated");
+  }
+};
+
+window.deleteAccount = async()=>{
+  if(captchaInput.value!=="DELETE"){
+    alert("Captcha incorrect");
+    return;
+  }
+  await deleteUser(currentUser);
   location.replace("index.html");
 };
 </script>
