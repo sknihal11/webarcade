@@ -7,9 +7,9 @@
 
 <style>
 :root {
+  --primary: #7c7cff;
   --bg: #020617;
   --card: #0f172a;
-  --primary: #7c7cff;
   --text: #e5e7eb;
 }
 
@@ -33,9 +33,6 @@ header {
 header h1 {
   margin: 0;
   font-size: 22px;
-  display: flex;
-  gap: 8px;
-  align-items: center;
 }
 
 header button {
@@ -46,18 +43,12 @@ header button {
   cursor: pointer;
   background: white;
   color: #1e1b4b;
-  transition: transform .2s, box-shadow .2s;
-}
-
-header button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 25px rgba(0,0,0,.25);
 }
 
 /* HERO */
 .hero {
   text-align: center;
-  padding: 110px 20px 90px;
+  padding: 110px 20px;
 }
 
 .hero h2 {
@@ -69,51 +60,83 @@ header button:hover {
   opacity: .85;
   max-width: 500px;
   margin: 0 auto 36px;
-  font-size: 17px;
 }
 
 /* ENTER BUTTON */
 .enter-btn {
-  display: inline-block;
   padding: 16px 42px;
   font-size: 18px;
   border-radius: 999px;
   background: linear-gradient(135deg, #7c7cff, #9f9fff);
   color: #020617;
-  text-decoration: none;
+  border: none;
   font-weight: 700;
+  cursor: pointer;
   box-shadow: 0 25px 60px rgba(124,124,255,.45);
-  transition: transform .25s, box-shadow .25s;
-}
-
-.enter-btn:hover {
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 35px 80px rgba(124,124,255,.6);
 }
 
 /* AUTH TEXT */
 .auth {
   margin-top: 28px;
   font-size: 14px;
-  opacity: .9;
 }
 
-.auth a {
+.auth span {
   color: var(--primary);
-  text-decoration: none;
+  cursor: pointer;
   font-weight: 600;
 }
 
-.auth a:hover {
-  text-decoration: underline;
+/* MODAL */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.6);
+  display: none;
+  justify-content: center;
+  align-items: center;
 }
 
-/* FOOTER */
-footer {
+.modal.active {
+  display: flex;
+}
+
+.modal-box {
+  background: var(--card);
+  padding: 30px;
+  border-radius: 18px;
+  width: 320px;
   text-align: center;
-  padding: 18px;
+}
+
+.modal-box h3 {
+  margin-bottom: 20px;
+}
+
+.modal-box input {
+  width: 100%;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: none;
+}
+
+.modal-box button {
+  width: 100%;
+  padding: 12px;
+  border-radius: 999px;
+  border: none;
+  background: var(--primary);
+  color: #020617;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.close {
+  margin-top: 12px;
   font-size: 13px;
-  opacity: .6;
+  opacity: .7;
+  cursor: pointer;
 }
 </style>
 </head>
@@ -122,25 +145,90 @@ footer {
 
 <header>
   <h1>WebArcade 🎮</h1>
-  <button onclick="location.href='login.html'">Login</button>
+  <button onclick="openAuth()">Login</button>
 </header>
 
 <section class="hero">
   <h2>Play. Compete. Chill.</h2>
   <p>A modern arcade for casual games. No installs. Just fun.</p>
 
-  <a href="blog.html" class="enter-btn">Enter Arcade →</a>
+  <button class="enter-btn" onclick="enterArcade()">Enter Arcade →</button>
 
   <div class="auth">
-    New user?
-    <a href="signup.html">Sign up</a> /
-    <a href="login.html">Login</a>
+    New user? <span onclick="openAuth(true)">Sign up</span>
   </div>
 </section>
 
-<footer>
-  © 2026 WebArcade
-</footer>
+<!-- AUTH MODAL -->
+<div class="modal" id="authModal">
+  <div class="modal-box">
+    <h3 id="authTitle">Login</h3>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button onclick="submitAuth()">Continue</button>
+    <div class="close" onclick="closeAuth()">Cancel</div>
+  </div>
+</div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+  authDomain: "webarcade-d4c3d.firebaseapp.com",
+  projectId: "webarcade-d4c3d",
+  storageBucket: "webarcade-d4c3d.firebasestorage.app",
+  messagingSenderId: "918209461327",
+  appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+let isSignup = false;
+
+window.openAuth = (signup=false) => {
+  isSignup = signup;
+  document.getElementById("authTitle").innerText = signup ? "Sign Up" : "Login";
+  document.getElementById("authModal").classList.add("active");
+};
+
+window.closeAuth = () => {
+  document.getElementById("authModal").classList.remove("active");
+};
+
+window.submitAuth = async () => {
+  const email = email.value;
+  const pass = password.value;
+
+  try {
+    if (isSignup) {
+      await createUserWithEmailAndPassword(auth, email, pass);
+    } else {
+      await signInWithEmailAndPassword(auth, email, pass);
+    }
+    window.location.href = "blog.html";
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+window.enterArcade = () => {
+  if (auth.currentUser) {
+    window.location.href = "blog.html";
+  } else {
+    openAuth();
+  }
+};
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    window.location.href = "blog.html";
+  }
+});
+</script>
 
 </body>
 </html>
