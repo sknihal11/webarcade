@@ -1,142 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WebArcade</title>
 
 <style>
 :root {
-  --primary: #7c7cff;
-  --bg: #020617;
-  --card: #0f172a;
-  --text: #e5e7eb;
+  --bg:#020617;
+  --card:#0f172a;
+  --accent:#7c7cff;
+  --text:#e5e7eb;
+  --error:#ff6b6b;
+  --success:#4ade80;
 }
 
+* { box-sizing:border-box; }
+
 body {
-  margin: 0;
-  font-family: "Segoe UI", system-ui, sans-serif;
-  background: radial-gradient(circle at top, #0f172a, #020617);
-  color: var(--text);
-  min-height: 100vh;
+  margin:0;
+  font-family:"Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(circle at top,#0f172a,#020617);
+  color:var(--text);
+  min-height:100vh;
 }
 
 /* HEADER */
 header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 32px;
-  background: linear-gradient(90deg, #6d6df6, #7c7cff);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 32px;
 }
 
 header h1 {
-  margin: 0;
-  font-size: 22px;
+  margin:0;
+  font-size:24px;
 }
 
 header button {
-  border: none;
-  padding: 8px 18px;
-  border-radius: 999px;
-  font-weight: 600;
-  cursor: pointer;
-  background: white;
-  color: #1e1b4b;
+  border:none;
+  padding:8px 20px;
+  border-radius:999px;
+  background:linear-gradient(90deg,#6d6df6,#7c7cff);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
 }
 
 /* HERO */
 .hero {
-  text-align: center;
-  padding: 110px 20px;
+  height:calc(100vh - 80px);
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:0 20px;
 }
 
 .hero h2 {
-  font-size: clamp(36px, 6vw, 56px);
-  margin-bottom: 14px;
+  font-size:3rem;
+  margin-bottom:10px;
 }
 
 .hero p {
-  opacity: .85;
-  max-width: 500px;
-  margin: 0 auto 36px;
+  opacity:.8;
+  max-width:520px;
 }
 
-/* ENTER BUTTON */
-.enter-btn {
-  padding: 16px 42px;
-  font-size: 18px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, #7c7cff, #9f9fff);
-  color: #020617;
-  border: none;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: 0 25px 60px rgba(124,124,255,.45);
-}
-
-/* AUTH TEXT */
-.auth {
-  margin-top: 28px;
-  font-size: 14px;
-}
-
-.auth span {
-  color: var(--primary);
-  cursor: pointer;
-  font-weight: 600;
+/* MODAL BACKDROP */
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(8px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:10;
 }
 
 /* MODAL */
 .modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,.6);
-  display: none;
-  justify-content: center;
-  align-items: center;
+  position:relative;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.08),
+    rgba(255,255,255,.02)
+  );
+  backdrop-filter:blur(20px);
+  border-radius:20px;
+  width:100%;
+  max-width:380px;
+  padding:28px;
+  box-shadow:0 40px 80px rgba(0,0,0,.5);
+  animation:pop .35s ease;
 }
 
-.modal.active {
-  display: flex;
+@keyframes pop {
+  from { transform:scale(.92); opacity:0 }
+  to { transform:scale(1); opacity:1 }
 }
 
-.modal-box {
-  background: var(--card);
-  padding: 30px;
-  border-radius: 18px;
-  width: 320px;
-  text-align: center;
+/* CLOSE BUTTON */
+.close-btn {
+  position:absolute;
+  top:12px;
+  right:14px;
+  font-size:22px;
+  background:none;
+  border:none;
+  color:#9ca3af;
+  cursor:pointer;
+}
+.close-btn:hover {
+  color:white;
 }
 
-.modal-box h3 {
-  margin-bottom: 20px;
+.modal h3 {
+  margin-top:0;
+  margin-bottom:18px;
+  text-align:center;
 }
 
-.modal-box input {
-  width: 100%;
-  padding: 12px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  border: none;
+input {
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+  border:none;
+  background:#020617;
+  color:white;
+  margin-bottom:12px;
+  outline:none;
 }
 
-.modal-box button {
-  width: 100%;
-  padding: 12px;
-  border-radius: 999px;
-  border: none;
-  background: var(--primary);
-  color: #020617;
-  font-weight: 700;
-  cursor: pointer;
+input::placeholder {
+  color:#9ca3af;
 }
 
-.close {
-  margin-top: 12px;
-  font-size: 13px;
-  opacity: .7;
-  cursor: pointer;
+.modal button.main-btn {
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:999px;
+  background:var(--accent);
+  font-weight:700;
+  cursor:pointer;
+  margin-top:8px;
+}
+
+.status {
+  margin-top:10px;
+  font-size:14px;
+  text-align:center;
+}
+
+.error { color:var(--error); }
+.success { color:var(--success); }
+
+.switch {
+  margin-top:12px;
+  font-size:14px;
+  text-align:center;
+  opacity:.85;
+  cursor:pointer;
 }
 </style>
 </head>
@@ -145,81 +173,97 @@ header button {
 
 <header>
   <h1>WebArcade 🎮</h1>
-  <button onclick="openAuth()">Login</button>
+  <button onclick="openModal()">Login / Signup</button>
 </header>
 
-<section class="hero">
-  <h2>Play. Compete. Chill.</h2>
-  <p>A modern arcade for casual games. No installs. Just fun.</p>
+<div class="hero">
+  <h2>Play. Compete. Relax.</h2>
+  <p>A modern arcade where your progress is saved, your scores matter, and fun never stops.</p>
+</div>
 
-  <button class="enter-btn" onclick="enterArcade()">Enter Arcade →</button>
+<!-- MODAL -->
+<div class="modal-backdrop" id="modal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="close-btn" onclick="closeModal()">×</button>
 
-  <div class="auth">
-    New user? <span onclick="openAuth(true)">Sign up</span>
-  </div>
-</section>
+    <h3 id="modalTitle">Login</h3>
 
-<!-- AUTH MODAL -->
-<div class="modal" id="authModal">
-  <div class="modal-box">
-    <h3 id="authTitle">Login</h3>
-    <input type="email" id="email" placeholder="Email" />
-    <input type="password" id="password" placeholder="Password" />
-    <button onclick="submitAuth()">Continue</button>
-    <div class="close" onclick="closeAuth()">Cancel</div>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+
+    <button class="main-btn" id="actionBtn">Continue</button>
+
+    <div class="status" id="status"></div>
+
+    <div class="switch" onclick="toggleMode()">
+      New user? Create account
+    </div>
   </div>
 </div>
 
 <!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import {
+  getAuth,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
   authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d",
-  storageBucket: "webarcade-d4c3d.firebasestorage.app",
-  messagingSenderId: "918209461327",
-  appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+  projectId: "webarcade-d4c3d"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-let isSignup = false;
+const modal = document.getElementById("modal");
+const statusEl = document.getElementById("status");
+const actionBtn = document.getElementById("actionBtn");
+const titleEl = document.getElementById("modalTitle");
+const switchEl = document.querySelector(".switch");
 
-window.openAuth = (signup=false) => {
-  isSignup = signup;
-  document.getElementById("authTitle").innerText = signup ? "Sign Up" : "Login";
-  document.getElementById("authModal").classList.add("active");
+let mode = "login";
+
+window.openModal = () => {
+  modal.style.display = "flex";
+  statusEl.textContent = "";
 };
 
-window.closeAuth = () => {
-  document.getElementById("authModal").classList.remove("active");
-};
-
-window.submitAuth = async () => {
-  const email = email.value;
-  const pass = password.value;
-
-  try {
-    if (isSignup) {
-      await createUserWithEmailAndPassword(auth, email, pass);
-    } else {
-      await signInWithEmailAndPassword(auth, email, pass);
-    }
-    window.location.href = "blog.html";
-  } catch (e) {
-    alert(e.message);
+window.closeModal = (e) => {
+  if (!e || e.target === modal) {
+    modal.style.display = "none";
   }
 };
 
-window.enterArcade = () => {
-  if (auth.currentUser) {
-    window.location.href = "blog.html";
-  } else {
-    openAuth();
+window.toggleMode = () => {
+  mode = mode === "login" ? "signup" : "login";
+  titleEl.textContent = mode === "login" ? "Login" : "Sign Up";
+  switchEl.textContent =
+    mode === "login" ? "New user? Create account" : "Already have an account?";
+};
+
+actionBtn.onclick = async () => {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+
+  statusEl.textContent = "Please wait...";
+  statusEl.className = "status";
+
+  try {
+    if (mode === "login") {
+      await signInWithEmailAndPassword(auth, email, password);
+    } else {
+      await createUserWithEmailAndPassword(auth, email, password);
+    }
+    statusEl.textContent = "Success! Redirecting…";
+    statusEl.classList.add("success");
+  } catch (err) {
+    statusEl.textContent = err.message.replace("Firebase: ","");
+    statusEl.classList.add("error");
   }
 };
 
