@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>WebArcade – Arcade</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebArcade – Arcade</title>
 
 <style>
 :root {
@@ -11,14 +11,16 @@
   --card:#0f172a;
   --accent:#7c7cff;
   --text:#e5e7eb;
+  --danger:#ff6b6b;
 }
+
+* { box-sizing:border-box; }
 
 body {
   margin:0;
   font-family:"Segoe UI",system-ui,sans-serif;
   background:radial-gradient(circle at top,#0f172a,#020617);
   color:var(--text);
-  min-height:100vh;
 }
 
 /* HEADER */
@@ -27,7 +29,6 @@ header {
   justify-content:space-between;
   align-items:center;
   padding:18px 32px;
-  background:linear-gradient(90deg,#6d6df6,#7c7cff);
 }
 
 header h1 {
@@ -35,46 +36,39 @@ header h1 {
   font-size:22px;
 }
 
-header button {
+.profile-btn {
   border:none;
   padding:8px 18px;
   border-radius:999px;
+  background:linear-gradient(90deg,#6d6df6,#7c7cff);
+  color:white;
   font-weight:600;
   cursor:pointer;
-  background:white;
-  color:#1e1b4b;
 }
 
-/* CONTAINER */
+/* GRID */
 .container {
   max-width:1200px;
   margin:auto;
-  padding:60px 20px;
+  padding:40px 20px;
 }
 
 .grid {
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:28px;
+  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+  gap:25px;
 }
 
-/* GAME CARD */
 .card {
-  background:linear-gradient(
-    180deg,
-    rgba(255,255,255,.08),
-    rgba(255,255,255,.02)
-  );
-  border-radius:20px;
+  background:rgba(255,255,255,.06);
+  border-radius:18px;
   overflow:hidden;
-  backdrop-filter:blur(14px);
-  box-shadow:0 30px 60px rgba(0,0,0,.35);
+  box-shadow:0 20px 40px rgba(0,0,0,.4);
   transition:.3s;
 }
 
 .card:hover {
-  transform:translateY(-8px);
-  box-shadow:0 45px 90px rgba(0,0,0,.55);
+  transform:translateY(-6px);
 }
 
 .card img {
@@ -84,48 +78,107 @@ header button {
 }
 
 .card-content {
-  padding:22px;
+  padding:18px;
 }
 
-.card-content h3 {
-  margin:0 0 10px;
-}
-
-.card-content p {
-  font-size:14px;
-  opacity:.85;
-}
-
+.card-content h3 { margin:0 0 6px; }
+.card-content p { opacity:.8; font-size:14px; }
 .card-content a {
   display:inline-block;
-  margin-top:14px;
-  padding:8px 18px;
+  margin-top:10px;
+  color:var(--accent);
+  text-decoration:none;
+  font-weight:600;
+}
+
+/* MODAL BACKDROP */
+.modal-backdrop {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  backdrop-filter:blur(10px);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:20;
+}
+
+/* MODAL */
+.modal {
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.1),
+    rgba(255,255,255,.02)
+  );
+  backdrop-filter:blur(20px);
+  border-radius:22px;
+  width:100%;
+  max-width:420px;
+  padding:28px;
+  position:relative;
+  animation:pop .35s ease;
+}
+
+@keyframes pop {
+  from { transform:scale(.92); opacity:0 }
+  to { transform:scale(1); opacity:1 }
+}
+
+.close {
+  position:absolute;
+  top:12px;
+  right:14px;
+  background:none;
+  border:none;
+  font-size:22px;
+  color:#9ca3af;
+  cursor:pointer;
+}
+
+.modal h3 {
+  margin-top:0;
+  text-align:center;
+}
+
+.avatar {
+  width:80px;
+  height:80px;
+  border-radius:50%;
+  object-fit:cover;
+  margin:10px auto;
+  display:block;
+  background:#020617;
+}
+
+input {
+  width:100%;
+  padding:12px 14px;
+  border-radius:10px;
+  border:none;
+  background:#020617;
+  color:white;
+  margin-bottom:10px;
+}
+
+button.action {
+  width:100%;
+  padding:12px;
+  border:none;
   border-radius:999px;
   background:var(--accent);
-  color:#020617;
-  font-weight:600;
-  text-decoration:none;
+  font-weight:700;
+  cursor:pointer;
+  margin-top:8px;
 }
 
-/* COMING SOON */
-.coming-soon {
-  opacity:.55;
-  pointer-events:none;
+button.danger {
+  background:var(--danger);
 }
 
-.coming-soon span {
-  display:inline-block;
-  margin-top:14px;
-  font-weight:600;
-  color:#9ca3af;
-}
-
-/* FOOTER */
-footer {
+.status {
+  margin-top:10px;
+  font-size:14px;
   text-align:center;
-  padding:20px;
-  font-size:13px;
-  opacity:.6;
 }
 </style>
 </head>
@@ -134,46 +187,52 @@ footer {
 
 <header>
   <h1>WebArcade 🎮</h1>
-  <button id="logoutBtn">Logout</button>
+  <button class="profile-btn" onclick="openProfile()">Profile</button>
 </header>
 
 <div class="container">
   <div class="grid">
-
-    <!-- GAME 1 -->
     <div class="card">
-      <img src="2048.jpeg" alt="2048 Game">
+      <img src="2048.jpeg">
       <div class="card-content">
         <h3>2048</h3>
-        <p>Merge tiles strategically and reach 2048.</p>
+        <p>Merge tiles strategically.</p>
         <a href="2048.html">Play →</a>
       </div>
     </div>
-
-    <!-- PLACEHOLDER -->
-    <div class="card coming-soon">
-      <img src="2048.jpeg" alt="Coming Soon">
-      <div class="card-content">
-        <h3>More Games</h3>
-        <p>More fun coming very soon.</p>
-        <span>Coming Soon</span>
-      </div>
-    </div>
-
   </div>
 </div>
 
-<footer>
-  © 2026 WebArcade
-</footer>
+<!-- PROFILE MODAL -->
+<div class="modal-backdrop" id="profileModal" onclick="closeProfile(event)">
+  <div class="modal">
+    <button class="close" onclick="closeProfile()">×</button>
 
-<!-- FIREBASE AUTH -->
+    <h3>Your Profile</h3>
+    <img class="avatar" id="avatar">
+
+    <input id="email" disabled>
+    <input id="username" placeholder="Username">
+    <input id="photo" placeholder="Profile picture URL">
+    <input id="newPassword" type="password" placeholder="New password">
+
+    <button class="action" onclick="saveProfile()">Save Changes</button>
+    <button class="action" onclick="logout()">Logout</button>
+    <button class="action danger" onclick="deleteAccount()">Delete Account</button>
+
+    <div class="status" id="status"></div>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
   getAuth,
   onAuthStateChanged,
-  signOut
+  updateProfile,
+  updatePassword,
+  signOut,
+  deleteUser
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -185,17 +244,55 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* AUTH GUARD */
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    window.location.href = "index.html";
+const modal = document.getElementById("profileModal");
+const statusEl = document.getElementById("status");
+
+window.openProfile = () => modal.style.display="flex";
+window.closeProfile = (e) => {
+  if(!e || e.target===modal) modal.style.display="none";
+};
+
+onAuthStateChanged(auth,user=>{
+  if(!user) {
+    window.location.href="index.html";
+    return;
   }
+  email.value = user.email;
+  username.value = user.displayName || "";
+  avatar.src = user.photoURL || "";
 });
 
-/* LOGOUT */
-document.getElementById("logoutBtn").onclick = async () => {
+window.saveProfile = async () => {
+  try {
+    const user = auth.currentUser;
+    if(username.value || photo.value) {
+      await updateProfile(user,{
+        displayName: username.value,
+        photoURL: photo.value
+      });
+    }
+    if(newPassword.value) {
+      await updatePassword(user,newPassword.value);
+    }
+    statusEl.textContent="Profile updated successfully";
+  } catch(err) {
+    statusEl.textContent=err.message;
+  }
+};
+
+window.logout = async () => {
   await signOut(auth);
-  window.location.href = "index.html";
+  window.location.href="index.html";
+};
+
+window.deleteAccount = async () => {
+  if(!confirm("This will permanently delete your account.")) return;
+  try {
+    await deleteUser(auth.currentUser);
+    window.location.href="index.html";
+  } catch(err) {
+    statusEl.textContent="Re-login required to delete account.";
+  }
 };
 </script>
 
