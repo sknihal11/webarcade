@@ -2,22 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<title>WebArcade – Arcade</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebArcade – Games</title>
 
 <style>
 :root {
-  --bg:#0b0f1a;
-  --card:#12182b;
-  --text:#ffffff;
-  --accent:#6f6cff;
+  --bg:#020617;
+  --card:#0f172a;
+  --accent:#7c7cff;
+  --text:#e5e7eb;
 }
 
 body {
   margin:0;
-  font-family:system-ui,sans-serif;
-  background:var(--bg);
+  font-family:"Segoe UI",system-ui,sans-serif;
+  background:radial-gradient(circle at top,#0f172a,#020617);
   color:var(--text);
+  min-height:100vh;
 }
 
 /* HEADER */
@@ -25,86 +26,105 @@ header {
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:14px 32px;
-  background:linear-gradient(90deg,#6f6cff,#7c7cff);
+  padding:18px 32px;
+  background:linear-gradient(90deg,#6d6df6,#7c7cff);
 }
 
-.logo {
-  font-size:20px;
-  font-weight:600;
+header h1 {
+  margin:0;
+  font-size:22px;
 }
 
-.auth button {
+header button {
+  border:none;
   padding:8px 18px;
   border-radius:999px;
-  border:none;
+  font-weight:600;
   cursor:pointer;
-  font-weight:500;
-}
-
-.logout {
   background:white;
-  color:#6f6cff;
+  color:#1e1b4b;
 }
 
-/* CONTENT */
+/* CONTAINER */
 .container {
-  max-width:1100px;
+  max-width:1200px;
   margin:auto;
-  padding:40px 24px;
+  padding:60px 20px;
 }
 
 .grid {
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-  gap:24px;
+  gap:28px;
 }
 
+/* GAME CARD */
 .card {
-  background:var(--card);
-  border-radius:16px;
+  background:linear-gradient(
+    180deg,
+    rgba(255,255,255,.08),
+    rgba(255,255,255,.02)
+  );
+  border-radius:20px;
   overflow:hidden;
-  box-shadow:0 10px 30px rgba(0,0,0,.4);
-  transition:.25s;
+  backdrop-filter:blur(14px);
+  box-shadow:0 30px 60px rgba(0,0,0,.35);
+  transition:.3s;
 }
 
 .card:hover {
-  transform:translateY(-6px);
+  transform:translateY(-8px);
+  box-shadow:0 45px 90px rgba(0,0,0,.55);
 }
 
 .card img {
   width:100%;
-  height:160px;
+  height:180px;
   object-fit:cover;
 }
 
-.card .content {
-  padding:16px;
+.card-content {
+  padding:22px;
 }
 
-.card h3 {
-  margin:0 0 8px;
+.card-content h3 {
+  margin:0 0 10px;
 }
 
-.card p {
-  opacity:.7;
+.card-content p {
   font-size:14px;
+  opacity:.85;
 }
 
-.play {
-  margin-top:12px;
+.card-content a {
   display:inline-block;
+  margin-top:14px;
   padding:8px 18px;
   border-radius:999px;
   background:var(--accent);
-  color:white;
+  color:#020617;
+  font-weight:600;
   text-decoration:none;
-  font-size:14px;
 }
 
+/* COMING SOON */
+.coming-soon {
+  opacity:.55;
+  pointer-events:none;
+}
+
+.coming-soon span {
+  display:inline-block;
+  margin-top:14px;
+  font-weight:600;
+  color:#9ca3af;
+}
+
+/* FOOTER */
 footer {
   text-align:center;
-  padding:30px;
+  padding:20px;
+  font-size:13px;
   opacity:.6;
 }
 </style>
@@ -113,40 +133,41 @@ footer {
 <body>
 
 <header>
-  <div class="logo">WebArcade 🎮</div>
-  <div class="auth">
-    <button class="logout" id="logoutBtn">Logout</button>
-  </div>
+  <h1>WebArcade 🎮</h1>
+  <button id="logoutBtn">Logout</button>
 </header>
 
 <div class="container">
   <div class="grid">
 
-    <!-- GAME CARD -->
+    <!-- GAME 1 -->
     <div class="card">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/1/18/2048_logo.svg" alt="2048">
-      <div class="content">
+      <img src="2048.jpeg" alt="2048 Game">
+      <div class="card-content">
         <h3>2048</h3>
-        <p>Merge tiles to win.</p>
-        <a class="play" href="games/2048/index.html">Play →</a>
+        <p>Merge tiles strategically and reach 2048.</p>
+        <a href="2048.html">Play →</a>
       </div>
     </div>
 
     <!-- PLACEHOLDER -->
-    <div class="card">
-      <img src="https://dummyimage.com/600x400/1e2438/ffffff&text=Coming+Soon">
-      <div class="content">
+    <div class="card coming-soon">
+      <img src="2048.jpeg" alt="Coming Soon">
+      <div class="card-content">
         <h3>More Games</h3>
-        <p>Coming soon.</p>
+        <p>More fun coming very soon.</p>
+        <span>Coming Soon</span>
       </div>
     </div>
 
   </div>
 </div>
 
-<footer>© 2026 WebArcade</footer>
+<footer>
+  © 2026 WebArcade
+</footer>
 
-<!-- FIREBASE -->
+<!-- FIREBASE AUTH -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
@@ -164,14 +185,14 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// AUTH GUARD
+/* AUTH GUARD */
 onAuthStateChanged(auth, user => {
   if (!user) {
-    window.location.href = "signup.html";
+    window.location.href = "index.html";
   }
 });
 
-// LOGOUT
+/* LOGOUT */
 document.getElementById("logoutBtn").onclick = async () => {
   await signOut(auth);
   window.location.href = "index.html";
