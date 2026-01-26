@@ -99,6 +99,9 @@
   <h1>WebArcade 🎮</h1>
   <p>Create your account</p>
 
+  <!-- NEW -->
+  <input id="username" type="text" placeholder="Username" />
+
   <input id="email" type="email" placeholder="Email" />
   <input id="password" type="password" placeholder="Password (min 6 chars)" />
 
@@ -115,8 +118,14 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
   import {
     getAuth,
-    createUserWithEmailAndPassword
+    createUserWithEmailAndPassword,
+    updateProfile
   } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+  import {
+    getFirestore,
+    doc,
+    setDoc
+  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -129,19 +138,40 @@
 
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
+  const db = getFirestore(app);
 
-  window.signupUser = function () {
-    const email = document.getElementById("email").value;
+  window.signupUser = async function () {
+    const username = document.getElementById("username").value.trim();
+    const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
 
-    createUserWithEmailAndPassword(auth, email, password)
-      .then(() => {
-        alert("Account created 🎉");
-        window.location.href = "index.html";
-      })
-      .catch(error => {
-        alert(error.message);
+    if (!username) {
+      alert("Please enter a username");
+      return;
+    }
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+
+      // ✅ Set display name
+      await updateProfile(cred.user, {
+        displayName: username
       });
+
+      // ✅ Create Firestore user document
+      await setDoc(doc(db, "users", cred.user.uid), {
+        username: username,
+        email: email,
+        best2048: 0,
+        createdAt: new Date()
+      });
+
+      alert("Account created 🎉");
+      window.location.href = "index.html";
+
+    } catch (error) {
+      alert(error.message);
+    }
   };
 </script>
 
