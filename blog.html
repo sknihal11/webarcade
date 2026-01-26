@@ -1,184 +1,162 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WebArcade – Arcade</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>User Profile | WebArcade</title>
 
 <style>
-:root {
-  --bg:#020617;
-  --card:#0f172a;
-  --accent:#7c7cff;
-  --text:#e5e7eb;
-  --danger:#ff6b6b;
+:root{
+  --bg:#0e0f14;
+  --card:#16181f;
+  --muted:#9aa0aa;
+  --accent:#5865f2;
+  --border:#22252e;
 }
 
-* { box-sizing:border-box; }
-
-body {
+*{box-sizing:border-box;font-family:Inter,system-ui}
+body{
   margin:0;
-  font-family:"Segoe UI",system-ui,sans-serif;
-  background:radial-gradient(circle at top,#0f172a,#020617);
-  color:var(--text);
+  background:linear-gradient(180deg,#0b0c10,#12131a);
+  color:#fff;
 }
 
-/* HEADER */
-header {
+/* ===== HEADER ===== */
+header{
+  padding:18px 40px;
   display:flex;
   justify-content:space-between;
   align-items:center;
-  padding:18px 32px;
+  border-bottom:1px solid var(--border);
 }
-
-header h1 {
-  margin:0;
-  font-size:22px;
-}
-
-.profile-btn {
+header h2{margin:0;font-weight:700}
+.logout{
+  background:#ff4d4d;
   border:none;
-  padding:8px 18px;
-  border-radius:999px;
-  background:linear-gradient(90deg,#6d6df6,#7c7cff);
-  color:white;
-  font-weight:600;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:8px;
   cursor:pointer;
 }
 
-/* GRID */
-.container {
-  max-width:1200px;
-  margin:auto;
-  padding:40px 20px;
+/* ===== PROFILE WRAPPER ===== */
+.wrapper{
+  max-width:900px;
+  margin:40px auto;
+  padding:0 20px;
 }
 
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-  gap:25px;
+/* ===== PROFILE CARD ===== */
+.profile-card{
+  background:var(--card);
+  border-radius:16px;
+  padding:24px;
+  box-shadow:0 20px 50px rgba(0,0,0,.4);
 }
 
-.card {
-  background:rgba(255,255,255,.06);
-  border-radius:18px;
-  overflow:hidden;
-  box-shadow:0 20px 40px rgba(0,0,0,.4);
-  transition:.3s;
-}
-
-.card:hover {
-  transform:translateY(-6px);
-}
-
-.card img {
-  width:100%;
-  height:180px;
-  object-fit:cover;
-}
-
-.card-content {
-  padding:18px;
-}
-
-.card-content h3 { margin:0 0 6px; }
-.card-content p { opacity:.8; font-size:14px; }
-.card-content a {
-  display:inline-block;
-  margin-top:10px;
-  color:var(--accent);
-  text-decoration:none;
-  font-weight:600;
-}
-
-/* MODAL BACKDROP */
-.modal-backdrop {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  backdrop-filter:blur(10px);
-  display:none;
+/* TOP */
+.profile-top{
+  display:flex;
   align-items:center;
-  justify-content:center;
-  z-index:20;
+  justify-content:space-between;
+  margin-bottom:24px;
+}
+.user{
+  display:flex;
+  align-items:center;
+  gap:16px;
+}
+.avatar{
+  width:72px;height:72px;
+  border-radius:50%;
+  background:#222;
+  object-fit:cover;
+}
+.name{
+  font-size:20px;
+  font-weight:700;
+}
+.username{
+  color:var(--muted);
+  font-size:14px;
 }
 
-/* MODAL */
-.modal {
-  background:linear-gradient(
-    180deg,
-    rgba(255,255,255,.1),
-    rgba(255,255,255,.02)
-  );
-  backdrop-filter:blur(20px);
-  border-radius:22px;
-  width:100%;
-  max-width:420px;
-  padding:28px;
-  position:relative;
-  animation:pop .35s ease;
-}
-
-@keyframes pop {
-  from { transform:scale(.92); opacity:0 }
-  to { transform:scale(1); opacity:1 }
-}
-
-.close {
-  position:absolute;
-  top:12px;
-  right:14px;
-  background:none;
+.edit-btn{
+  background:var(--accent);
   border:none;
-  font-size:22px;
-  color:#9ca3af;
+  padding:10px 16px;
+  border-radius:10px;
+  color:#fff;
   cursor:pointer;
 }
 
-.modal h3 {
-  margin-top:0;
-  text-align:center;
+/* ROWS */
+.row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 0;
+  border-top:1px solid var(--border);
+}
+.label{
+  color:var(--muted);
+  font-size:14px;
+}
+.value{
+  font-weight:500;
+}
+.action{
+  background:#222;
+  border:1px solid var(--border);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:8px;
+  cursor:pointer;
 }
 
-.avatar {
-  width:80px;
-  height:80px;
-  border-radius:50%;
-  object-fit:cover;
-  margin:10px auto;
-  display:block;
-  background:#020617;
+/* SECTIONS */
+.section{
+  margin-top:30px;
 }
-
-input {
-  width:100%;
-  padding:12px 14px;
-  border-radius:10px;
-  border:none;
-  background:#020617;
-  color:white;
+.section h3{
   margin-bottom:10px;
 }
-
-button.action {
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:999px;
+.section button{
   background:var(--accent);
-  font-weight:700;
+  border:none;
+  color:#fff;
+  padding:10px 14px;
+  border-radius:8px;
   cursor:pointer;
   margin-top:8px;
 }
 
-button.danger {
-  background:var(--danger);
+/* MODAL */
+.modal{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  align-items:center;
+  justify-content:center;
 }
-
-.status {
-  margin-top:10px;
-  font-size:14px;
-  text-align:center;
+.modal-content{
+  background:var(--card);
+  padding:24px;
+  border-radius:14px;
+  width:320px;
+}
+.modal-content input{
+  width:100%;
+  padding:10px;
+  background:#0e0f14;
+  border:1px solid var(--border);
+  border-radius:8px;
+  color:#fff;
+  margin-bottom:10px;
+}
+.modal-content button{
+  width:100%;
 }
 </style>
 </head>
@@ -186,113 +164,120 @@ button.danger {
 <body>
 
 <header>
-  <h1>WebArcade 🎮</h1>
-  <button class="profile-btn" onclick="openProfile()">Profile</button>
+  <h2>WebArcade</h2>
+  <button class="logout" onclick="logout()">Logout</button>
 </header>
 
-<div class="container">
-  <div class="grid">
-    <div class="card">
-      <img src="2048.jpeg">
-      <div class="card-content">
-        <h3>2048</h3>
-        <p>Merge tiles strategically.</p>
-        <a href="2048.html">Play →</a>
+<div class="wrapper">
+  <div class="profile-card">
+
+    <!-- TOP -->
+    <div class="profile-top">
+      <div class="user">
+        <img id="avatar" class="avatar" src="https://i.imgur.com/8Km9tLL.png">
+        <div>
+          <div class="name" id="displayName">User</div>
+          <div class="username" id="email">@email</div>
+        </div>
+      </div>
+      <button class="edit-btn" onclick="openModal()">Edit User Profile</button>
+    </div>
+
+    <!-- DETAILS -->
+    <div class="row">
+      <div>
+        <div class="label">Email</div>
+        <div class="value" id="emailRow"></div>
       </div>
     </div>
+
+    <div class="row">
+      <div>
+        <div class="label">Profile Picture</div>
+        <div class="value">Upload new avatar</div>
+      </div>
+      <input type="file" id="upload" accept="image/*">
+    </div>
+
+    <!-- SECURITY -->
+    <div class="section">
+      <h3>Password & Authentication</h3>
+      <button onclick="changePassword()">Change Password</button>
+      <button style="background:#ff4d4d" onclick="deleteAccount()">Delete Account</button>
+    </div>
+
   </div>
 </div>
 
-<!-- PROFILE MODAL -->
-<div class="modal-backdrop" id="profileModal" onclick="closeProfile(event)">
-  <div class="modal">
-    <button class="close" onclick="closeProfile()">×</button>
-
-    <h3>Your Profile</h3>
-    <img class="avatar" id="avatar">
-
-    <input id="email" disabled>
-    <input id="username" placeholder="Username">
-    <input id="photo" placeholder="Profile picture URL">
-    <input id="newPassword" type="password" placeholder="New password">
-
-    <button class="action" onclick="saveProfile()">Save Changes</button>
-    <button class="action" onclick="logout()">Logout</button>
-    <button class="action danger" onclick="deleteAccount()">Delete Account</button>
-
-    <div class="status" id="status"></div>
+<!-- MODAL -->
+<div class="modal" id="modal">
+  <div class="modal-content">
+    <h3>Edit Display Name</h3>
+    <input id="newName" placeholder="New display name">
+    <button onclick="updateName()">Save</button>
   </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import {
-  getAuth,
-  onAuthStateChanged,
-  updateProfile,
-  updatePassword,
-  signOut,
-  deleteUser
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, updateProfile, sendPasswordResetEmail, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-  authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  projectId: "YOUR_ID",
+  storageBucket: "YOUR_BUCKET",
+  appId: "YOUR_APP_ID"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+const auth = getAuth();
+const storage = getStorage();
 
-const modal = document.getElementById("profileModal");
-const statusEl = document.getElementById("status");
-
-window.openProfile = () => modal.style.display="flex";
-window.closeProfile = (e) => {
-  if(!e || e.target===modal) modal.style.display="none";
-};
-
-onAuthStateChanged(auth,user=>{
-  if(!user) {
-    window.location.href="index.html";
-    return;
-  }
-  email.value = user.email;
-  username.value = user.displayName || "";
-  avatar.src = user.photoURL || "";
+onAuthStateChanged(auth, user=>{
+  if(!user){ location.href="index.html"; return; }
+  displayName.textContent = user.displayName || "User";
+  email.textContent = user.email;
+  emailRow.textContent = user.email;
+  if(user.photoURL) avatar.src = user.photoURL;
 });
 
-window.saveProfile = async () => {
-  try {
-    const user = auth.currentUser;
-    if(username.value || photo.value) {
-      await updateProfile(user,{
-        displayName: username.value,
-        photoURL: photo.value
-      });
-    }
-    if(newPassword.value) {
-      await updatePassword(user,newPassword.value);
-    }
-    statusEl.textContent="Profile updated successfully";
-  } catch(err) {
-    statusEl.textContent=err.message;
-  }
+upload.onchange = async ()=>{
+  const file = upload.files[0];
+  if(!file) return;
+  const user = auth.currentUser;
+  const fileRef = ref(storage, "avatars/"+user.uid);
+  await uploadBytes(fileRef, file);
+  const url = await getDownloadURL(fileRef);
+  await updateProfile(user,{photoURL:url});
+  avatar.src = url;
 };
 
-window.logout = async () => {
-  await signOut(auth);
-  window.location.href="index.html";
+window.openModal = ()=> modal.style.display="flex";
+modal.onclick = e=>{ if(e.target===modal) modal.style.display="none"; }
+
+window.updateName = async ()=>{
+  await updateProfile(auth.currentUser,{displayName:newName.value});
+  displayName.textContent = newName.value;
+  modal.style.display="none";
 };
 
-window.deleteAccount = async () => {
-  if(!confirm("This will permanently delete your account.")) return;
-  try {
+window.changePassword = ()=>{
+  sendPasswordResetEmail(auth, auth.currentUser.email);
+  alert("Password reset email sent");
+};
+
+window.deleteAccount = async ()=>{
+  if(confirm("Delete account permanently?")){
     await deleteUser(auth.currentUser);
-    window.location.href="index.html";
-  } catch(err) {
-    statusEl.textContent="Re-login required to delete account.";
+    location.href="index.html";
   }
+};
+
+window.logout = async ()=>{
+  await signOut(auth);
+  location.href="index.html";
 };
 </script>
 
