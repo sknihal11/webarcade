@@ -18,17 +18,38 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-// 🔐 Redirect if not logged in
+/* ===== AUTH UI HANDLING ===== */
 onAuthStateChanged(auth, user => {
-  if (!user && location.pathname.includes("2048")) {
-    window.location.href = "login.html";
+  const authBox = document.getElementById("auth-box");
+
+  if (!authBox) return;
+
+  if (user) {
+    authBox.innerHTML = `
+      <span style="opacity:.85;font-size:14px">${user.email}</span>
+      <button onclick="logout()" class="logout-btn">Logout</button>
+    `;
+  } else {
+    authBox.innerHTML = `
+      <a href="login.html" class="login-btn">Login</a>
+      <a href="signup.html" class="signup-btn">Sign up</a>
+    `;
   }
 });
 
-// 🚪 Logout helper
-window.logout = () => {
+/* ===== LOGOUT ===== */
+window.logout = function () {
   signOut(auth).then(() => {
-    window.location.href = "login.html";
+    window.location.href = "index.html";
   });
 };
+
+/* ===== PROTECT GAMES ===== */
+if (location.pathname.includes("2048")) {
+  onAuthStateChanged(auth, user => {
+    if (!user) {
+      window.location.href = "login.html";
+    }
+  });
+}
 </script>
