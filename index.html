@@ -6,85 +6,88 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    /* ===== RESET ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: "Segoe UI", system-ui, sans-serif;
-    }
-
-    /* ===== THEME (LIGHT DEFAULT) ===== */
     :root {
-      --bg: #f7f4ef;
-      --text: #1f2937;
-      --card: #ffffff;
-      --accent: #6366f1;
+      --primary: #6366f1;
+      --bg-light: #f8fafc;
+      --bg-dark: #020617;
+      --text-light: #020617;
+      --text-dark: #e5e7eb;
     }
 
-    /* ===== AUTO DARK MODE ===== */
+    /* Auto theme */
     @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #020617;
-        --text: #e5e7eb;
-        --card: #0f172a;
-        --accent: #6366f1;
+      body {
+        background: radial-gradient(circle at top, #1e293b, #020617);
+        color: var(--text-dark);
+      }
+    }
+
+    @media (prefers-color-scheme: light) {
+      body {
+        background: linear-gradient(135deg, #eef2ff, #f8fafc);
+        color: var(--text-light);
       }
     }
 
     body {
-      height: 100vh;
-      background: radial-gradient(circle at top, #1e293b, var(--bg));
-      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, sans-serif;
       display: flex;
-      align-items: center;
       justify-content: center;
-      text-align: center;
+      align-items: center;
     }
 
-    /* ===== HERO ===== */
     .hero {
-      animation: fadeUp 0.8s ease;
-      max-width: 520px;
-      padding: 20px;
+      text-align: center;
+      padding: 40px;
+      animation: fade 1s ease;
     }
 
-    .hero h1 {
+    h1 {
       font-size: 3rem;
-      margin-bottom: 12px;
+      margin-bottom: 10px;
     }
 
-    .hero p {
-      font-size: 1.05rem;
+    p {
       opacity: 0.85;
-      margin-bottom: 28px;
+      margin-bottom: 30px;
     }
 
-    /* ===== BUTTON ===== */
-    .cta-btn {
-      padding: 14px 36px;
-      font-size: 1rem;
-      font-weight: 600;
+    .primary-btn {
+      padding: 14px 32px;
+      font-size: 16px;
       border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      border-radius: 12px;
+      background: var(--primary);
       color: white;
       cursor: pointer;
-      box-shadow: 0 12px 30px rgba(99,102,241,0.35);
-      transition: all 0.25s ease;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      box-shadow: 0 10px 25px rgba(99,102,241,0.35);
     }
 
-    .cta-btn:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 18px 45px rgba(99,102,241,0.45);
+    .primary-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 15px 35px rgba(99,102,241,0.45);
     }
 
-    .cta-btn:active {
-      transform: translateY(-1px);
+    .auth-links {
+      margin-top: 20px;
+      font-size: 14px;
     }
 
-    /* ===== ANIMATION ===== */
-    @keyframes fadeUp {
+    .auth-links a {
+      color: var(--primary);
+      font-weight: 600;
+      text-decoration: none;
+      margin: 0 6px;
+    }
+
+    .auth-links a:hover {
+      text-decoration: underline;
+    }
+
+    @keyframes fade {
       from {
         opacity: 0;
         transform: translateY(20px);
@@ -100,12 +103,18 @@
 <body>
   <div class="hero">
     <h1>WebArcade 🎮</h1>
-    <p>A modern arcade of interactive web games.<br>
-       Play instantly — no downloads.</p>
+    <p>A modern arcade of interactive web games</p>
 
-    <button class="cta-btn" onclick="location.href='blog.html'">
+    <button class="primary-btn" onclick="location.href='blog.html'">
       Enter Arcade
     </button>
+
+    <div class="auth-links">
+      <span>New here?</span>
+      <a href="signup.html">Sign up</a>
+      ·
+      <a href="login.html">Login</a>
+    </div>
   </div>
 </body>
 </html>
