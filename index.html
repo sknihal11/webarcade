@@ -103,7 +103,7 @@ header button {
   to { transform:scale(1); opacity:1 }
 }
 
-/* CLOSE BUTTON */
+/* CLOSE BUTTON — RESTORED */
 .close-btn {
   position:absolute;
   top:12px;
@@ -201,14 +201,12 @@ input::placeholder {
   </div>
 </div>
 
-<!-- FIREBASE -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  onAuthStateChanged
+  createUserWithEmailAndPassword
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -243,35 +241,29 @@ window.toggleMode = () => {
   mode = mode === "login" ? "signup" : "login";
   titleEl.textContent = mode === "login" ? "Login" : "Sign Up";
   switchEl.textContent =
-    mode === "login" ? "New user? Create account" : "Already have an account?";
+    mode === "login"
+      ? "New user? Create account"
+      : "Already have an account?";
 };
 
 actionBtn.onclick = async () => {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-
   statusEl.textContent = "Please wait...";
   statusEl.className = "status";
 
   try {
     if (mode === "login") {
-      await signInWithEmailAndPassword(auth, email, password);
+      await signInWithEmailAndPassword(auth, email.value, password.value);
     } else {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await createUserWithEmailAndPassword(auth, email.value, password.value);
     }
     statusEl.textContent = "Success! Redirecting…";
     statusEl.classList.add("success");
+    location.href = "blog.html";
   } catch (err) {
     statusEl.textContent = err.message.replace("Firebase: ","");
     statusEl.classList.add("error");
   }
 };
-
-onAuthStateChanged(auth, user => {
-  if (user) {
-    window.location.href = "blog.html";
-  }
-});
 </script>
 
 </body>
