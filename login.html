@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Login – WebArcade</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+:root {
+  --bg1:#020617;
+  --bg2:#1e293b;
+  --card:#0f172a;
+  --text:#e5e7eb;
+  --accent:#6366f1;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg1:#e0e7ff;
+    --bg2:#f8fafc;
+    --card:#ffffff;
+    --text:#1f2937;
+  }
+}
+
+body {
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(99,102,241,.25), transparent 40%),
+    linear-gradient(135deg,var(--bg1),var(--bg2));
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--card);
+  padding: 32px;
+  border-radius: 20px;
+  box-shadow: 0 40px 120px rgba(0,0,0,.45);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+p {
+  text-align: center;
+  opacity: .8;
+  margin-bottom: 24px;
+}
+
+input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,.1);
+  font-size: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+button:hover {
+  opacity: .95;
+}
+
+.links {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 14px;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+</style>
+</head>
+
+<body>
+<div class="card">
+  <h1>Welcome Back 🎮</h1>
+  <p>Login to save your progress</p>
+
+  <input type="email" placeholder="Email">
+  <input type="password" placeholder="Password">
+
+  <button>Login</button>
+
+  <div class="links">
+    <p>New here? <a href="signup.html">Create an account</a></p>
+    <p><a href="blog.html">Continue as Guest</a></p>
+  </div>
+</div>
+</body>
+</html>
