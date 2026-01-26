@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Flappy Bird – WebArcade</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
+
+body{
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:
+    radial-gradient(circle at 20% 20%, rgba(99,102,241,.25), transparent 40%),
+    radial-gradient(circle at 80% 80%, rgba(34,197,94,.25), transparent 40%),
+    linear-gradient(135deg,#020617,#1e293b);
+}
+
+/* GAME CARD */
+#game{
+  position:relative;
+  width:520px;
+  height:620px;
+  border-radius:28px;
+  overflow:hidden;
+  background:linear-gradient(#7dd3fc,#e0f7ff);
+  box-shadow:0 40px 120px rgba(0,0,0,.45);
+}
+
+/* BACK BUTTON (2048 STYLE) */
+#backBtn{
+  position:absolute;
+  top:14px;
+  left:14px;
+  background:#bbada0;
+  color:#fff;
+  padding:10px 16px;
+  border-radius:12px;
+  font-weight:800;
+  cursor:pointer;
+  z-index:10;
+  user-select:none;
+}
+
+/* SCORE BAR */
+.top-bar{
+  position:absolute;
+  top:14px;
+  left:50%;
+  transform:translateX(-50%);
+  display:flex;
+  gap:12px;
+  z-index:5;
+}
+.score-box{
+  background:#bbada0;
+  color:#fff;
+  padding:8px 14px;
+  border-radius:10px;
+  text-align:center;
+  min-width:80px;
+}
+.score-box small{font-size:11px;opacity:.85}
+.score-box b{display:block;font-size:22px}
+
+/* START TEXT */
+#startText{
+  position:absolute;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-size:22px;
+  font-weight:800;
+  color:white;
+  text-shadow:0 4px 12px rgba(0,0,0,.5);
+  pointer-events:none;
+  z-index:4;
+}
+
+/* BIRD */
+#bird{
+  position:absolute;
+  left:140px;
+  top:300px;
+  width:26px;
+  height:20px;
+  background:#ffeb3b;
+  border-radius:50% 60% 50% 50%;
+  transform-origin:center;
+}
+#bird::before{
+  content:"";
+  position:absolute;
+  left:-6px;
+  top:8px;
+  width:14px;
+  height:8px;
+  background:#fff;
+  border-radius:50%;
+  animation:flap .35s infinite;
+}
+#bird::after{
+  content:"";
+  position:absolute;
+  right:-6px;
+  top:8px;
+  width:6px;
+  height:4px;
+  background:#f97316;
+  border-radius:2px;
+}
+@keyframes flap{
+  0%{transform:rotate(15deg)}
+  50%{transform:rotate(-15deg)}
+  100%{transform:rotate(15deg)}
+}
+
+/* PIPES */
+.pipe{
+  position:absolute;
+  width:70px;
+  background:linear-gradient(#4ade80,#166534);
+  border-radius:8px;
+}
+.pipe.top{top:0}
+.pipe.bottom{bottom:80px}
+
+/* GROUND */
+#ground{
+  position:absolute;
+  bottom:0;
+  width:200%;
+  height:80px;
+  background:repeating-linear-gradient(
+    45deg,#d6b26c,#d6b26c 20px,#c19a55 20px,#c19a55 40px
+  );
+  animation:groundMove 3s linear infinite;
+}
+@keyframes groundMove{
+  from{transform:translateX(0)}
+  to{transform:translateX(-50%)}
+}
+
+/* GAME OVER */
+#overlay{
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.6);
+  display:none;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  color:white;
+  z-index:6;
+}
+#overlay h1{margin-bottom:12px}
+#overlay button{
+  padding:12px 28px;
+  border:none;
+  border-radius:999px;
+  background:linear-gradient(135deg,#5865f2,#7b83ff);
+  color:white;
+  font-weight:700;
+  cursor:pointer;
+}
+
+/* LEADERBOARD */
+#leaderboard{
+  position:absolute;
+  right:12px;
+  bottom:96px;
+  background:#cdc1b4;
+  padding:12px;
+  border-radius:14px;
+  width:140px;
+  font-weight:700;
+}
+#leaderboard h4{
+  margin-bottom:6px;
+  text-align:center;
+}
+#leaderboard div{
+  background:#eee4da;
+  padding:6px;
+  border-radius:6px;
+  margin-bottom:4px;
+  text-align:center;
+}
+
+/* MOBILE */
+@media(max-width:600px){
+  #game{width:92vw;height:80vh}
+}
+</style>
+</head>
+
+<body>
+
+<div id="game">
+
+  <div id="backBtn" onclick="location.href='blog.html'">← Back</div>
+
+  <div class="top-bar">
+    <div class="score-box">
+      <small>SCORE</small>
+      <b id="score">0</b>
+    </div>
+    <div class="score-box">
+      <small>BEST</small>
+      <b id="best">0</b>
+    </div>
+  </div>
+
+  <div id="startText">Tap or Press Space</div>
+  <div id="bird"></div>
+  <div id="ground"></div>
+
+  <div id="leaderboard">
+    <h4>🏆 Top</h4>
+    <div id="lb"></div>
+  </div>
+
+  <div id="overlay">
+    <h1>Game Over</h1>
+    <button onclick="restart()">Restart</button>
+  </div>
+
+</div>
+
+<script>
+/* SOUNDS */
+const sounds={
+  flap:new Audio("https://assets.mixkit.co/sfx/preview/mixkit-game-click-1114.mp3"),
+  score:new Audio("https://assets.mixkit.co/sfx/preview/mixkit-coin-win-notification-1992.mp3"),
+  hit:new Audio("https://assets.mixkit.co/sfx/preview/mixkit-arcade-retro-game-over-213.mp3")
+};
+Object.values(sounds).forEach(s=>s.volume=.4);
+
+/* GAME STATE */
+const bird=document.getElementById("bird");
+const scoreEl=document.getElementById("score");
+const bestEl=document.getElementById("best");
+const overlay=document.getElementById("overlay");
+const startText=document.getElementById("startText");
+const lb=document.getElementById("lb");
+
+let birdY=300;
+let vel=0;
+const gravity=.12;          // SLOW FALL
+const jump=-4.6;
+const maxFall=4.5;
+const pipeSpeed=1.4;
+
+let pipes=[];
+let score=0;
+let started=false;
+let running=true;
+let spawnTimer=null;
+
+/* BEST */
+let best=+localStorage.getItem("best")||0;
+bestEl.textContent=best;
+
+/* INPUT */
+function vibrate(ms){navigator.vibrate&&navigator.vibrate(ms)}
+document.addEventListener("keydown",e=>e.code==="Space"&&flap());
+document.getElementById("game").addEventListener("click",flap);
+
+/* FLAP */
+function flap(){
+  if(!started){
+    started=true;
+    startText.style.display="none";
+    spawnTimer=setInterval(spawnPipe,2600);
+  }
+  vel=jump;
+  sounds.flap.currentTime=0;
+  sounds.flap.play();
+  vibrate(15);
+}
+
+/* MAIN LOOP */
+function loop(){
+  if(!running) return;
+
+  if(started){
+    vel+=gravity;
+    if(vel>maxFall) vel=maxFall;
+    birdY+=vel;
+  }
+
+  bird.style.top=birdY+"px";
+  bird.style.transform=`rotate(${vel*2}deg)`;
+
+  if(started&&(birdY<0||birdY>520)) endGame();
+
+  pipes.forEach(p=>{
+    p.x-=pipeSpeed;
+    p.el.style.left=p.x+"px";
+
+    if(!p.scored&&p.x<140){
+      score++;
+      scoreEl.textContent=score;
+      sounds.score.play();
+      vibrate(25);
+      p.scored=true;
+    }
+
+    if(p.x<166&&p.x+70>140&&(birdY<p.top||birdY+20>p.top+170)){
+      endGame();
+    }
+  });
+
+  pipes=pipes.filter(p=>p.x>-100);
+  requestAnimationFrame(loop);
+}
+
+/* SPAWN PIPES */
+function spawnPipe(){
+  if(!running) return;
+  const gap=170;
+  const top=Math.random()*220+100;
+
+  ["top","bottom"].forEach(type=>{
+    const el=document.createElement("div");
+    el.className="pipe "+type;
+    el.style.height=(type==="top"?top:620-top-gap-80)+"px";
+    document.getElementById("game").appendChild(el);
+    pipes.push({x:520,top,el,scored:type==="top"?false:true});
+  });
+}
+
+/* GAME OVER */
+function endGame(){
+  if(!running) return;
+  running=false;
+  clearInterval(spawnTimer);
+  sounds.hit.play();
+  vibrate(200);
+  overlay.style.display="flex";
+
+  if(score>best){
+    best=score;
+    localStorage.setItem("best",best);
+    bestEl.textContent=best;
+  }
+
+  saveLeaderboard(score);
+}
+
+/* RESTART */
+function restart(){location.reload()}
+
+/* LEADERBOARD */
+function saveLeaderboard(s){
+  let data=JSON.parse(localStorage.getItem("lb")||"[]");
+  data.push(s);
+  data=data.sort((a,b)=>b-a).slice(0,5);
+  localStorage.setItem("lb",JSON.stringify(data));
+  renderLB();
+}
+function renderLB(){
+  lb.innerHTML="";
+  (JSON.parse(localStorage.getItem("lb")||"[]")).forEach(s=>{
+    const d=document.createElement("div");
+    d.textContent=s;
+    lb.appendChild(d);
+  });
+}
+renderLB();
+
+loop();
+</script>
+
+</body>
+</html>
