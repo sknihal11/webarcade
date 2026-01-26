@@ -6,109 +6,144 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
-:root {
-  --bg1:#020617;
-  --bg2:#1e293b;
-  --card:#0f172a;
-  --text:#e5e7eb;
-  --accent:#6366f1;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg1:#e0e7ff;
-    --bg2:#f8fafc;
-    --card:#ffffff;
-    --text:#1f2937;
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: "Segoe UI", sans-serif;
+    background: radial-gradient(circle at top, #1e293b, #020617);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #e5e7eb;
   }
-}
 
-body {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 80% 20%, rgba(34,197,94,.25), transparent 40%),
-    linear-gradient(135deg,var(--bg1),var(--bg2));
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+  .card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 25px 60px rgba(0,0,0,.4);
+    animation: fade 0.8s ease;
+  }
 
-.card {
-  width: 100%;
-  max-width: 400px;
-  background: var(--card);
-  padding: 32px;
-  border-radius: 20px;
-  box-shadow: 0 40px 120px rgba(0,0,0,.45);
-}
+  h1 {
+    text-align: center;
+    margin-bottom: 8px;
+  }
 
-h1 {
-  text-align: center;
-  margin-bottom: 10px;
-}
+  p {
+    text-align: center;
+    opacity: 0.85;
+    font-size: 14px;
+    margin-bottom: 24px;
+  }
 
-p {
-  text-align: center;
-  opacity: .8;
-  margin-bottom: 24px;
-}
+  input {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 14px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 15px;
+  }
 
-input {
-  width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.1);
-  font-size: 15px;
-}
+  input::placeholder {
+    color: #cbd5f5;
+  }
 
-button {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
-}
+  button {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: white;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+  }
 
-.links {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 14px;
-}
+  button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(99,102,241,.5);
+  }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
-}
+  .link {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 14px;
+  }
+
+  .link a {
+    color: #818cf8;
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  @keyframes fade {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
 </style>
 </head>
 
 <body>
+
 <div class="card">
-  <h1>Join WebArcade 🚀</h1>
-  <p>Create an account to save scores</p>
+  <h1>WebArcade 🎮</h1>
+  <p>Create your account</p>
 
-  <input type="text" placeholder="Username">
-  <input type="email" placeholder="Email">
-  <input type="password" placeholder="Password">
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password (min 6 chars)" />
 
-  <button>Create Account</button>
+  <button onclick="signupUser()">Sign Up</button>
 
-  <div class="links">
-    <p>Already have an account? <a href="login.html">Login</a></p>
-    <p><a href="blog.html">Continue as Guest</a></p>
+  <div class="link">
+    Already have an account?
+    <a href="login.html">Login</a>
   </div>
 </div>
+
+<!-- FIREBASE -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+  import {
+    getAuth,
+    createUserWithEmailAndPassword
+  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+    authDomain: "webarcade-d4c3d.firebaseapp.com",
+    projectId: "webarcade-d4c3d",
+    storageBucket: "webarcade-d4c3d.firebasestorage.app",
+    messagingSenderId: "918209461327",
+    appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  window.signupUser = function () {
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+
+    createUserWithEmailAndPassword(auth, email, password)
+      .then(() => {
+        alert("Account created 🎉");
+        window.location.href = "index.html";
+      })
+      .catch(error => {
+        alert(error.message);
+      });
+  };
+</script>
+
 </body>
 </html>
