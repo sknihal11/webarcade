@@ -1,190 +1,167 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>WebArcade</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebArcade</title>
 
-  <!-- Auto dark/light theme -->
-  <style>
-    :root {
-      --bg: #0b0f1a;
-      --card: #12182b;
-      --text: #ffffff;
-      --accent: #6f6cff;
-    }
+<style>
+:root {
+  --bg:#0b0f1a;
+  --card:#12182b;
+  --text:#ffffff;
+  --accent:#6f6cff;
+}
 
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg: #f4f6ff;
-        --card: #ffffff;
-        --text: #0b0f1a;
-      }
-    }
+body {
+  margin:0;
+  font-family:system-ui,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
 
-    body {
-      margin: 0;
-      font-family: system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
+/* HEADER */
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:14px 32px;
+  background:linear-gradient(90deg,#6f6cff,#7c7cff);
+}
 
-    /* HEADER */
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 14px 32px;
-      background: linear-gradient(90deg, #6f6cff, #7c7cff);
-    }
+.logo {
+  font-size:20px;
+  font-weight:600;
+  color:white;
+}
 
-    .logo {
-      font-size: 20px;
-      font-weight: 600;
-      color: white;
-    }
+.auth button {
+  padding:8px 18px;
+  border-radius:999px;
+  border:none;
+  cursor:pointer;
+  font-weight:500;
+}
 
-    .auth {
-      display: flex;
-      gap: 12px;
-    }
+.login {
+  background:white;
+  color:#6f6cff;
+}
 
-    button {
-      padding: 8px 16px;
-      border-radius: 999px;
-      border: none;
-      cursor: pointer;
-      font-weight: 500;
-    }
+.logout {
+  background:transparent;
+  border:1px solid white;
+  color:white;
+}
 
-    .login {
-      background: white;
-      color: #6f6cff;
-    }
+.hidden {
+  display:none;
+}
 
-    .logout {
-      background: transparent;
-      border: 1px solid white;
-      color: white;
-    }
+/* HERO */
+.hero {
+  min-height:80vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  gap:24px;
+}
 
-    .hidden {
-      display: none;
-    }
+.hero h1 {
+  font-size:48px;
+}
 
-    /* MAIN */
-    main {
-      padding: 40px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 24px;
-    }
+.hero p {
+  opacity:.7;
+}
 
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-    }
+.enter {
+  padding:14px 36px;
+  font-size:18px;
+  border-radius:999px;
+  border:none;
+  background:var(--accent);
+  color:white;
+  cursor:pointer;
+  box-shadow:0 10px 30px rgba(111,108,255,.5);
+  transition:.25s;
+}
 
-    .card img {
-      width: 100%;
-      border-radius: 12px;
-    }
+.enter:hover {
+  transform:translateY(-4px) scale(1.05);
+}
 
-    .play {
-      margin-top: 12px;
-      background: var(--accent);
-      color: white;
-      width: fit-content;
-    }
-
-    footer {
-      text-align: center;
-      padding: 30px;
-      opacity: 0.6;
-    }
-  </style>
+footer {
+  text-align:center;
+  padding:30px;
+  opacity:.6;
+}
+</style>
 </head>
+
 <body>
 
-  <!-- HEADER -->
-  <header>
-    <div class="logo">WebArcade 🎮</div>
-    <div class="auth">
-      <button id="loginBtn" class="login">Login</button>
-      <button id="logoutBtn" class="logout hidden">Logout</button>
-    </div>
-  </header>
+<header>
+  <div class="logo">WebArcade 🎮</div>
+  <div class="auth">
+    <button id="loginBtn" class="login">Login</button>
+    <button id="logoutBtn" class="logout hidden">Logout</button>
+  </div>
+</header>
 
-  <!-- MAIN -->
-  <main>
-    <div class="card">
-      <img src="https://i.imgur.com/Wn8X9dN.png" alt="2048">
-      <h3>2048</h3>
-      <p>Merge tiles to win.</p>
-      <button class="play" onclick="playGame()">Play →</button>
-    </div>
+<section class="hero">
+  <h1>Welcome to WebArcade</h1>
+  <p>Play classic games. No downloads. Pure fun.</p>
+  <button class="enter" onclick="enterArcade()">ENTER ARCADE →</button>
+</section>
 
-    <div class="card">
-      <h3>More games</h3>
-      <p>Coming soon</p>
-    </div>
-  </main>
+<footer>© 2026 WebArcade</footer>
 
-  <footer>© 2026 WebArcade</footer>
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import {
+  getAuth,
+  onAuthStateChanged,
+  signOut
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-  <!-- FIREBASE -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import {
-      getAuth,
-      onAuthStateChanged,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+const firebaseConfig = {
+  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+  authDomain: "webarcade-d4c3d.firebaseapp.com",
+  projectId: "webarcade-d4c3d"
+};
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-      authDomain: "webarcade-d4c3d.firebaseapp.com",
-      projectId: "webarcade-d4c3d",
-      storageBucket: "webarcade-d4c3d.firebasestorage.app",
-      messagingSenderId: "918209461327",
-      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-    };
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+const loginBtn = document.getElementById("loginBtn");
+const logoutBtn = document.getElementById("logoutBtn");
 
-    const loginBtn = document.getElementById("loginBtn");
-    const logoutBtn = document.getElementById("logoutBtn");
+loginBtn.onclick = () => {
+  window.location.href = "signup.html";
+};
 
-    loginBtn.onclick = () => {
-      window.location.href = "signup.html";
-    };
+logoutBtn.onclick = async () => {
+  await signOut(auth);
+};
 
-    logoutBtn.onclick = async () => {
-      await signOut(auth);
-    };
+window.enterArcade = () => {
+  window.location.href = "blog.html";
+};
 
-    window.playGame = () => {
-      if (auth.currentUser) {
-        window.location.href = "games/2048.html";
-      } else {
-        alert("Login required to play 🎮");
-        window.location.href = "signup.html";
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        loginBtn.classList.add("hidden");
-        logoutBtn.classList.remove("hidden");
-      } else {
-        loginBtn.classList.remove("hidden");
-        logoutBtn.classList.add("hidden");
-      }
-    });
-  </script>
+onAuthStateChanged(auth, user => {
+  if (user) {
+    loginBtn.classList.add("hidden");
+    logoutBtn.classList.remove("hidden");
+  } else {
+    loginBtn.classList.remove("hidden");
+    logoutBtn.classList.add("hidden");
+  }
+});
+</script>
 
 </body>
 </html>
