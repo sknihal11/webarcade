@@ -5,31 +5,107 @@
   <title>WebArcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Global Styles -->
-  <link rel="stylesheet" href="assets/css/style.css" />
+  <style>
+    /* ===== RESET ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", system-ui, sans-serif;
+    }
+
+    /* ===== THEME (LIGHT DEFAULT) ===== */
+    :root {
+      --bg: #f7f4ef;
+      --text: #1f2937;
+      --card: #ffffff;
+      --accent: #6366f1;
+    }
+
+    /* ===== AUTO DARK MODE ===== */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #020617;
+        --text: #e5e7eb;
+        --card: #0f172a;
+        --accent: #6366f1;
+      }
+    }
+
+    body {
+      height: 100vh;
+      background: radial-gradient(circle at top, #1e293b, var(--bg));
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      animation: fadeUp 0.8s ease;
+      max-width: 520px;
+      padding: 20px;
+    }
+
+    .hero h1 {
+      font-size: 3rem;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      font-size: 1.05rem;
+      opacity: 0.85;
+      margin-bottom: 28px;
+    }
+
+    /* ===== BUTTON ===== */
+    .cta-btn {
+      padding: 14px 36px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent), #4f46e5);
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 12px 30px rgba(99,102,241,0.35);
+      transition: all 0.25s ease;
+    }
+
+    .cta-btn:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 18px 45px rgba(99,102,241,0.45);
+    }
+
+    .cta-btn:active {
+      transform: translateY(-1px);
+    }
+
+    /* ===== ANIMATION ===== */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
 </head>
 
 <body>
-
-  <!-- HEADER -->
-  <header>
+  <div class="hero">
     <h1>WebArcade 🎮</h1>
-    <nav>
-      <!-- Login will go here later -->
-    </nav>
-  </header>
+    <p>A modern arcade of interactive web games.<br>
+       Play instantly — no downloads.</p>
 
-  <!-- MAIN CONTENT -->
-  <main class="container">
-    <section class="hero">
-      <h2>A modern arcade of interactive web games</h2>
-      <p>Play classic games directly in your browser — no downloads.</p>
-
-      <button onclick="location.href='blog.html'">
-        Enter Arcade
-      </button>
-    </section>
-  </main>
-
+    <button class="cta-btn" onclick="location.href='blog.html'">
+      Enter Arcade
+    </button>
+  </div>
 </body>
 </html>
