@@ -225,10 +225,8 @@ footer{
 
 <footer>© 2026 All Rights Reserved</footer>
 
-<!-- OVERLAY -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 
-<!-- PROFILE DRAWER -->
 <div class="drawer" id="drawer">
   <span class="close" onclick="closeDrawer()">×</span>
   <h3>Profile Settings</h3>
@@ -237,12 +235,6 @@ footer{
     <label>Display Name</label>
     <input id="nameInput">
     <button onclick="saveName()">Save</button>
-  </div>
-
-  <div class="setting">
-    <label>Username</label>
-    <input id="usernameInput">
-    <button onclick="saveUsername()">Save</button>
   </div>
 
   <div class="setting">
@@ -265,7 +257,7 @@ footer{
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, sendPasswordResetEmail, deleteUser, updateProfile } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey:"AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -293,7 +285,7 @@ onAuthStateChanged(auth, async u=>{
   }
 });
 
-/* DRAWER CONTROLS */
+/* DRAWER */
 window.openDrawer=()=>{
   drawer.classList.add("open");
   overlay.classList.add("active");
@@ -307,10 +299,6 @@ window.closeDrawer=()=>{
 window.saveName=async()=>{
   await updateProfile(user,{displayName:nameInput.value});
   displayName.textContent=nameInput.value;
-}
-window.saveUsername=async()=>{
-  await setDoc(doc(db,"users",user.uid),{username:usernameInput.value},{merge:true});
-  usernameTop.textContent=usernameInput.value;
 }
 window.saveAvatar=async()=>{
   await updateProfile(user,{photoURL:avatarInput.value});
