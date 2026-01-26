@@ -1,4 +1,3 @@
-<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
   getAuth,
@@ -18,17 +17,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-/* ===== AUTH UI HANDLING ===== */
+/* AUTH STATE */
 onAuthStateChanged(auth, user => {
   const authBox = document.getElementById("auth-box");
-
   if (!authBox) return;
 
   if (user) {
     authBox.innerHTML = `
-      <span style="opacity:.85;font-size:14px">${user.email}</span>
-      <button onclick="logout()" class="logout-btn">Logout</button>
+      <span style="font-size:14px;opacity:.85">${user.email}</span>
+      <button class="logout-btn" id="logoutBtn">Logout</button>
     `;
+
+    document.getElementById("logoutBtn").onclick = () => {
+      signOut(auth).then(() => location.reload());
+    };
   } else {
     authBox.innerHTML = `
       <a href="login.html" class="login-btn">Login</a>
@@ -36,20 +38,3 @@ onAuthStateChanged(auth, user => {
     `;
   }
 });
-
-/* ===== LOGOUT ===== */
-window.logout = function () {
-  signOut(auth).then(() => {
-    window.location.href = "index.html";
-  });
-};
-
-/* ===== PROTECT GAMES ===== */
-if (location.pathname.includes("2048")) {
-  onAuthStateChanged(auth, user => {
-    if (!user) {
-      window.location.href = "login.html";
-    }
-  });
-}
-</script>
