@@ -6,112 +6,168 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-}
-
 :root {
-  --bg1:#020617;
-  --bg2:#1e293b;
+  --primary:#6366f1;
+  --bg:#020617;
   --card:#0f172a;
   --text:#e5e7eb;
-  --accent:#6366f1;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg1:#e0e7ff;
-    --bg2:#f8fafc;
+    --bg:#f8fafc;
     --card:#ffffff;
-    --text:#1f2937;
+    --text:#020617;
   }
 }
 
 body {
-  min-height: 100vh;
-  background:
-    radial-gradient(circle at 20% 20%, rgba(99,102,241,.25), transparent 40%),
-    linear-gradient(135deg,var(--bg1),var(--bg2));
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:"Segoe UI", system-ui, sans-serif;
+  background: radial-gradient(circle at top, #1e293b, var(--bg));
+  color:var(--text);
 }
 
 .card {
-  width: 100%;
-  max-width: 380px;
-  background: var(--card);
-  padding: 32px;
-  border-radius: 20px;
-  box-shadow: 0 40px 120px rgba(0,0,0,.45);
+  width:100%;
+  max-width:380px;
+  background:var(--card);
+  border-radius:18px;
+  padding:32px;
+  box-shadow:0 30px 60px rgba(0,0,0,0.35);
+  animation:fade .8s ease;
 }
 
 h1 {
-  text-align: center;
-  margin-bottom: 10px;
+  margin:0 0 8px;
+  text-align:center;
 }
 
 p {
-  text-align: center;
-  opacity: .8;
-  margin-bottom: 24px;
+  text-align:center;
+  opacity:.8;
+  font-size:14px;
+  margin-bottom:24px;
 }
 
 input {
-  width: 100%;
-  padding: 12px 14px;
-  margin-bottom: 14px;
-  border-radius: 10px;
-  border: 1px solid rgba(0,0,0,.1);
-  font-size: 15px;
+  width:100%;
+  padding:14px;
+  margin-bottom:14px;
+  border-radius:12px;
+  border:none;
+  outline:none;
+  background:#020617;
+  color:white;
+  font-size:14px;
+}
+
+@media (prefers-color-scheme: light) {
+  input {
+    background:#f1f5f9;
+    color:#020617;
+  }
 }
 
 button {
-  width: 100%;
-  padding: 14px;
-  border: none;
-  border-radius: 12px;
-  background: var(--accent);
-  color: #fff;
-  font-weight: 600;
-  font-size: 15px;
-  cursor: pointer;
+  width:100%;
+  padding:14px;
+  border:none;
+  border-radius:12px;
+  background:var(--primary);
+  color:white;
+  font-size:15px;
+  font-weight:600;
+  cursor:pointer;
+  transition:.25s;
 }
 
 button:hover {
-  opacity: .95;
+  transform:translateY(-2px);
+  box-shadow:0 10px 30px rgba(99,102,241,.45);
 }
 
-.links {
-  margin-top: 18px;
-  text-align: center;
-  font-size: 14px;
+.footer {
+  margin-top:18px;
+  text-align:center;
+  font-size:14px;
 }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
+.footer a {
+  color:var(--primary);
+  text-decoration:none;
+  font-weight:600;
+}
+
+.error {
+  color:#ef4444;
+  font-size:13px;
+  margin-top:8px;
+  text-align:center;
+}
+
+@keyframes fade {
+  from {opacity:0; transform:translateY(20px)}
+  to {opacity:1; transform:none}
 }
 </style>
 </head>
 
 <body>
+
 <div class="card">
-  <h1>Welcome Back 🎮</h1>
-  <p>Login to save your progress</p>
+  <h1>Welcome back 🎮</h1>
+  <p>Login to continue to WebArcade</p>
 
-  <input type="email" placeholder="Email">
-  <input type="password" placeholder="Password">
+  <input type="email" id="email" placeholder="Email">
+  <input type="password" id="password" placeholder="Password">
 
-  <button>Login</button>
+  <button onclick="login()">Login</button>
 
-  <div class="links">
-    <p>New here? <a href="signup.html">Create an account</a></p>
-    <p><a href="blog.html">Continue as Guest</a></p>
+  <div class="error" id="error"></div>
+
+  <div class="footer">
+    New here?
+    <a href="signup.html">Create account</a>
   </div>
 </div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+  authDomain: "webarcade-d4c3d.firebaseapp.com",
+  projectId: "webarcade-d4c3d",
+  storageBucket: "webarcade-d4c3d.firebasestorage.app",
+  messagingSenderId: "918209461327",
+  appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+window.login = function () {
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const error = document.getElementById("error");
+
+  error.textContent = "";
+
+  signInWithEmailAndPassword(auth, email, password)
+    .then(() => {
+      window.location.href = "blog.html";
+    })
+    .catch(err => {
+      error.textContent = err.message;
+    });
+};
+</script>
+
 </body>
 </html>
