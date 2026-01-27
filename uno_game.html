@@ -3,130 +3,134 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>UNO Pro – WebArcade</title>
+<title>UNO Royale – WebArcade</title>
 <style>
-  :root { 
-    --bg: #020617; --surface: #1e293b; --accent: #6366f1;
-    --red: #ef4444; --blue: #3b82f6; --green: #22c55e; --yellow: #eab308;
+  :root {
+    --red: #ff5555; --blue: #5555ff; --green: #55aa55; --yellow: #ffaa00;
+    --bg: #0f172a; --accent: #6366f1;
   }
-  * { box-sizing: border-box; font-family: "Segoe UI", sans-serif; user-select: none; }
+  * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; user-select: none; }
   
   body { 
-    margin: 0; background: var(--bg); color: #fff; 
-    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+    margin: 0; background: var(--bg); color: white; 
+    height: 100vh; overflow: hidden; display: flex; flex-direction: column;
   }
 
-  /* --- BOARD --- */
-  .game-board {
-    flex: 1; display: flex; flex-direction: column; 
-    justify-content: space-between; padding: 20px; position: relative;
+  /* --- THE TABLE --- */
+  .arena {
+    flex: 1; position: relative;
     background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
-  }
-
-  .hand-label { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: center;}
-  .card-row { display: flex; justify-content: center; height: 80px; }
-
-  .card-back {
-    width: 45px; height: 65px; background: #1e1e1e; border: 2px solid #fff; border-radius: 6px;
-    margin: 0 -15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-    background-image: repeating-linear-gradient(45deg, #333 0, #333 5px, #222 5px, #222 10px);
-    transition: 0.3s transform;
-  }
-
-  /* --- CENTER --- */
-  .center-area { display: flex; justify-content: center; align-items: center; gap: 40px; }
-  
-  .deck-pile {
-    width: 80px; height: 110px; background: #000; border: 3px solid #444; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center; cursor: pointer;
-    box-shadow: 0 0 20px rgba(255,255,255,0.1); transition: 0.2s;
-  }
-  .deck-pile:active { transform: scale(0.9); }
-
-  #discardPile { position: relative; width: 80px; height: 110px; }
-
-  /* --- CARD STYLES --- */
-  .card {
-    width: 80px; height: 110px; border-radius: 10px;
+    perspective: 1000px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 28px; font-weight: 900; color: white;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    border: 4px solid white; cursor: pointer;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative; text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
   }
-  .player-area .card:hover { transform: translateY(-30px) scale(1.15); z-index: 100; }
+
+  /* --- REVERSE ANIMATION OVERLAY --- */
+  .direction-ring {
+    position: absolute; width: 280px; height: 280px;
+    border: 8px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    transition: transform 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .direction-ring::after {
+    content: '➔'; position: absolute; top: -20px; font-size: 30px; color: rgba(255,255,255,0.3);
+  }
+  .rev-clockwise { transform: rotate(360deg); }
+  .rev-counter { transform: rotate(-360deg) scaleX(-1); }
+
+  /* --- PLAYERS --- */
+  .player-box {
+    position: absolute; display: flex; flex-direction: column; align-items: center;
+    transition: all 0.3s; padding: 10px; border-radius: 15px;
+  }
+  .active-turn { 
+    background: rgba(99, 102, 241, 0.2); 
+    box-shadow: 0 0 20px var(--accent);
+    transform: scale(1.1);
+  }
+
+  .p-bottom { bottom: 20px; width: 100%; }
+  .p-top { top: 20px; transform: rotate(180deg); }
+  .p-left { left: 10px; transform: rotate(90deg); }
+  .p-right { right: 10px; transform: rotate(-90deg); }
+
+  .avatar {
+    width: 50px; height: 50px; border-radius: 50%; border: 3px solid #fff;
+    background: #334155; margin-bottom: 5px;
+  }
+
+  /* --- CARDS --- */
+  .card {
+    width: 70px; height: 100px; border-radius: 10px; border: 4px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 900; font-size: 24px; cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    transition: transform 0.3s ease, margin 0.3s;
+    background-color: #222; position: relative;
+  }
+  .my-cards .card { margin-left: -25px; }
+  .my-cards .card:first-child { margin-left: 0; }
+  .my-cards .card:hover { transform: translateY(-30px) rotate(5deg); z-index: 100; }
 
   .c-red { background: var(--red); }
   .c-blue { background: var(--blue); }
   .c-green { background: var(--green); }
   .c-yellow { background: var(--yellow); }
-  .c-wild { background: linear-gradient(45deg, var(--red), var(--blue), var(--green), var(--yellow)); font-size: 18px; }
+  .c-wild { background: linear-gradient(45deg, var(--red), var(--blue), var(--green), var(--yellow)); }
 
-  /* --- UI --- */
-  .status-bar { text-align: center; padding: 12px; background: rgba(0,0,0,0.5); font-weight: bold; }
+  /* --- PILES --- */
+  .center-piles { display: flex; gap: 30px; z-index: 10; }
+  .draw-pile { 
+    width: 80px; height: 115px; background: #111; border: 3px solid #444; 
+    border-radius: 12px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  }
   
-  /* Color Picker Modal */
-  #colorPicker {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
-    display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
+  /* Play Animation */
+  @keyframes throwCard {
+    0% { transform: translateY(200px) scale(0.5) rotate(45deg); opacity: 0; }
+    100% { transform: translateY(0) scale(1) rotate(0deg); opacity: 1; }
   }
-  .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-  .color-btn { width: 80px; height: 80px; border-radius: 15px; border: 4px solid #fff; cursor: pointer; }
+  .last-played { animation: throwCard 0.4s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
 
-  /* Win Screen */
-  #winScreen {
-    position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95);
-    display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 300;
+  /* Color Picker */
+  #colorModal {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; place-items: center; z-index: 1000;
   }
-
-  .player-area {
-    display: flex; justify-content: center; align-items: flex-end; 
-    height: 160px; padding-bottom: 20px; overflow-x: auto;
-  }
-
-  /* Animations */
-  @keyframes slideIn {
-    from { transform: translateY(150px) scale(0.5); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
-  }
-  .animate-card { animation: slideIn 0.5s ease-out; }
+  .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .color-btn { width: 100px; height: 100px; border-radius: 20px; border: 5px solid white; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<div class="status-bar" id="statusText">Connecting...</div>
+<div class="arena">
+  <div id="dirRing" class="direction-ring rev-clockwise"></div>
 
-<div class="game-board">
-  <div class="opponent-area">
-    <div class="hand-label">Opponent: <b id="oppCount" style="color:var(--accent)">0</b> Cards</div>
-    <div class="card-row" id="opponentHand"></div>
-  </div>
+  <div id="playerTop" class="player-box p-top"><div class="avatar"></div><span class="count">7</span></div>
+  <div id="playerLeft" class="player-box p-left"><div class="avatar"></div><span class="count">7</span></div>
+  <div id="playerRight" class="player-box p-right"><div class="avatar"></div><span class="count">7</span></div>
 
-  <div class="center-area">
-    <div class="deck-pile" onclick="drawCard()">
-      <div style="text-align:center"><b>+</b><br><small>DRAW</small></div>
+  <div class="center-piles">
+    <div class="draw-pile" onclick="drawCard()">
+      <div style="font-weight:bold; color:#666">DRAW</div>
     </div>
-    <div id="discardPile"></div>
+    <div id="discardArea"></div>
   </div>
 
-  <div class="player-area" id="myHand"></div>
+  <div class="player-box p-bottom">
+    <div id="myHand" class="my-cards" style="display:flex;"></div>
+    <p id="turnStatus" style="margin-top:15px; font-weight:bold; letter-spacing:1px;"></p>
+  </div>
 </div>
 
-<div id="colorPicker">
-  <h3>CHOOSE A COLOR</h3>
+<div id="colorModal">
   <div class="color-grid">
-    <div class="color-btn c-red" onclick="selectColor('red')"></div>
-    <div class="color-btn c-blue" onclick="selectColor('blue')"></div>
-    <div class="color-btn c-green" onclick="selectColor('green')"></div>
-    <div class="color-btn c-yellow" onclick="selectColor('yellow')"></div>
+    <div class="color-btn c-red" onclick="pickColor('red')"></div>
+    <div class="color-btn c-blue" onclick="pickColor('blue')"></div>
+    <div class="color-btn c-green" onclick="pickColor('green')"></div>
+    <div class="color-btn c-yellow" onclick="pickColor('yellow')"></div>
   </div>
-</div>
-
-<div id="winScreen">
-  <h1 id="winMsg" style="font-size: 3rem;">WINNER!</h1>
-  <button class="btn" style="padding:15px 40px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="requestRematch()">REMATCH</button>
-  <button class="btn" style="margin-top:15px; background:transparent; color:#94a3b8; border:none; cursor:pointer;" onclick="location.href='blog.html'">Exit to Lobby</button>
 </div>
 
 <script type="module">
@@ -144,163 +148,115 @@ const db = getFirestore(app);
 
 const params = new URLSearchParams(window.location.search);
 const roomId = params.get("room");
-const myRole = params.get("role");
+let userUid, game, wildIdx;
 
-let user = null;
-let gameData = null;
-let pendingWildIndex = null;
-
-onAuthStateChanged(auth, async (u) => {
-  if(!u) return;
-  user = u;
-  if(myRole === 'host') resetMatch(); // Initial setup
-  subscribeToGame();
-});
-
-// --- REMATCH LOGIC ---
-async function resetMatch() {
-  const colors = ['red', 'blue', 'green', 'yellow'];
-  const vals = ['0','1','2','3','4','5','6','7','8','9','SKIP','+2'];
-  let deck = [];
-  colors.forEach(c => {
-    vals.forEach(v => {
-      deck.push({ color: c, val: v, id: Math.random() });
-      if(v !== '0') deck.push({ color: c, val: v, id: Math.random() });
-    });
-  });
-  // Add 4 Wild Cards
-  for(let i=0; i<4; i++) deck.push({ color: 'wild', val: 'WILD', id: Math.random() });
-  
-  deck.sort(() => Math.random() - 0.5);
-
-  await updateDoc(doc(db, "matches", roomId), {
-    deck: deck.slice(15),
-    hostHand: deck.slice(0, 7),
-    guestHand: deck.slice(7, 14),
-    currentCard: deck[14],
-    turn: user.uid,
-    winner: null,
-    status: "playing"
-  });
-}
-
-function subscribeToGame() {
-  onSnapshot(doc(db, "matches", roomId), (snap) => {
-    gameData = snap.data();
-    if (gameData.winner) {
-      document.getElementById("winScreen").style.display = "flex";
-      document.getElementById("winMsg").innerText = gameData.winner === myRole ? "YOU WON! 🎉" : "YOU LOST 💀";
-    } else {
-      document.getElementById("winScreen").style.display = "none";
-    }
+onAuthStateChanged(auth, u => {
+  if(!u) return; userUid = u.uid;
+  onSnapshot(doc(db, "matches", roomId), snap => {
+    game = snap.data();
     render();
   });
-}
+});
 
 function render() {
-  const isMyTurn = gameData.turn === user.uid;
-  document.getElementById("statusText").innerText = isMyTurn ? "★ YOUR TURN ★" : "Opponent's Turn...";
+  const players = game.players;
+  const myIdx = players.indexOf(userUid);
+  const isMyTurn = players[game.turnIndex] === userUid;
 
-  // Discard Pile
-  const cc = gameData.currentCard;
-  const discardDiv = document.getElementById("discardPile");
-  discardDiv.innerHTML = `<div class="card c-${cc.color} animate-card">${cc.val === 'SKIP' ? '🚫' : cc.val}</div>`;
+  // 1. Reverse Ring Animation
+  const ring = document.getElementById("dirRing");
+  ring.className = `direction-ring ${game.direction === 1 ? 'rev-clockwise' : 'rev-counter'}`;
 
-  // Hands
-  const myHand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
-  const myHandDiv = document.getElementById("myHand");
-  myHandDiv.innerHTML = "";
-  myHand.forEach((c, i) => {
+  // 2. Center Card
+  const disc = document.getElementById("discardArea");
+  disc.innerHTML = `<div class="card c-${game.currentCard.color} last-played">${game.currentCard.val}</div>`;
+
+  // 3. Status
+  document.getElementById("turnStatus").innerText = isMyTurn ? "★ YOUR TURN ★" : "WAITING FOR OTHERS...";
+
+  // 4. My Hand
+  const myHand = document.getElementById("myHand");
+  myHand.innerHTML = "";
+  (game.hands[userUid] || []).forEach((c, i) => {
     const el = document.createElement("div");
     el.className = `card c-${c.color}`;
-    el.innerHTML = c.val === 'SKIP' ? '🚫' : c.val;
-    el.style.marginLeft = i === 0 ? "0" : "-35px";
+    el.innerText = c.val;
     el.onclick = () => playCard(i);
-    if(!isMyTurn) el.style.opacity = "0.5";
-    myHandDiv.appendChild(el);
+    myHand.appendChild(el);
   });
 
-  const oppCount = myRole === 'host' ? gameData.guestHand.length : gameData.hostHand.length;
-  document.getElementById("oppCount").innerText = oppCount;
-  const oppDiv = document.getElementById("opponentHand");
-  oppDiv.innerHTML = "";
-  for(let i=0; i<Math.min(oppCount, 15); i++) {
-    const b = document.createElement("div"); b.className = "card-back";
-    oppDiv.appendChild(b);
-  }
+  // 5. Opponents (Dynamic Layout)
+  const posElements = [
+    { id: 'playerLeft', idx: (myIdx + 1) % players.length },
+    { id: 'playerTop', idx: (myIdx + 2) % players.length },
+    { id: 'playerRight', idx: (myIdx + 3) % players.length }
+  ];
+
+  posElements.forEach(pos => {
+    const el = document.getElementById(pos.id);
+    if (players.length > 1 && players[pos.idx] && players[pos.idx] !== userUid) {
+      el.style.display = "flex";
+      const count = game.hands[players[pos.idx]].length;
+      el.querySelector(".count").innerText = count + " Cards";
+      if (game.turnIndex === pos.idx) el.classList.add("active-turn");
+      else el.classList.remove("active-turn");
+    } else {
+      el.style.display = "none";
+    }
+  });
 }
 
 window.playCard = async (i) => {
-  if(gameData.turn !== user.uid) return;
-  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
-  const card = hand[i];
-  const top = gameData.currentCard;
+  if (game.players[game.turnIndex] !== userUid) return;
+  const card = game.hands[userUid][i];
+  const top = game.currentCard;
 
-  // Wild card can always be played. Others must match color or value.
   if (card.color !== 'wild' && card.color !== top.color && card.val !== top.val) return;
 
   if (card.color === 'wild') {
-    pendingWildIndex = i;
-    document.getElementById("colorPicker").style.display = "flex";
+    wildIdx = i;
+    document.getElementById("colorModal").style.display = "grid";
     return;
   }
-
-  await processMove(i, card.color);
+  executeMove(i, card.color);
 };
 
-window.selectColor = (color) => {
-  document.getElementById("colorPicker").style.display = "none";
-  processMove(pendingWildIndex, color);
+window.pickColor = (c) => {
+  document.getElementById("colorModal").style.display = "none";
+  executeMove(wildIdx, c);
 };
 
-async function processMove(index, chosenColor) {
-  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
-  const card = hand.splice(index, 1)[0];
-  
-  // If it was a wild, we change its "active" color for the next player
-  if(card.color === 'wild') card.color = chosenColor;
+async function executeMove(idx, color) {
+  let hands = game.hands;
+  let card = hands[userUid].splice(idx, 1)[0];
+  if (card.color === 'wild') card.color = color;
 
-  let nextTurn = myRole === 'host' ? gameData.guest : gameData.host;
-  let deck = gameData.deck;
+  let direction = game.direction;
+  if (card.val === 'REV') direction *= -1;
 
-  if (card.val === 'SKIP' || card.val === '+2') {
-    if(card.val === '+2') {
-      const penalty = deck.splice(0, 2);
-      if(myRole === 'host') gameData.guestHand.push(...penalty);
-      else gameData.hostHand.push(...penalty);
-    }
-    nextTurn = user.uid; // Stay on current player
+  let nextIdx = (game.turnIndex + direction + game.players.length) % game.players.length;
+
+  // Power Logic
+  if (card.val === 'SKIP') {
+    nextIdx = (nextIdx + direction + game.players.length) % game.players.length;
+  } else if (card.val === '+2' || card.val === '+4') {
+    const victim = game.players[nextIdx];
+    const penalty = game.deck.splice(0, card.val === '+2' ? 2 : 4);
+    hands[victim].push(...penalty);
+    nextIdx = (nextIdx + direction + game.players.length) % game.players.length;
   }
 
   await updateDoc(doc(db, "matches", roomId), {
-    currentCard: card,
-    turn: nextTurn,
-    deck: deck,
-    hostHand: gameData.hostHand,
-    guestHand: gameData.guestHand,
-    winner: hand.length === 0 ? myRole : null
+    hands, currentCard: card, turnIndex: nextIdx, direction, deck: game.deck
   });
 }
 
 window.drawCard = async () => {
-  if(gameData.turn !== user.uid) return;
-  const deck = gameData.deck;
-  const card = deck.shift();
-  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
-  hand.push(card);
-  const nextTurn = myRole === 'host' ? gameData.guest : gameData.host;
-
-  await updateDoc(doc(db, "matches", roomId), {
-    deck: deck,
-    hostHand: gameData.hostHand,
-    guestHand: gameData.guestHand,
-    turn: nextTurn
-  });
-};
-
-window.requestRematch = () => {
-  if(myRole === 'host') resetMatch();
-  else alert("Waiting for Host to reset...");
+  if (game.players[game.turnIndex] !== userUid) return;
+  const hands = game.hands;
+  hands[userUid].push(game.deck.shift());
+  const nextIdx = (game.turnIndex + game.direction + game.players.length) % game.players.length;
+  await updateDoc(doc(db, "matches", roomId), { hands, turnIndex: nextIdx, deck: game.deck });
 };
 </script>
 </body>
