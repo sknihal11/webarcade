@@ -13,6 +13,7 @@
   --accent: #6366f1;
   --accent-glow: rgba(99, 102, 241, 0.5);
   --gold: #fbbf24;
+  --multiplayer: #ec4899; /* Pink for Multiplayer */
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.1);
@@ -106,6 +107,7 @@ header h2 {
   background: linear-gradient(180deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
   border: 1px solid var(--border); border-radius: 18px; padding: 20px;
   text-align: center; transition: transform 0.2s, box-shadow 0.2s;
+  display: flex; flex-direction: column; justify-content: space-between;
 }
 .game-card:hover {
   transform: translateY(-5px); box-shadow: 0 10px 25px var(--accent-glow); border-color: var(--accent);
@@ -121,6 +123,12 @@ header h2 {
   transition: 0.2s;
 }
 .play-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+
+/* Multiplayer Specific Button */
+.mp-btn {
+  background: var(--multiplayer);
+  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.5);
+}
 
 /* --- LEADERBOARD (HALL OF FAME) --- */
 .leaderboard-container {
@@ -146,7 +154,6 @@ header h2 {
 .lb-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .lb-score { font-weight: 800; color: var(--gold); text-align: right; font-size: 18px; }
 
-/* Top 3 Colors */
 .lb-row:nth-child(2) .rank { color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.4); } /* Gold */
 .lb-row:nth-child(3) .rank { color: #94a3b8; } /* Silver */
 .lb-row:nth-child(4) .rank { color: #b45309; } /* Bronze */
@@ -212,16 +219,29 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
   <div class="games">
     <div class="game-card">
       <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/2048_logo.svg/1200px-2048_logo.svg.png" class="game-thumb">
-      <h3>2048</h3>
-      <p style="color: var(--text-muted); font-size: 14px;">High Score: <b id="score2048" style="color: var(--accent);">0</b></p>
-      <a href="2048.html" class="play-btn">▶ Play</a>
+      <div>
+        <h3>2048</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">High Score: <b id="score2048" style="color: var(--accent);">0</b></p>
+        <a href="2048.html" class="play-btn">▶ Play</a>
+      </div>
     </div>
 
     <div class="game-card">
       <img src="https://i.imgur.com/2yaf2wb.png" class="game-thumb">
-      <h3>Flappy Bird</h3>
-      <p style="color: var(--text-muted); font-size: 14px;">High Score: <b id="scoreFlappy" style="color: var(--accent);">0</b></p>
-      <a href="flappy.html" class="play-btn">▶ Play</a>
+      <div>
+        <h3>Flappy Bird</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">High Score: <b id="scoreFlappy" style="color: var(--accent);">0</b></p>
+        <a href="flappy.html" class="play-btn">▶ Play</a>
+      </div>
+    </div>
+
+    <div class="game-card" style="border-color: rgba(236, 72, 153, 0.3);">
+      <img src="https://images.unsplash.com/photo-1511512578047-dfb367046420?q=80&w=400&auto=format&fit=crop" class="game-thumb" style="object-position: center;">
+      <div>
+        <h3 style="color: #f472b6;">Multiplayer Arena</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">Host or Join rooms</p>
+        <a href="multiplayer.html" class="play-btn mp-btn">⚔️ Enter Lobby</a>
+      </div>
     </div>
   </div>
 
@@ -329,9 +349,7 @@ async function loadLeaderboard() {
         const s2048 = d.best2048 || 0;
         const sFlappy = d.bestFlappy || 0;
         
-        // CALCULATION LOGIC:
-        // 1 Flappy point = 100 rating points (Harder to get)
-        // 1 2048 point = 1 rating point (Easier to get)
+        // 1 Flappy point = 100 rating points
         const totalRating = s2048 + (sFlappy * 100);
 
         if (totalRating > 0) {
@@ -343,7 +361,6 @@ async function loadLeaderboard() {
         }
       });
 
-      // Sort by Total Rating
       players.sort((a, b) => b.rating - a.rating);
 
       els.leaderboard.innerHTML = "";
@@ -352,7 +369,6 @@ async function loadLeaderboard() {
           return;
       }
 
-      // Show Top 10
       players.slice(0, 10).forEach((p, index) => {
          const div = document.createElement("div");
          div.className = "lb-row";
