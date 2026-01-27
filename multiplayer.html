@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Multiplayer Lobby – WebArcade</title>
+
+<style>
+:root { --bg: #0f172a; --card: #1e293b; --accent: #8b5cf6; --text: #f8fafc; }
+* { box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
+
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+
+.container {
+  width: 90%; max-width: 400px; text-align: center;
+}
+
+h1 { margin-bottom: 30px; font-size: 2rem; background: linear-gradient(to right, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+.card {
+  background: var(--card); padding: 30px; border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
+}
+
+input {
+  width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #334155;
+  background: #0f172a; color: #fff; font-size: 18px; text-align: center; letter-spacing: 2px;
+  margin-bottom: 15px; outline: none; transition: 0.2s;
+}
+input:focus { border-color: var(--accent); }
+
+.btn {
+  width: 100%; padding: 15px; border: none; border-radius: 12px;
+  font-size: 16px; font-weight: bold; cursor: pointer; color: white;
+  margin-bottom: 10px; transition: 0.2s;
+}
+.btn-host { background: linear-gradient(135deg, var(--accent), #6366f1); }
+.btn-join { background: #334155; }
+.btn-back { background: transparent; color: #94a3b8; margin-top: 10px; }
+
+.status { margin-top: 20px; font-size: 14px; min-height: 20px; color: #cbd5e1; }
+.code-display { font-size: 32px; font-weight: 900; letter-spacing: 5px; color: var(--accent); margin: 20px 0; }
+
+/* Hidden logic */
+.hidden { display: none; }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>MULTIPLAYER ⚔️</h1>
+  
+  <div id="menuPanel" class="card">
+    <button class="btn btn-host" onclick="hostGame()">HOST GAME</button>
+    <div style="margin: 10px 0; opacity: 0.5">- OR -</div>
+    <input id="roomCodeInput" placeholder="ENTER ROOM CODE" maxlength="6" style="text-transform:uppercase">
+    <button class="btn btn-join" onclick="joinGame()">JOIN GAME</button>
+    <button class="btn btn-back" onclick="location.href='blog.html'">← Back to Dashboard</button>
+  </div>
+
+  <div id="lobbyPanel" class="card hidden">
+    <h3>Room Code</h3>
+    <div class="code-display" id="displayCode">...</div>
+    <div class="status" id="lobbyStatus">Waiting for opponent...</div>
+    <div style="margin-top:20px;">
+       <div id="p1Name" style="color:#8b5cf6">You (Host)</div>
+       <div style="font-size:20px; margin:5px 0">VS</div>
+       <div id="p2Name" style="color:#94a3b8">...</div>
+    </div>
+    <button class="btn btn-host hidden" id="startGameBtn" onclick="launchGame()">START GAME</button>
+    <button class="btn btn-back" onclick="location.reload()">Cancel</button>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+const app = initializeApp({
+  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+  authDomain: "webarcade-d4c3d.firebaseapp.com",
+  projectId: "webarcade-d4c3d"
+});
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let user = null;
+let currentRoomId = null;
+let unsubscribe = null;
+
+onAuthStateChanged(auth, u => {
+  if(!u) location.href = 'index.html';
+  user = u;
+});
+
+// --- HOST LOGIC ---
+window.hostGame = async () => {
+  const roomId = Math.floor(100000 + Math.random() * 900000).toString(); // 6 Digit Code
+  currentRoomId = roomId;
+
+  // UI Update
+  document.getElementById("menuPanel").classList.add("hidden");
+  document.getElementById("lobbyPanel").classList.remove("hidden");
+  document.getElementById("displayCode").innerText = roomId;
+  document.getElementById("p1Name").innerText = user.displayName || "Host";
+
+  // Create Room in DB
+  await setDoc(doc(db, "matches", roomId), {
+    status: "waiting",
+    host: user.uid,
+    hostName: user.displayName || "Host",
+    guest: null,
+    guestName: null,
+    gameType: "uno" // For future expansion
+  });
+
+  // Listen for Guest
+  unsubscribe = onSnapshot(doc(db, "matches", roomId), (snap) => {
+    const data = snap.data();
+    if (data.guest) {
+      document.getElementById("p2Name").innerText = data.guestName;
+      document.getElementById("p2Name").style.color = "#f43f5e"; // Red color for guest
+      document.getElementById("lobbyStatus").innerText = "Player found! Ready to start.";
+      document.getElementById("startGameBtn").classList.remove("hidden");
+    }
+    
+    // If game started
+    if(data.status === 'playing') {
+      window.location.href = `uno_game.html?room=${roomId}&role=host`;
+    }
+  });
+};
+
+// --- JOIN LOGIC ---
+window.joinGame = async () => {
+  const roomId = document.getElementById("roomCodeInput").value.trim();
+  if(roomId.length !== 6) return alert("Invalid Code");
+
+  const roomRef = doc(db, "matches", roomId);
+  const snap = await getDoc(roomRef);
+
+  if(!snap.exists()) return alert("Room not found!");
+  if(snap.data().status !== "waiting") return alert("Game already full or started.");
+
+  // Join Room
+  await updateDoc(roomRef, {
+    guest: user.uid,
+    guestName: user.displayName || "Guest"
+  });
+
+  // Wait for Host to Start
+  document.getElementById("menuPanel").classList.add("hidden");
+  document.getElementById("lobbyPanel").classList.remove("hidden");
+  document.getElementById("displayCode").innerText = roomId;
+  document.getElementById("lobbyStatus").innerText = "Connected! Waiting for host to start...";
+  document.getElementById("p1Name").innerText = snap.data().hostName;
+  document.getElementById("p2Name").innerText = user.displayName || "Guest";
+  document.getElementById("p2Name").style.color = "#f43f5e";
+
+  unsubscribe = onSnapshot(roomRef, (s) => {
+    const d = s.data();
+    if(d.status === 'playing') {
+      window.location.href = `uno_game.html?room=${roomId}&role=guest`;
+    }
+  });
+};
+
+// --- START LOGIC ---
+window.launchGame = async () => {
+  await updateDoc(doc(db, "matches", currentRoomId), {
+    status: "playing",
+    turn: user.uid // Host goes first
+  });
+  // Listener will redirect us
+};
+
+</script>
+</body>
+</html>
