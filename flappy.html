@@ -6,10 +6,11 @@
 <title>Flappy Bird – WebArcade</title>
 
 <style>
-/* --- CORE VARIABLES --- */
+/* --- VARIABLES --- */
 :root {
-  --bg-dark: #020617;
-  --accent: #facc15;
+  --bg-dark: #111;
+  --cabinet-color: #222;
+  --neon-blue: #00f3ff;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", sans-serif; }
@@ -25,82 +26,105 @@ body {
   touch-action: none;
 }
 
-/* --- RETRO BACKGROUND --- */
-.retro-bg {
+/* --- ARCADE AMBIANCE --- */
+.arcade-room {
   position: fixed; inset: 0; z-index: -1;
-  background: 
-    linear-gradient(transparent 95%, rgba(99, 102, 241, 0.1) 95%),
-    linear-gradient(90deg, transparent 95%, rgba(99, 102, 241, 0.1) 95%);
-  background-size: 40px 40px;
-  transform: perspective(500px) rotateX(20deg);
-  opacity: 0.3; pointer-events: none;
+  background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
 }
 
-/* --- GAME CONTAINER --- */
+.arcade-glow {
+  position: absolute; inset: 0;
+  background-image: 
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+    linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  background-size: 100% 2px, 3px 100%;
+  pointer-events: none;
+}
+
+/* --- GAME SCREEN --- */
 #game-container {
   position: relative;
   width: 400px;
   height: 600px;
-  background: #4ec0ca; /* Sky */
-  border-radius: 12px;
+  background: #000; /* Start black to hide flash */
   overflow: hidden;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-  border: 4px solid #334155;
+  border: 8px solid var(--cabinet-color);
+  border-radius: 4px;
+  box-shadow: 0 0 0 4px #000, 0 0 20px var(--neon-blue);
   image-rendering: pixelated; 
 }
 
-@media(max-width: 420px) {
-  #game-container { width: 100%; height: 100vh; border: none; border-radius: 0; }
+@media(max-width: 450px) {
+  #game-container { width: 100%; height: 100vh; border: none; box-shadow: none; border-radius: 0; }
 }
 
-/* --- SCENERY --- */
-.scenery { position: absolute; width: 100%; pointer-events: none; }
-
-#city {
-  bottom: 60px; height: 150px; width: 200%;
-  background: repeat-x bottom left url('https://i.imgur.com/Q6amLgA.png'); 
-  background-size: contain;
-  z-index: 1;
+/* --- LOADING SCREEN (HIGHEST Z-INDEX) --- */
+#loader {
+  position: absolute; inset: 0;
+  background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 9999; /* Covers EVERYTHING */
+  color: #00f3ff; font-weight: bold; font-size: 14px; letter-spacing: 2px;
+  transition: opacity 0.5s ease-out;
+}
+.loader-bar {
+  width: 150px; height: 4px; background: #333; margin-top: 10px; border-radius: 2px; overflow: hidden;
+}
+.loader-progress {
+  width: 0%; height: 100%; background: #00f3ff; transition: width 0.1s;
 }
 
-#clouds {
-  bottom: 150px; height: 100px; width: 200%;
-  opacity: 0.8;
-  background: repeat-x bottom left url('https://i.imgur.com/z48eI5w.png');
-  background-size: contain;
+/* --- LAYERS --- */
+.scenery { position: absolute; width: 100%; pointer-events: none; opacity: 0; transition: opacity 0.5s; }
+.scenery.loaded { opacity: 1; }
+
+#bg-art {
+  bottom: 0; height: 100%; width: 100%;
+  background-size: cover;
   z-index: 0;
 }
 
-/* --- UI ELEMENTS --- */
+#ground {
+  position: absolute; bottom: 0; width: 100%; height: 112px;
+  background-size: auto 112px;
+  z-index: 30;
+  opacity: 0; transition: opacity 0.5s;
+}
+#ground.loaded { opacity: 1; }
+
+/* --- UI --- */
 .ui-layer {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   pointer-events: none; z-index: 50;
+  opacity: 0; transition: opacity 0.5s;
 }
+.ui-layer.loaded { opacity: 1; }
 
 .back-btn {
-  position: absolute; top: 15px; left: 15px;
-  background: rgba(0,0,0,0.5); color: white;
-  padding: 8px 14px; border-radius: 99px;
-  text-decoration: none; font-weight: bold; font-size: 13px;
-  pointer-events: auto; backdrop-filter: blur(4px);
-  border: 1px solid rgba(255,255,255,0.2);
+  position: absolute; top: 20px; left: 20px;
+  background: #e86101; color: white; border: 2px solid #fff;
+  padding: 8px 14px; border-radius: 6px;
+  text-decoration: none; font-weight: bold; font-size: 14px;
+  pointer-events: auto; box-shadow: 0 4px 0 #bc4f01;
 }
+.back-btn:active { transform: translateY(4px); box-shadow: none; }
 
 .world-record {
-  position: absolute; top: 15px; right: 15px;
-  background: rgba(0,0,0,0.5); color: #fbbf24;
-  padding: 6px 12px; border-radius: 8px;
+  position: absolute; top: 20px; right: 20px;
+  background: rgba(0,0,0,0.6); color: #fbbf24;
+  padding: 6px 12px; border-radius: 6px;
   font-size: 12px; font-weight: bold;
   text-align: right;
-  border: 1px solid rgba(251, 191, 36, 0.3);
+  border: 2px solid rgba(255,255,255,0.2);
 }
 .world-record span { display: block; font-size: 16px; color: #fff; }
 
 .score-display {
-  position: absolute; top: 60px; width: 100%;
-  text-align: center; font-size: 56px; font-weight: 900;
+  position: absolute; top: 80px; width: 100%;
+  text-align: center; font-size: 60px; font-weight: 900;
   color: white; 
-  text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+  text-shadow: 3px 3px 0 #000;
   z-index: 50;
 }
 
@@ -108,52 +132,45 @@ body {
   position: absolute; top: 50%; left: 50%;
   transform: translate(-50%, -50%);
   width: 184px; height: 267px;
-  background: url('https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/message.png') no-repeat center;
   background-size: contain;
+  background-repeat: no-repeat;
   z-index: 40;
+  display: none;
 }
 
-/* --- GAME OBJECTS --- */
+/* --- OBJECTS --- */
 #bird {
   position: absolute;
   width: 34px; height: 24px;
-  background-image: url('https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-midflap.png');
   background-size: contain;
   background-repeat: no-repeat;
   z-index: 20;
+  opacity: 0;
 }
-
-/* DEBUG HITBOX: Uncomment to see the actual collision box */
-/* #bird { border: 1px solid red; } */
+#bird.loaded { opacity: 1; }
 
 .pipe {
   position: absolute; width: 52px;
-  background: url('https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/pipe-green.png');
   background-size: 100% 100%;
   z-index: 10;
-  border: 2px solid #533846;
 }
-.pipe.top-pipe { transform: scaleY(-1); border-bottom: none; }
-.pipe.btm-pipe { border-top: none; }
-
-#ground {
-  position: absolute; bottom: 0; width: 100%; height: 60px;
-  background: url('https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/base.png');
-  background-size: auto 60px;
-  z-index: 30;
-  border-top: 2px solid #533846;
-}
+.pipe.top-pipe { transform: scaleY(-1); }
 
 /* --- GAME OVER --- */
 #game-over-screen {
   position: absolute; inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.4);
   display: none; flex-direction: column;
   align-items: center; justify-content: center;
   z-index: 60; pointer-events: auto; opacity: 0;
   transition: opacity 0.3s;
 }
 #game-over-screen.show { opacity: 1; }
+
+.game-over-logo {
+  width: 192px; height: 42px; margin-bottom: 20px;
+  background-size: contain; background-repeat: no-repeat;
+}
 
 .panel {
   background: #ded895;
@@ -162,21 +179,18 @@ body {
   text-align: center; width: 240px;
   box-shadow: inset 0 0 0 2px #9e9a6b, 0 10px 20px rgba(0,0,0,0.5);
   margin-bottom: 20px;
-  position: relative;
 }
-.panel h2 { color: #e86101; font-size: 28px; text-shadow: 2px 2px 0 #fff; margin-bottom: 15px; }
 .panel-row { display: flex; justify-content: space-between; margin: 10px 0; font-weight: bold; color: #e86101; }
 .panel-row span { color: #fff; font-size: 20px; text-shadow: 1px 1px 0 #000; }
 
 .play-btn {
-  background: #e86101; border: 2px solid #fff;
+  background: #52c3cc; border: 2px solid #fff;
   color: white; padding: 12px 30px; font-weight: bold; font-size: 18px;
-  cursor: pointer; box-shadow: 0 4px 0 #bc4f01;
-  border-radius: 4px;
+  cursor: pointer; box-shadow: 0 4px 0 #3b9099;
+  border-radius: 4px; text-shadow: 1px 1px 0 #3b9099;
 }
-.play-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #bc4f01; }
+.play-btn:active { transform: translateY(4px); box-shadow: none; }
 
-/* Flash effect */
 #flash {
   position: absolute; inset: 0; background: white; 
   z-index: 100; opacity: 0; pointer-events: none;
@@ -186,21 +200,19 @@ body {
 
 <body>
 
-<div class="retro-bg"></div>
+<div class="arcade-room"><div class="arcade-glow"></div></div>
 
 <div id="game-container">
-  
-  <div class="scenery" id="clouds"></div>
-  <div class="scenery" id="city"></div>
+  <div id="loader">
+    INITIALIZING...
+    <div class="loader-bar"><div class="loader-progress" id="progress"></div></div>
+  </div>
 
-  <div class="ui-layer">
-    <a href="blog.html" class="back-btn">← Back</a>
-    
-    <div class="world-record">
-      Global Best
-      <span id="globalBest">Loading...</span>
-    </div>
+  <div class="scenery" id="bg-art"></div>
 
+  <div class="ui-layer" id="uiLayer">
+    <a href="blog.html" class="back-btn">← DASHBOARD</a>
+    <div class="world-record">WORLD BEST <span id="globalBest">-</span></div>
     <div class="score-display" id="scoreEl">0</div>
     <div class="start-msg" id="startMsg"></div>
     <div id="flash"></div>
@@ -211,22 +223,19 @@ body {
   <div id="ground"></div>
 
   <div id="game-over-screen">
+    <div class="game-over-logo" id="goLogo"></div>
     <div class="panel">
-      <h2>GAME OVER</h2>
       <div class="panel-row">Score <span id="finalScore">0</span></div>
       <div class="panel-row">Best <span id="bestScore">0</span></div>
     </div>
-    <button class="play-btn" onclick="resetGame()">PLAY AGAIN</button>
+    <button class="play-btn" onclick="resetGame()">PLAY</button>
   </div>
-
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { 
-  getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs 
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 /* --- FIREBASE --- */
 const app = initializeApp({
@@ -237,79 +246,92 @@ const app = initializeApp({
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let currentUser = null;
-let personalBest = 0;
-let worldRecord = 0;
-
-/* --- ASSETS & AUDIO --- */
-const sprites = {
-  bird: [
-    'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-upflap.png',
-    'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-midflap.png',
-    'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-downflap.png'
-  ]
+/* --- ASSET PRELOADER --- */
+// Stable GitHub Raw Links
+const assets = {
+  bg: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/background-day.png',
+  ground: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/base.png',
+  msg: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/message.png',
+  pipe: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/pipe-green.png',
+  bird1: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-midflap.png',
+  bird2: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-upflap.png',
+  bird3: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/yellowbird-downflap.png',
+  over: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/gameover.png'
 };
 
-// Preload
-sprites.bird.forEach(src => { const img = new Image(); img.src = src; });
+const loader = document.getElementById("loader");
+const progress = document.getElementById("progress");
+let loadedCount = 0;
+const totalAssets = Object.keys(assets).length;
 
-const ctx = new (window.AudioContext || window.webkitAudioContext)();
-function playSound(type) {
-  if (ctx.state === 'suspended') ctx.resume();
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.connect(gain);
-  gain.connect(ctx.destination);
+// Preload Loop
+function preloadGame() {
+  Object.entries(assets).forEach(([key, url]) => {
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      loadedCount++;
+      progress.style.width = (loadedCount / totalAssets) * 100 + "%";
+      
+      if(loadedCount === totalAssets) {
+        // Apply Backgrounds via CSS only AFTER load
+        document.getElementById('bg-art').style.backgroundImage = `url(${assets.bg})`;
+        document.getElementById('ground').style.backgroundImage = `url(${assets.ground})`;
+        document.getElementById('startMsg').style.backgroundImage = `url(${assets.msg})`;
+        document.getElementById('goLogo').style.backgroundImage = `url(${assets.over})`;
+        
+        // CSS Pipe class needs dynamic injection or JS handling. 
+        // For simplicity, we inject a style tag for pipes
+        const style = document.createElement('style');
+        style.innerHTML = `.pipe { background-image: url(${assets.pipe}); }`;
+        document.head.appendChild(style);
 
-  if (type === 'flap') {
-    osc.frequency.setValueAtTime(400, ctx.currentTime);
-    osc.type = 'triangle';
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
-    osc.start(); osc.stop(ctx.currentTime + 0.1);
-  } else if (type === 'point') {
-    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-    osc.type = 'sine';
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
-    osc.start(); osc.stop(ctx.currentTime + 0.15);
-  } else if (type === 'hit') {
-    osc.frequency.setValueAtTime(150, ctx.currentTime);
-    osc.type = 'sawtooth';
-    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
-    osc.start(); osc.stop(ctx.currentTime + 0.3);
-  }
+        setTimeout(revealGame, 500);
+      }
+    };
+  });
 }
 
-/* --- GAME STATE --- */
+function revealGame() {
+  // Fade out loader
+  loader.style.opacity = 0;
+  
+  // Fade in elements
+  document.getElementById('bg-art').classList.add('loaded');
+  document.getElementById('ground').classList.add('loaded');
+  document.getElementById('bird').classList.add('loaded');
+  document.getElementById('uiLayer').classList.add('loaded');
+  
+  setTimeout(() => {
+    loader.style.display = 'none';
+    resetGame();
+    loop(); // Start loop only now
+  }, 500);
+}
+
+/* --- GAME LOGIC --- */
 const container = document.getElementById("game-container");
 const birdEl = document.getElementById("bird");
 const pipesCont = document.getElementById("pipes-container");
 const scoreEl = document.getElementById("scoreEl");
 const ground = document.getElementById("ground");
-const city = document.getElementById("city");
-const clouds = document.getElementById("clouds");
 
-let width, height;
+let width = container.offsetWidth;
+let height = container.offsetHeight;
+
 let frames = 0;
 let score = 0;
 let state = 'START'; 
 let birdY, birdVel;
-const GRAVITY = 0.25;
-const JUMP = -4.6;
-const SPEED = 2.5;
 let pipes = [];
 
-/* --- INIT --- */
-function resize() {
-  width = container.offsetWidth;
-  height = container.offsetHeight;
-}
-window.onresize = resize;
-resize();
+const GRAVITY = 0.25;
+const JUMP = -4.6;
+const SPEED = 2; 
 
-// Load Data
+let currentUser, personalBest = 0, worldRecord = 0;
+
+/* --- AUTH --- */
 onAuthStateChanged(auth, async (u) => {
   currentUser = u;
   fetchGlobalBest();
@@ -330,81 +352,66 @@ async function fetchGlobalBest() {
     if (!snap.empty) {
       worldRecord = snap.docs[0].data().bestFlappy || 0;
       document.getElementById("globalBest").textContent = worldRecord;
-    } else {
-      document.getElementById("globalBest").textContent = "0";
     }
-  } catch (e) { console.error(e); }
+  } catch(e) {}
 }
 
 /* --- LOOP --- */
 function loop() {
-  if (state === 'PLAY') {
-    update();
-  }
+  if (state === 'PLAY') update();
   
-  if (state === 'PLAY' || state === 'START') {
-    let pos = (frames * SPEED) % 24; 
-    ground.style.backgroundPosition = `-${pos}px 0`;
-    city.style.backgroundPosition = `-${frames * 0.5}px bottom`;
-    clouds.style.backgroundPosition = `-${frames * 0.2}px bottom`;
+  // Animation (Ground scroll)
+  if (state !== 'OVER') {
+    let pos = (frames * SPEED) % 336; 
+    ground.style.transform = `translateX(-${pos}px)`;
     
-    // Animate Bird Wing
+    // Bird Flap
     let flapSpeed = birdVel < 0 ? 5 : 10;
-    let frameIndex = Math.floor(frames / flapSpeed) % 3;
-    if(birdVel > 5) frameIndex = 1; 
-    birdEl.style.backgroundImage = `url(${sprites.bird[frameIndex]})`;
+    let index = Math.floor(frames / flapSpeed) % 3;
+    if(birdVel > 5) index = 1; 
+    
+    // Use Preloaded URLs
+    const birdSprites = [assets.bird2, assets.bird1, assets.bird3];
+    birdEl.style.backgroundImage = `url(${birdSprites[index]})`;
   }
   
   if (state === 'PLAY') frames++;
   requestAnimationFrame(loop);
 }
 
-/* --- UPDATE (FIXED COLLISION) --- */
+/* --- UPDATE --- */
 function update() {
   birdVel += GRAVITY;
   birdY += birdVel;
-  
+
   // Rotation
   let rot = Math.min(Math.max(birdVel * 6, -25), 90);
-  birdEl.style.transform = `translate(0, ${birdY}px) rotate(${rot}deg)`;
+  birdEl.style.transform = `translate(50px, ${birdY}px) rotate(${rot}deg)`;
 
   // Ground Hit
-  if (birdY + 24 >= height - 60) {
+  const groundY = height - 112; 
+  if (birdY + 24 >= groundY) {
     hit();
     return;
   }
 
-  // Pipe Logic
-  if (frames % 100 === 0) createPipe();
+  // Pipe Management
+  if (frames % 120 === 0) createPipe();
 
   pipes.forEach(p => {
     p.x -= SPEED;
     p.top.style.left = p.x + 'px';
     p.btm.style.left = p.x + 'px';
 
-    /* --- IMPROVED HITBOX (FORGIVING) --- */
-    // Bird is visually 34px wide, 24px high.
-    // The previous hitbox was checking 34x24 which is too strict.
-    // We shrink the hitbox by ~6px on all sides.
-    const paddingX = 6; 
-    const paddingY = 6;
-
-    // Bird Hitbox
-    const bLeft = 50 + paddingX;
-    const bRight = 50 + 34 - paddingX;
-    const bTop = birdY + paddingY;
-    const bBtm = birdY + 24 - paddingY;
-
-    // Pipe Hitbox
     const pLeft = p.x;
     const pRight = p.x + 52;
-    const pTopY = p.h; // Bottom of top pipe
-    const pBtmY = p.h + 140; // Top of bottom pipe
+    const pTopY = p.h; 
+    const pBtmY = p.h + 120; 
 
-    // Check collision
-    if (bRight > pLeft && bLeft < pRight) {
-       // We are horizontally inside the pipe
-       if (bTop < pTopY || bBtm > pBtmY) {
+    // Horizontal overlap
+    if (pRight > 54 && pLeft < 80) {
+       // Vertical overlap
+       if (birdY + 4 < pTopY || birdY + 20 > pBtmY) {
            hit();
        }
     }
@@ -418,7 +425,7 @@ function update() {
     }
   });
 
-  // Remove pipes
+  // Cleanup
   if (pipes.length > 0 && pipes[0].x < -60) {
     pipes[0].top.remove();
     pipes[0].btm.remove();
@@ -427,10 +434,10 @@ function update() {
 }
 
 function createPipe() {
-  const gap = 140;
-  const minPipe = 50;
-  const maxPipe = height - 60 - gap - minPipe;
-  const h = Math.floor(Math.random() * (maxPipe - minPipe + 1)) + minPipe;
+  const gap = 120;
+  const min = 50;
+  const max = height - 112 - gap - min;
+  const h = Math.floor(Math.random() * (max - min + 1)) + min;
 
   const top = document.createElement('div');
   top.className = 'pipe top-pipe';
@@ -439,10 +446,10 @@ function createPipe() {
   top.style.top = '0';
 
   const btm = document.createElement('div');
-  btm.className = 'pipe btm-pipe';
-  btm.style.height = (height - 60 - gap - h) + 'px';
+  btm.className = 'pipe';
+  btm.style.height = (height - 112 - gap - h) + 'px';
   btm.style.left = width + 'px';
-  btm.style.bottom = '60px'; 
+  btm.style.bottom = '112px'; 
 
   pipesCont.appendChild(top);
   pipesCont.appendChild(btm);
@@ -454,11 +461,11 @@ function hit() {
   playSound('hit');
   
   const flash = document.getElementById("flash");
-  flash.style.opacity = 0.6;
+  flash.style.opacity = 0.8;
   setTimeout(() => flash.style.opacity = 0, 100);
 
   birdEl.style.transition = 'transform 0.5s ease-in';
-  birdEl.style.transform = `translate(0, ${height - 60 - 24}px) rotate(90deg)`;
+  birdEl.style.transform = `translate(50px, ${height - 112 - 24}px) rotate(90deg)`;
 
   if (score > personalBest) {
     personalBest = score;
@@ -499,19 +506,51 @@ window.resetGame = () => {
   scoreEl.style.display = 'block';
   document.getElementById("game-over-screen").style.display = 'none';
   document.getElementById("game-over-screen").classList.remove('show');
+  
+  // Show Start Msg
   document.getElementById("startMsg").style.display = 'block';
   
   birdEl.style.transition = 'none';
-  birdEl.style.transform = `translate(0, ${birdY}px)`;
-  birdEl.style.backgroundImage = `url(${sprites.bird[1]})`;
+  birdEl.style.transform = `translate(50px, ${birdY}px)`;
+  birdEl.style.backgroundImage = `url(${assets.bird1})`;
 };
+
+/* --- SOUND ENGINE --- */
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(type) {
+  if (ctx.state === 'suspended') ctx.resume();
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+
+  if (type === 'flap') {
+    osc.frequency.setValueAtTime(400, ctx.currentTime);
+    osc.type = 'triangle';
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+    osc.start(); osc.stop(ctx.currentTime + 0.1);
+  } else if (type === 'point') {
+    osc.frequency.setValueAtTime(1000, ctx.currentTime);
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+    osc.start(); osc.stop(ctx.currentTime + 0.15);
+  } else if (type === 'hit') {
+    osc.frequency.setValueAtTime(150, ctx.currentTime);
+    osc.type = 'sawtooth';
+    gain.gain.setValueAtTime(0.2, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.3);
+    osc.start(); osc.stop(ctx.currentTime + 0.3);
+  }
+}
 
 window.addEventListener('keydown', e => { if(e.code==='Space') { e.preventDefault(); flap(); } });
 container.addEventListener('touchstart', e => { e.preventDefault(); flap(); }, {passive:false});
 container.addEventListener('mousedown', e => { if(e.target.className!=='play-btn') flap(); });
 
-resetGame();
-loop();
+// START LOADING
+preloadGame();
 </script>
 
 </body>
