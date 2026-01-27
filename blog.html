@@ -240,7 +240,6 @@ header h2 {
 .danger-btn { background: var(--danger); }
 .danger-btn:hover { background: #dc2626; }
 
-/* Close Drawer Button */
 .close-drawer {
   background: none; border: none;
   color: var(--text-muted); font-size: 24px;
@@ -294,7 +293,7 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
     </div>
   </div>
 
-  <h3>Global Leaderboard (Top Players)</h3>
+  <h3>🏆 Global Leaderboard (2048)</h3>
   <ul id="leaderboard">
     <li style="text-align:center;">Loading scores...</li>
   </ul>
@@ -338,7 +337,7 @@ import {
   deleteUser,signOut
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 import {
-  getFirestore,doc,getDoc,collection,getDocs, query, orderBy, limit
+  getFirestore,doc,getDoc,collection,getDocs
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -352,7 +351,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser;
 
-// --- SAFE DOM ELEMENTS ---
+// Elements
 const els = {
     name: document.getElementById("displayName"),
     email: document.getElementById("email"),
@@ -367,7 +366,7 @@ const els = {
     avatarInput: document.getElementById("avatarInput")
 };
 
-// --- AUTH STATE LISTENER ---
+// Listen for Auth Changes
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
     location.replace("index.html");
@@ -375,7 +374,7 @@ onAuthStateChanged(auth, async (user) => {
   }
   currentUser = user;
 
-  // 1. Update UI with basic Auth data
+  // 1. Update UI
   els.name.textContent = user.displayName || "Player";
   els.topName.textContent = user.displayName || "Player";
   els.email.textContent = user.email;
@@ -384,45 +383,42 @@ onAuthStateChanged(auth, async (user) => {
   els.avatar.src = photo;
   els.topAvatar.src = photo;
 
-  // 2. Fetch Firestore Data (Best Score)
+  // 2. Fetch Personal Score (best2048)
   try {
-      const docRef = doc(db, "users", user.uid);
-      const snap = await getDoc(docRef);
-      
+      const snap = await getDoc(doc(db, "users", user.uid));
       if (snap.exists()) {
         const data = snap.data();
-        // FIXED: Using 'best2048' to match signup logic
+        // Force update score display
         els.score.textContent = data.best2048 || 0;
       }
-  } catch (e) {
-      console.error("Error fetching user data:", e);
-  }
+  } catch (e) { console.error(e); }
 
   loadLeaderboard();
 });
 
-// --- LEADERBOARD LOGIC ---
+// Load Leaderboard Logic (Fixed Sync)
 async function loadLeaderboard() {
   els.leaderboard.innerHTML = "<li>Loading...</li>";
   
   try {
-      // Fetch users. Ideally, you should use query(collection(db, "users"), orderBy("best2048", "desc"), limit(10))
-      // But since indices might not be built yet, we will fetch and sort manually for now.
       const snap = await getDocs(collection(db, "users"));
       let players = [];
       
       snap.forEach(doc => {
         const d = doc.data();
-        players.push({
-            name: d.username || "Unknown",
-            score: d.best2048 || 0 // FIXED FIELD NAME
-        });
+        // IMPORTANT: Check for best2048 specifically
+        if (d.best2048 > 0) {
+            players.push({
+                name: d.username || "Unknown",
+                score: d.best2048
+            });
+        }
       });
 
-      // Sort Descending
+      // Sort
       players.sort((a, b) => b.score - a.score);
 
-      // Render Top 5
+      // Render
       els.leaderboard.innerHTML = "";
       if(players.length === 0) {
           els.leaderboard.innerHTML = "<li>No scores yet. Be the first!</li>";
@@ -441,11 +437,10 @@ async function loadLeaderboard() {
   }
 }
 
-// --- DRAWER FUNCTIONS ---
+// Drawer Controls
 window.openDrawer = () => {
   els.drawer.classList.add("open");
   els.overlay.classList.add("active");
-  // Pre-fill inputs
   els.nameInput.value = currentUser.displayName || "";
   els.avatarInput.value = currentUser.photoURL || "";
 };
@@ -458,25 +453,19 @@ window.closeDrawer = () => {
 window.saveName = async () => {
   const newName = els.nameInput.value.trim();
   if(!newName) return alert("Name cannot be empty");
-  
-  try {
-    await updateProfile(currentUser, { displayName: newName });
-    els.name.textContent = newName;
-    els.topName.textContent = newName;
-    alert("Name updated!");
-  } catch(e) { alert(e.message); }
+  await updateProfile(currentUser, { displayName: newName });
+  els.name.textContent = newName;
+  els.topName.textContent = newName;
+  alert("Name updated!");
 };
 
 window.saveAvatar = async () => {
   const newUrl = els.avatarInput.value.trim();
   if(!newUrl) return alert("URL cannot be empty");
-
-  try {
-    await updateProfile(currentUser, { photoURL: newUrl });
-    els.avatar.src = newUrl;
-    els.topAvatar.src = newUrl;
-    alert("Avatar updated!");
-  } catch(e) { alert(e.message); }
+  await updateProfile(currentUser, { photoURL: newUrl });
+  els.avatar.src = newUrl;
+  els.topAvatar.src = newUrl;
+  alert("Avatar updated!");
 };
 
 window.logoutUser = async () => {
@@ -486,10 +475,8 @@ window.logoutUser = async () => {
 
 window.deleteAccount = async () => {
   if (confirm("Are you sure? This cannot be undone.")) {
-    try {
-      await deleteUser(currentUser);
-      location.replace("index.html");
-    } catch(e) { alert("Error: " + e.message + " (You may need to re-login to delete)"); }
+    try { await deleteUser(currentUser); location.replace("index.html"); } 
+    catch(e) { alert("Error: " + e.message); }
   }
 };
 </script>
