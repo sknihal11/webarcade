@@ -3,84 +3,102 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Multiplayer Lobby – WebArcade</title>
-
+<title>WebArcade | Multiplayer Lobby</title>
 <style>
-:root { --bg: #0f172a; --card: #1e293b; --accent: #8b5cf6; --text: #f8fafc; }
-* { box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
+  :root {
+    --bg: #020617; --card-bg: rgba(30, 41, 59, 0.7);
+    --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.5);
+    --text: #f8fafc; --muted: #94a3b8; --border: rgba(255, 255, 255, 0.1);
+  }
 
-body {
-  margin: 0; background: var(--bg); color: var(--text);
-  min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
-}
+  body {
+    margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg);
+    color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  }
 
-.container {
-  width: 90%; max-width: 400px; text-align: center;
-}
+  .lobby-container {
+    width: 90%; max-width: 600px; background: var(--card-bg);
+    border: 1px solid var(--border); border-radius: 24px; padding: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    text-align: center;
+  }
 
-h1 { margin-bottom: 30px; font-size: 2rem; background: linear-gradient(to right, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  h1 { margin: 0 0 10px 0; background: linear-gradient(to right, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-.card {
-  background: var(--card); padding: 30px; border-radius: 20px;
-  box-shadow: 0 10px 40px rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1);
-}
+  /* --- SLOTS --- */
+  .player-slots {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;
+  }
+  .slot {
+    background: rgba(0,0,0,0.3); border: 2px dashed var(--border);
+    border-radius: 15px; padding: 15px; display: flex; flex-direction: column;
+    align-items: center; min-height: 100px; justify-content: center;
+    transition: 0.3s;
+  }
+  .slot.occupied { border: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); border-style: solid; }
+  .slot img { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 8px; border: 2px solid var(--accent); }
+  .slot span { font-size: 14px; font-weight: 600; }
 
-input {
-  width: 100%; padding: 15px; border-radius: 12px; border: 2px solid #334155;
-  background: #0f172a; color: #fff; font-size: 18px; text-align: center; letter-spacing: 2px;
-  margin-bottom: 15px; outline: none; transition: 0.2s;
-}
-input:focus { border-color: var(--accent); }
+  /* --- INPUTS --- */
+  .room-info { margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; }
+  .room-id { font-family: monospace; font-size: 24px; color: var(--accent); letter-spacing: 2px; }
 
-.btn {
-  width: 100%; padding: 15px; border: none; border-radius: 12px;
-  font-size: 16px; font-weight: bold; cursor: pointer; color: white;
-  margin-bottom: 10px; transition: 0.2s;
-}
-.btn-host { background: linear-gradient(135deg, var(--accent), #6366f1); }
-.btn-join { background: #334155; }
-.btn-back { background: transparent; color: #94a3b8; margin-top: 10px; }
+  input {
+    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
+    background: #0f172a; color: #fff; margin-bottom: 15px; text-align: center;
+  }
 
-.status { margin-top: 20px; font-size: 14px; min-height: 20px; color: #cbd5e1; }
-.code-display { font-size: 32px; font-weight: 900; letter-spacing: 5px; color: var(--accent); margin: 20px 0; }
+  .btn {
+    width: 100%; padding: 14px; border: none; border-radius: 12px;
+    font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase;
+  }
+  .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
+  .btn-secondary { background: #334155; color: white; margin-top: 10px; }
+  .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-/* Hidden logic */
-.hidden { display: none; }
+  .back-btn { margin-top: 20px; display: inline-block; color: var(--muted); text-decoration: none; font-size: 14px; }
 </style>
 </head>
-
 <body>
 
-<div class="container">
-  <h1>MULTIPLAYER ⚔️</h1>
+<div class="lobby-container" id="setupView">
+  <h1>Multiplayer Arena</h1>
+  <p style="color:var(--muted)">Create a room or join a friend</p>
   
-  <div id="menuPanel" class="card">
-    <button class="btn btn-host" onclick="hostGame()">HOST GAME</button>
-    <div style="margin: 10px 0; opacity: 0.5">- OR -</div>
-    <input id="roomCodeInput" placeholder="ENTER ROOM CODE" maxlength="6" style="text-transform:uppercase">
-    <button class="btn btn-join" onclick="joinGame()">JOIN GAME</button>
-    <button class="btn btn-back" onclick="location.href='blog.html'">← Back to Dashboard</button>
+  <button class="btn btn-primary" onclick="createRoom()">Host New Game</button>
+  
+  <div style="margin: 20px 0; color: var(--muted)">— OR —</div>
+  
+  <input type="text" id="joinInput" placeholder="Enter 6-Digit Code">
+  <button class="btn btn-secondary" onclick="joinRoom()">Join Game</button>
+  
+  <br>
+  <a href="blog.html" class="back-btn">← Back to Arcade</a>
+</div>
+
+<div class="lobby-container" id="roomView" style="display:none">
+  <h2 id="lobbyTitle">Waiting for Players...</h2>
+  <div class="room-info">
+    <div style="font-size: 12px; color: var(--muted)">ROOM CODE</div>
+    <div class="room-id" id="displayCode">------</div>
   </div>
 
-  <div id="lobbyPanel" class="card hidden">
-    <h3>Room Code</h3>
-    <div class="code-display" id="displayCode">...</div>
-    <div class="status" id="lobbyStatus">Waiting for opponent...</div>
-    <div style="margin-top:20px;">
-       <div id="p1Name" style="color:#8b5cf6">You (Host)</div>
-       <div style="font-size:20px; margin:5px 0">VS</div>
-       <div id="p2Name" style="color:#94a3b8">...</div>
-    </div>
-    <button class="btn btn-host hidden" id="startGameBtn" onclick="launchGame()">START GAME</button>
-    <button class="btn btn-back" onclick="location.reload()">Cancel</button>
+  <div class="player-slots">
+    <div class="slot" id="slot0"><span>Waiting...</span></div>
+    <div class="slot" id="slot1"><span>Empty</span></div>
+    <div class="slot" id="slot2"><span>Empty</span></div>
+    <div class="slot" id="slot3"><span>Empty</span></div>
   </div>
 
+  <button id="startBtn" class="btn btn-primary" onclick="startGame()" style="display:none">Start Game</button>
+  <p id="waitMsg" style="color: var(--muted); font-size: 14px;">Only the host can start the game.</p>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -92,94 +110,130 @@ const db = getFirestore(app);
 
 let user = null;
 let currentRoomId = null;
-let unsubscribe = null;
+let isHost = false;
 
-onAuthStateChanged(auth, u => {
-  if(!u) location.href = 'index.html';
-  user = u;
-});
+onAuthStateChanged(auth, u => { if(u) user = u; else location.href="index.html"; });
 
-// --- HOST LOGIC ---
-window.hostGame = async () => {
-  const roomId = Math.floor(100000 + Math.random() * 900000).toString(); // 6 Digit Code
+// --- ROOM LOGIC ---
+
+window.createRoom = async () => {
+  const roomId = Math.floor(100000 + Math.random() * 900000).toString();
   currentRoomId = roomId;
+  isHost = true;
 
-  // UI Update
-  document.getElementById("menuPanel").classList.add("hidden");
-  document.getElementById("lobbyPanel").classList.remove("hidden");
-  document.getElementById("displayCode").innerText = roomId;
-  document.getElementById("p1Name").innerText = user.displayName || "Host";
-
-  // Create Room in DB
   await setDoc(doc(db, "matches", roomId), {
+    hostId: user.uid,
+    players: [{uid: user.uid, name: user.displayName, photo: user.photoURL}],
     status: "waiting",
-    host: user.uid,
-    hostName: user.displayName || "Host",
-    guest: null,
-    guestName: null,
-    gameType: "uno" // For future expansion
+    createdAt: Date.now()
   });
 
-  // Listen for Guest
-  unsubscribe = onSnapshot(doc(db, "matches", roomId), (snap) => {
-    const data = snap.data();
-    if (data.guest) {
-      document.getElementById("p2Name").innerText = data.guestName;
-      document.getElementById("p2Name").style.color = "#f43f5e"; // Red color for guest
-      document.getElementById("lobbyStatus").innerText = "Player found! Ready to start.";
-      document.getElementById("startGameBtn").classList.remove("hidden");
-    }
-    
-    // If game started
-    if(data.status === 'playing') {
-      window.location.href = `uno_game.html?room=${roomId}&role=host`;
-    }
-  });
+  enterLobby();
 };
 
-// --- JOIN LOGIC ---
-window.joinGame = async () => {
-  const roomId = document.getElementById("roomCodeInput").value.trim();
-  if(roomId.length !== 6) return alert("Invalid Code");
+window.joinRoom = async () => {
+  const roomId = document.getElementById("joinInput").value.trim();
+  if(roomId.length !== 6) return alert("Enter a valid 6-digit code");
 
-  const roomRef = doc(db, "matches", roomId);
-  const snap = await getDoc(roomRef);
-
+  const snap = await getDoc(doc(db, "matches", roomId));
   if(!snap.exists()) return alert("Room not found!");
-  if(snap.data().status !== "waiting") return alert("Game already full or started.");
+  if(snap.data().players.length >= 4) return alert("Room is full!");
 
-  // Join Room
-  await updateDoc(roomRef, {
-    guest: user.uid,
-    guestName: user.displayName || "Guest"
+  currentRoomId = roomId;
+  isHost = false;
+
+  await updateDoc(doc(db, "matches", roomId), {
+    players: arrayUnion({uid: user.uid, name: user.displayName, photo: user.photoURL})
   });
 
-  // Wait for Host to Start
-  document.getElementById("menuPanel").classList.add("hidden");
-  document.getElementById("lobbyPanel").classList.remove("hidden");
-  document.getElementById("displayCode").innerText = roomId;
-  document.getElementById("lobbyStatus").innerText = "Connected! Waiting for host to start...";
-  document.getElementById("p1Name").innerText = snap.data().hostName;
-  document.getElementById("p2Name").innerText = user.displayName || "Guest";
-  document.getElementById("p2Name").style.color = "#f43f5e";
-
-  unsubscribe = onSnapshot(roomRef, (s) => {
-    const d = s.data();
-    if(d.status === 'playing') {
-      window.location.href = `uno_game.html?room=${roomId}&role=guest`;
-    }
-  });
+  enterLobby();
 };
 
-// --- START LOGIC ---
-window.launchGame = async () => {
+function enterLobby() {
+  document.getElementById("setupView").style.display = "none";
+  document.getElementById("roomView").style.display = "block";
+  document.getElementById("displayCode").innerText = currentRoomId;
+
+  // Listen for players
+  onSnapshot(doc(db, "matches", currentRoomId), (snap) => {
+    const data = snap.data();
+    if(!data) return;
+
+    // Check if game started
+    if(data.status === "playing") {
+      location.href = `uno_game.html?room=${currentRoomId}`;
+      return;
+    }
+
+    // Update Slots
+    for(let i=0; i<4; i++) {
+      const slot = document.getElementById(`slot${i}`);
+      const p = data.players[i];
+      if(p) {
+        slot.className = "slot occupied";
+        slot.innerHTML = `<img src="${p.photo || 'https://i.imgur.com/8Km9tLL.png'}"><span>${p.name}</span>`;
+      } else {
+        slot.className = "slot";
+        slot.innerHTML = "<span>Empty</span>";
+      }
+    }
+
+    // Host controls
+    if(isHost) {
+      document.getElementById("startBtn").style.display = "block";
+      document.getElementById("waitMsg").style.display = "none";
+      if(data.players.length < 2) document.getElementById("startBtn").disabled = true;
+      else document.getElementById("startBtn").disabled = false;
+    }
+  });
+}
+
+// --- GAME INITIALIZER (THE BIG PART) ---
+window.startGame = async () => {
+  const snap = await getDoc(doc(db, "matches", currentRoomId));
+  const players = snap.data().players;
+  
+  // 1. Generate Deck (Same as UNO Mobile)
+  const colors = ['red', 'blue', 'green', 'yellow'];
+  const values = ['0','1','2','3','4','5','6','7','8','9','SKIP','REV','+2'];
+  let deck = [];
+  
+  colors.forEach(c => {
+    values.forEach(v => {
+      deck.push({ color: c, val: v, id: Math.random() });
+      if(v !== '0') deck.push({ color: c, val: v, id: Math.random() });
+    });
+  });
+  for(let i=0; i<4; i++) {
+    deck.push({ color: 'wild', val: 'WILD', id: Math.random() });
+    deck.push({ color: 'wild', val: '+4', id: Math.random() });
+  }
+
+  // 2. Shuffle
+  deck.sort(() => Math.random() - 0.5);
+
+  // 3. Deal to all players
+  let hands = {};
+  let playerList = [];
+
+  players.forEach(p => {
+    hands[p.uid] = deck.splice(0, 7); // Give 7 cards to each
+    playerList.push(p.uid); // Keep list of UIDs for turn rotation
+  });
+
+  const startCard = deck.pop();
+
+  // 4. Update Database
   await updateDoc(doc(db, "matches", currentRoomId), {
     status: "playing",
-    turn: user.uid // Host goes first
+    players: playerList,
+    hands: hands,
+    deck: deck,
+    currentCard: startCard,
+    turnIndex: 0,
+    direction: 1
   });
-  // Listener will redirect us
 };
-
 </script>
 </body>
 </html>
