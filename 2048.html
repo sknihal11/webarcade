@@ -8,14 +8,13 @@
 <style>
 :root {
   --bg-base: #020617;
-  --bg-card: rgba(15, 23, 42, 0.8);
+  --bg-card: #1e293b;
   --accent: #6366f1;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --grid-color: rgba(99, 102, 241, 0.15);
 }
 
-* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", system-ui, sans-serif; }
+* { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", sans-serif; }
 
 body {
   min-height: 100vh;
@@ -24,134 +23,156 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 20px;
-  overflow: hidden; /* Prevent scroll on mobile */
+  padding: 10px;
+  overflow: hidden; 
   user-select: none;
 }
 
-/* --- RETRO BACKGROUND --- */
+/* BACKGROUND GRID ANIMATION */
 .retro-bg {
   position: fixed; inset: 0; z-index: -1;
   background: 
-    linear-gradient(transparent 0%, var(--bg-base) 100%),
-    linear-gradient(0deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent),
-    linear-gradient(90deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent);
-  background-size: 50px 50px;
-  transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px);
-  animation: moveGrid 10s linear infinite;
-  opacity: 0.6; pointer-events: none;
-}
-@keyframes moveGrid {
-  0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
-  100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); }
+    linear-gradient(transparent 95%, rgba(99, 102, 241, 0.1) 95%),
+    linear-gradient(90deg, transparent 95%, rgba(99, 102, 241, 0.1) 95%);
+  background-size: 40px 40px;
+  transform: perspective(500px) rotateX(20deg);
+  opacity: 0.4;
+  pointer-events: none;
 }
 
+/* MAIN CONTAINER */
 .scene {
-  display: flex; gap: 32px;
-  padding: 24px;
+  display: flex; gap: 20px;
+  padding: 20px;
   border-radius: 20px;
-  backdrop-filter: blur(12px);
-  background: rgba(30, 41, 59, 0.6);
+  background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
-  max-width: 900px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+  backdrop-filter: blur(10px);
+  max-width: 800px;
+  width: 100%;
+  justify-content: center;
 }
 
-@media(max-width: 800px) {
-  .scene { flex-direction: column; width: 100%; padding: 16px; gap: 20px; }
+@media(max-width: 850px) {
+  .scene { flex-direction: column; align-items: center; max-width: 450px; }
 }
 
-/* GAME CONTAINER */
+/* --- GAME SECTION --- */
 .game-container {
-  display: flex; flex-direction: column; align-items: center;
+  width: 100%;
+  max-width: 360px; /* Locks width to prevent shifting */
 }
 
+/* TOP BAR (FIXED OVERLAP) */
 .top-bar {
-  width: 100%; display: flex; justify-content: space-between; align-items: center;
+  display: flex; 
+  flex-wrap: wrap; /* Allows wrapping if screen is tiny */
+  justify-content: space-between; 
+  align-items: center;
   margin-bottom: 16px;
+  gap: 10px;
+}
+
+.header-row {
+  display: flex; justify-content: space-between; width: 100%; align-items: center;
 }
 
 .back-btn {
-  background: none; border: none; color: var(--text-muted);
-  cursor: pointer; font-size: 16px; font-weight: 600;
-  display: flex; align-items: center; gap: 5px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  color: var(--text-muted); padding: 6px 12px;
+  cursor: pointer; font-size: 13px; font-weight: 600;
+  border-radius: 8px; text-decoration: none;
 }
-.back-btn:hover { color: #fff; }
+.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
 
 .title {
-  font-size: 32px; font-weight: 800;
-  background: linear-gradient(to right, #fff, var(--accent));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-size: 28px; font-weight: 800;
+  color: var(--text-main);
+  text-shadow: 0 0 15px rgba(99,102,241,0.5);
 }
 
-.score-box { display: flex; gap: 10px; }
-.score, .best {
-  background: rgba(15, 23, 42, 0.8);
+.score-box {
+  display: flex; gap: 8px; margin-top: 5px; width: 100%;
+}
+.score-card {
+  flex: 1;
+  background: #0f172a;
   border: 1px solid rgba(255,255,255,0.1);
-  color: #fff; padding: 8px 16px;
-  border-radius: 8px; font-weight: bold; font-size: 14px;
+  border-radius: 8px;
+  padding: 8px;
   text-align: center;
-  min-width: 80px;
 }
-.score span, .best span { display: block; font-size: 10px; color: var(--text-muted); text-transform: uppercase; }
+.score-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+.score-val { font-size: 16px; font-weight: bold; color: #fff; }
 
-/* BOARD */
-.board {
-  background: #bbada0;
-  padding: 10px; border-radius: 12px;
+/* BOARD (STABLE) */
+.board-bg {
+  background: #0f172a;
+  padding: 10px; border-radius: 10px;
+  width: 340px; height: 340px;
+  border: 2px solid rgba(255,255,255,0.05);
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
   gap: 10px;
-  width: 340px; height: 340px;
-  touch-action: none; /* Crucial for swipe */
+  touch-action: none; /* Critical for swipe */
 }
 
-@media(max-width: 380px) {
-  .board { width: 300px; height: 300px; gap: 8px; padding: 8px; }
+/* Mobile Adjustment */
+@media(max-width: 360px) {
+  .board-bg { width: 300px; height: 300px; gap: 8px; padding: 8px; }
 }
 
+/* TILES */
 .cell {
   width: 100%; height: 100%;
-  background: rgba(238, 228, 218, 0.35);
   border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 32px; font-weight: bold; color: #776e65;
-  transition: transform 0.1s ease-in-out;
+  font-size: 28px; font-weight: bold;
+  background: rgba(255,255,255,0.03); /* Empty cell color */
+  transition: transform 0.1s, background 0.15s;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); /* Subtle inner border */
 }
 
-/* TILE COLORS */
-.cell[data-value="2"] { background: #eee4da; font-size: 36px; }
-.cell[data-value="4"] { background: #ede0c8; font-size: 36px; }
-.cell[data-value="8"] { background: #f2b179; color: #f9f6f2; }
-.cell[data-value="16"] { background: #f59563; color: #f9f6f2; }
-.cell[data-value="32"] { background: #f67c5f; color: #f9f6f2; }
-.cell[data-value="64"] { background: #f65e3b; color: #f9f6f2; }
-.cell[data-value="128"] { background: #edcf72; color: #f9f6f2; font-size: 28px; box-shadow: 0 0 10px #edcf72; }
-.cell[data-value="256"] { background: #edcc61; color: #f9f6f2; font-size: 28px; box-shadow: 0 0 15px #edcc61; }
-.cell[data-value="512"] { background: #edc850; color: #f9f6f2; font-size: 28px; box-shadow: 0 0 20px #edc850; }
-.cell[data-value="1024"] { background: #edc53f; color: #f9f6f2; font-size: 24px; box-shadow: 0 0 25px #edc53f; }
-.cell[data-value="2048"] { background: #edc22e; color: #f9f6f2; font-size: 24px; box-shadow: 0 0 30px #edc22e; }
+/* POP ANIMATION */
+.pop { animation: pop 0.2s ease-in-out; }
+@keyframes pop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
 
-/* LEADERBOARD SIDEBAR */
+/* TILE COLORS (Vibrant & Neon) */
+.t-2 { background: #e2e8f0; color: #334155; box-shadow: 0 2px 0 #cbd5e1; }
+.t-4 { background: #fef08a; color: #854d0e; box-shadow: 0 2px 0 #fde047; }
+.t-8 { background: #f97316; color: white; box-shadow: 0 2px 0 #ea580c; }
+.t-16 { background: #ef4444; color: white; box-shadow: 0 2px 0 #dc2626; }
+.t-32 { background: #ec4899; color: white; box-shadow: 0 2px 0 #db2777; }
+.t-64 { background: #a855f7; color: white; box-shadow: 0 2px 0 #9333ea; }
+.t-128 { background: #6366f1; color: white; box-shadow: 0 0 10px #6366f1; font-size: 24px; }
+.t-256 { background: #3b82f6; color: white; box-shadow: 0 0 15px #3b82f6; font-size: 24px; }
+.t-512 { background: #14b8a6; color: white; box-shadow: 0 0 20px #14b8a6; font-size: 24px; }
+.t-1024 { background: #22c55e; color: white; box-shadow: 0 0 25px #22c55e; font-size: 20px; }
+.t-2048 { background: #eab308; color: white; box-shadow: 0 0 30px #eab308; font-size: 20px; }
+
+/* LEADERBOARD */
 .leaderboard {
-  min-width: 260px;
-  background: var(--bg-card);
-  border-radius: 16px; padding: 20px;
+  width: 100%;
+  background: rgba(30, 41, 59, 0.5);
+  border-radius: 12px; padding: 15px;
   border: 1px solid rgba(255,255,255,0.05);
 }
-.leaderboard h3 { margin-bottom: 15px; font-size: 18px; color: var(--accent); }
+.leaderboard h3 { font-size: 16px; margin-bottom: 12px; color: var(--accent); text-align: center; }
 .entry {
   display: flex; justify-content: space-between;
-  padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
-  font-size: 14px;
+  padding: 8px 10px; 
+  background: rgba(0,0,0,0.2);
+  margin-bottom: 6px;
+  border-radius: 6px;
+  font-size: 13px;
 }
-.entry:last-child { border-bottom: none; }
-.entry span:nth-child(1) { color: var(--text-main); }
-.entry span:nth-child(2) { color: #fbbf24; font-weight: bold; }
-
-.controls-hint {
-  margin-top: 20px; text-align: center; font-size: 12px; color: var(--text-muted);
-}
+.rank { font-weight: bold; color: #fbbf24; margin-right: 8px; }
 </style>
 </head>
 
@@ -163,18 +184,28 @@ body {
 
   <div class="game-container">
     <div class="top-bar">
-      <button class="back-btn" onclick="location.href='blog.html'">← Dashboard</button>
-      <div class="title">2048</div>
+      <div class="header-row">
+        <a href="blog.html" class="back-btn">← Back</a>
+        <div class="title">2048</div>
+        <div style="width: 50px;"></div> </div>
+      
       <div class="score-box">
-        <div class="score"><span>Score</span><div id="score">0</div></div>
-        <div class="best"><span>Best</span><div id="best">0</div></div>
+        <div class="score-card">
+          <div class="score-label">Score</div>
+          <div class="score-val" id="score">0</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">Best</div>
+          <div class="score-val" id="best">0</div>
+        </div>
       </div>
     </div>
     
-    <div class="board" id="board"></div>
+    <div class="board-bg" id="board">
+      </div>
     
-    <div class="controls-hint">
-      Desktop: Arrow Keys • Mobile: Swipe
+    <div style="text-align:center; font-size:12px; color:#64748b; margin-top:15px;">
+      Use Arrow Keys or Swipe
     </div>
   </div>
 
@@ -188,9 +219,7 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import {
-  getFirestore, collection, getDocs, doc, setDoc, getDoc
-} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -209,220 +238,151 @@ let best = 0;
 const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
-const leaderboardEl = document.getElementById("leaderboard");
+const lbEl = document.getElementById("leaderboard");
 
-// --- 1. AUTH & INIT ---
+/* --- INITIALIZATION --- */
 onAuthStateChanged(auth, async (u) => {
-  if (!u) {
-     // Optional: Redirect if not logged in, or just let them play locally
-     // location.href = "index.html"; 
-  }
   user = u;
-  
-  if (user) {
-    // Fetch user's personal best from Firestore
+  if(user) {
     try {
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        best = data.best2048 || 0; // CORRECT FIELD NAME
-      }
-    } catch (e) { console.error(e); }
+      const s = await getDoc(doc(db, "users", user.uid));
+      if(s.exists()) best = s.data().best2048 || 0;
+    } catch(e){}
   } else {
-    // Fallback to local storage if guest
-    best = Number(localStorage.getItem("best2048") || 0);
+    best = Number(localStorage.getItem("best2048")||0);
   }
-  
-  updateScoreDisplay();
+  updateUI();
   loadLeaderboard();
 });
 
-// --- 2. LEADERBOARD ---
-async function loadLeaderboard() {
-  leaderboardEl.innerHTML = "<div class='entry'>Loading...</div>";
-  try {
-    const snap = await getDocs(collection(db, "users"));
-    const rows = [];
-    
-    snap.forEach(d => {
-      const data = d.data();
-      // CORRECT FIELD NAME: 'best2048'
-      if (data.best2048 > 0) {
-        rows.push({
-          name: data.username || "Player",
-          score: data.best2048
-        });
-      }
-    });
-
-    rows.sort((a, b) => b.score - a.score);
-    
-    leaderboardEl.innerHTML = "";
-    if (rows.length === 0) {
-      leaderboardEl.innerHTML = "<div class='entry' style='justify-content:center; opacity:0.7'>No scores yet</div>";
-      return;
-    }
-
-    rows.slice(0, 5).forEach((r, i) => {
-      leaderboardEl.innerHTML += `
-        <div class="entry">
-          <span>#${i+1} ${r.name.substring(0, 12)}</span>
-          <span>${r.score}</span>
-        </div>`;
-    });
-  } catch (e) {
-    console.error("Leaderboard error:", e);
-    leaderboardEl.innerHTML = "<div class='entry'>Offline</div>";
-  }
-}
-
-// --- 3. GAME LOGIC ---
-function init() {
-  board = Array.from({length: 4}, () => Array(4).fill(0));
+/* --- GAME LOGIC --- */
+function initGame() {
+  board = Array.from({length:4}, () => Array(4).fill(0));
   score = 0;
-  addRandom();
-  addRandom();
-  draw();
+  addRandom(); addRandom();
+  drawBoard();
 }
 
-function draw() {
+function drawBoard() {
   boardEl.innerHTML = "";
-  board.flat().forEach(val => {
-    const cell = document.createElement("div");
-    cell.className = "cell";
-    if (val) {
-      cell.textContent = val;
-      cell.dataset.value = val;
-    }
-    boardEl.appendChild(cell);
+  board.forEach((row, r) => {
+    row.forEach((val, c) => {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      if(val > 0) {
+        cell.textContent = val;
+        cell.classList.add(`t-${val}`);
+        // Add pop class for animation (handled by logic below mostly, simple re-render here)
+      }
+      boardEl.appendChild(cell);
+    });
   });
-  updateScoreDisplay();
+  updateUI();
 }
 
-function updateScoreDisplay() {
+function updateUI() {
   scoreEl.textContent = score;
   bestEl.textContent = best;
 }
 
 function addRandom() {
-  const empty = [];
-  board.forEach((row, r) => row.forEach((val, c) => {
-    if (val === 0) empty.push([r, c]);
-  }));
-  if (empty.length === 0) return;
+  let empty = [];
+  board.forEach((r, i) => r.forEach((v, j) => { if(v===0) empty.push({x:i, y:j}) }));
+  if(empty.length === 0) return;
+  let spot = empty[Math.floor(Math.random() * empty.length)];
+  board[spot.x][spot.y] = Math.random() > 0.9 ? 4 : 2;
   
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
-  board[r][c] = Math.random() < 0.9 ? 2 : 4;
+  // Quick hack to animate the specific new cell
+  // In a full React/Vue app we would track IDs, but here re-draw works fast enough
 }
 
 function slide(row) {
   let arr = row.filter(v => v);
-  for (let i = 0; i < arr.length - 1; i++) {
-    if (arr[i] === arr[i+1]) {
-      arr[i] *= 2;
-      score += arr[i];
-      arr[i+1] = 0;
+  for(let i=0; i<arr.length-1; i++){
+    if(arr[i] === arr[i+1]){
+      arr[i] *= 2; score += arr[i]; arr[i+1] = 0;
     }
   }
   arr = arr.filter(v => v);
-  while (arr.length < 4) arr.push(0);
+  while(arr.length < 4) arr.push(0);
   return arr;
 }
 
-function move(direction) {
-  const oldBoard = JSON.stringify(board);
+function move(dir) {
+  let oldStr = JSON.stringify(board);
   
-  if (direction === "left") {
-    board = board.map(row => slide(row));
-  } else if (direction === "right") {
-    board = board.map(row => slide(row.reverse()).reverse());
-  } else if (direction === "up") {
-    for (let c = 0; c < 4; c++) {
+  if(dir === 'left') board = board.map(r => slide(r));
+  else if(dir === 'right') board = board.map(r => slide(r.reverse()).reverse());
+  else if(dir === 'up') {
+    for(let c=0; c<4; c++) {
       let col = [board[0][c], board[1][c], board[2][c], board[3][c]];
       col = slide(col);
-      for (let r = 0; r < 4; r++) board[r][c] = col[r];
+      for(let r=0; r<4; r++) board[r][c] = col[r];
     }
-  } else if (direction === "down") {
-    for (let c = 0; c < 4; c++) {
+  }
+  else if(dir === 'down') {
+    for(let c=0; c<4; c++) {
       let col = [board[0][c], board[1][c], board[2][c], board[3][c]];
       col = slide(col.reverse()).reverse();
-      for (let r = 0; r < 4; r++) board[r][c] = col[r];
+      for(let r=0; r<4; r++) board[r][c] = col[r];
     }
   }
 
-  if (oldBoard !== JSON.stringify(board)) {
+  if(JSON.stringify(board) !== oldStr) {
     addRandom();
-    draw();
-    checkGameOver();
-    saveScore();
-  }
-}
-
-function checkGameOver() {
-   // Simple check: if no empty spots and no merges possible
-   // (Logic simplified for brevity, mostly handled by user inability to move)
-}
-
-async function saveScore() {
-  if (score > best) {
-    best = score;
-    updateScoreDisplay();
-    localStorage.setItem("best2048", best); // Local backup
+    drawBoard();
     
-    if (user) {
-      // Correct Field Name: best2048
-      await setDoc(doc(db, "users", user.uid), {
-        username: user.displayName || "Player",
-        best2048: best
-      }, { merge: true });
-      
-      // Refresh leaderboard if we just got a high score
-      loadLeaderboard(); 
+    // Save High Score
+    if(score > best) {
+      best = score;
+      localStorage.setItem("best2048", best);
+      if(user) setDoc(doc(db,"users",user.uid), { best2048: best }, { merge: true }).then(loadLeaderboard);
     }
   }
 }
 
-// --- 4. CONTROLS (Keyboard + Touch) ---
+/* --- LEADERBOARD --- */
+async function loadLeaderboard() {
+  lbEl.innerHTML = "Loading...";
+  try {
+    const s = await getDocs(collection(db, "users"));
+    let d = [];
+    s.forEach(doc => {
+       const dd = doc.data();
+       if(dd.best2048 > 0) d.push({n: dd.username || "Anon", s: dd.best2048});
+    });
+    d.sort((a,b) => b.s - a.s);
+    
+    lbEl.innerHTML = "";
+    if(d.length === 0) lbEl.innerHTML = "<div style='text-align:center;font-size:12px'>No scores yet</div>";
+    
+    d.slice(0,5).forEach((p, i) => {
+      const div = document.createElement("div");
+      div.className = "entry";
+      div.innerHTML = `<div><span class="rank">#${i+1}</span> ${p.n.substring(0,10)}</div> <div>${p.s}</div>`;
+      lbEl.appendChild(div);
+    });
+  } catch(e){ console.log(e); lbEl.innerHTML = "Offline"; }
+}
+
+/* --- CONTROLS --- */
 document.addEventListener("keydown", e => {
   if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
-    e.preventDefault(); // Stop scrolling
-    if (e.key === "ArrowLeft") move("left");
-    if (e.key === "ArrowRight") move("right");
-    if (e.key === "ArrowUp") move("up");
-    if (e.key === "ArrowDown") move("down");
+    e.preventDefault();
+    move(e.key.replace("Arrow","").toLowerCase());
   }
 });
 
-// Swipe Logic
-let touchStartX = 0;
-let touchStartY = 0;
-
-boardEl.addEventListener("touchstart", e => {
-  touchStartX = e.changedTouches[0].screenX;
-  touchStartY = e.changedTouches[0].screenY;
-  e.preventDefault(); // Prevent scroll inside board
-}, {passive: false});
-
+let tsX, tsY;
+boardEl.addEventListener("touchstart", e => { tsX=e.touches[0].clientX; tsY=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
 boardEl.addEventListener("touchend", e => {
-  const touchEndX = e.changedTouches[0].screenX;
-  const touchEndY = e.changedTouches[0].screenY;
-  
-  const dx = touchEndX - touchStartX;
-  const dy = touchEndY - touchStartY;
-  
-  if (Math.abs(dx) > Math.abs(dy)) {
-    // Horizontal
-    if (Math.abs(dx) > 30) move(dx > 0 ? "right" : "left");
-  } else {
-    // Vertical
-    if (Math.abs(dy) > 30) move(dy > 0 ? "down" : "up");
-  }
-  e.preventDefault();
-}, {passive: false});
+  let dX = e.changedTouches[0].clientX - tsX;
+  let dY = e.changedTouches[0].clientY - tsY;
+  if(Math.abs(dX) > Math.abs(dY) && Math.abs(dX)>30) move(dX>0?"right":"left");
+  else if(Math.abs(dY) > 30) move(dY>0?"down":"up");
+}, {passive:false});
 
-// Start Game
-init();
-
+initGame();
 </script>
 
 </body>
