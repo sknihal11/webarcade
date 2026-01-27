@@ -3,239 +3,136 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>UNO Ultimate – WebArcade</title>
+<title>UNO Pro – WebArcade</title>
 <style>
-  :root {
-    --bg-grad: radial-gradient(circle at center, #c62828 0%, #8e0000 100%);
-    --card-ratio: 1.4;
-    --card-w: 80px;
-    --card-h: calc(var(--card-w) * var(--card-ratio));
-    --radius: 10px;
+  :root { 
+    --bg: #020617; --surface: #1e293b; --accent: #6366f1;
+    --red: #ef4444; --blue: #3b82f6; --green: #22c55e; --yellow: #eab308;
   }
-  
-  * { box-sizing: border-box; font-family: "Arial Rounded MT Bold", "Helvetica Rounded", Arial, sans-serif; user-select: none; }
+  * { box-sizing: border-box; font-family: "Segoe UI", sans-serif; user-select: none; }
   
   body { 
-    margin: 0; 
-    background: var(--bg-grad); 
-    height: 100vh; 
-    display: flex; flex-direction: column; overflow: hidden;
+    margin: 0; background: var(--bg); color: #fff; 
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
   }
 
-  /* --- TABLE UI --- */
-  .game-table {
+  /* --- BOARD --- */
+  .game-board {
     flex: 1; display: flex; flex-direction: column; 
-    justify-content: space-between; padding: 10px;
-    position: relative;
-    background-image: url('https://www.transparenttextures.com/patterns/wood-pattern.png'); /* Subtle texture */
+    justify-content: space-between; padding: 20px; position: relative;
+    background: radial-gradient(circle at center, #1e293b 0%, #020617 100%);
   }
 
-  /* --- PLAYER AVATARS --- */
-  .avatar-zone {
-    display: flex; align-items: center; gap: 10px; color: white;
-    background: rgba(0,0,0,0.4); padding: 8px 16px; border-radius: 50px;
-    border: 2px solid rgba(255,255,255,0.2); width: fit-content;
-    transition: 0.3s;
-  }
-  .avatar-zone.active {
-    background: rgba(255, 215, 0, 0.2);
-    border-color: #ffd700;
-    box-shadow: 0 0 15px #ffd700;
-    transform: scale(1.05);
-  }
-  .avatar-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid white; }
-  
-  .top-hud { display: flex; justify-content: space-between; align-items: center; padding: 10px; }
+  .hand-label { font-size: 12px; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; text-align: center;}
+  .card-row { display: flex; justify-content: center; height: 80px; }
 
-  /* --- CARD GRAPHICS (PURE CSS) --- */
-  .card {
-    width: var(--card-w); height: var(--card-h);
-    background: #fff; border-radius: var(--radius);
-    position: relative; cursor: pointer;
-    box-shadow: -2px 2px 6px rgba(0,0,0,0.4);
-    transition: transform 0.2s, margin 0.2s;
-    display: flex; align-items: center; justify-content: center;
-    border: 4px solid white;
-    overflow: hidden;
-  }
-  
-  /* Inner Colored Oval */
-  .card-inner {
-    width: 100%; height: 100%;
-    border-radius: 6px;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
-  }
-  
-  /* Oval Background */
-  .oval {
-    width: 90%; height: 60%;
-    background: white; border-radius: 50%;
-    transform: rotate(-45deg);
-    position: absolute;
-    box-shadow: inset 1px 1px 4px rgba(0,0,0,0.2);
-  }
-
-  /* Numbers/Symbols */
-  .symbol {
-    z-index: 2; font-size: 40px; font-weight: 900;
-    text-shadow: 2px 2px 0px rgba(0,0,0,0.5);
-    -webkit-text-stroke: 1px white;
-    color: inherit; /* Takes color from parent */
-  }
-  
-  .corner-symbol {
-    position: absolute; font-size: 14px; font-weight: bold; color: white;
-    padding: 2px;
-  }
-  .tl { top: 2px; left: 4px; }
-  .br { bottom: 2px; right: 4px; transform: rotate(180deg); }
-
-  /* Colors */
-  .red { background: #d32f2f; color: #d32f2f; }
-  .blue { background: #1976d2; color: #1976d2; }
-  .green { background: #388e3c; color: #388e3c; }
-  .yellow { background: #fbc02d; color: #f9a825; }
-  .black { background: #222; color: black; } /* Wilds */
-
-  /* Wild Gradient */
-  .wild-bg {
-    background: conic-gradient(#d32f2f, #1976d2, #388e3c, #fbc02d, #d32f2f);
-  }
-
-  /* Card Back */
   .card-back {
-    background: #111; border: 4px solid white;
-    background-image: linear-gradient(135deg, #d32f2f 25%, #000 25%, #000 50%, #d32f2f 50%, #d32f2f 75%, #000 75%, #000 100%);
-    background-size: 20px 20px;
-    display: flex; align-items: center; justify-content: center;
-    color: #fbc02d; font-weight: bold; font-style: italic; font-size: 18px;
-    text-shadow: 1px 1px 0 #d32f2f;
+    width: 45px; height: 65px; background: #1e1e1e; border: 2px solid #fff; border-radius: 6px;
+    margin: 0 -15px; box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+    background-image: repeating-linear-gradient(45deg, #333 0, #333 5px, #222 5px, #222 10px);
+    transition: 0.3s transform;
   }
 
-  /* --- ZONES --- */
-  .hand-area {
-    display: flex; justify-content: center; align-items: flex-end;
-    height: 140px; margin-bottom: 10px;
-    perspective: 1000px;
-  }
+  /* --- CENTER --- */
+  .center-area { display: flex; justify-content: center; align-items: center; gap: 40px; }
   
-  /* Card Fan Effect */
-  .my-card {
-    margin-left: -35px; /* Overlap */
-    transform-origin: bottom center;
-    transition: 0.2s;
+  .deck-pile {
+    width: 80px; height: 110px; background: #000; border: 3px solid #444; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    box-shadow: 0 0 20px rgba(255,255,255,0.1); transition: 0.2s;
   }
-  .my-card:hover { transform: translateY(-40px) scale(1.1) z-index 50; margin: 0 5px; }
+  .deck-pile:active { transform: scale(0.9); }
 
-  .center-zone {
-    flex: 1; display: flex; justify-content: center; align-items: center; gap: 30px;
+  #discardPile { position: relative; width: 80px; height: 110px; }
+
+  /* --- CARD STYLES --- */
+  .card {
+    width: 80px; height: 110px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px; font-weight: 900; color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    border: 4px solid white; cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative; text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
   }
+  .player-area .card:hover { transform: translateY(-30px) scale(1.15); z-index: 100; }
 
-  .deck { box-shadow: 0 10px 20px rgba(0,0,0,0.5); cursor: pointer; }
-  .deck:active { transform: scale(0.95); }
+  .c-red { background: var(--red); }
+  .c-blue { background: var(--blue); }
+  .c-green { background: var(--green); }
+  .c-yellow { background: var(--yellow); }
+  .c-wild { background: linear-gradient(45deg, var(--red), var(--blue), var(--green), var(--yellow)); font-size: 18px; }
 
-  /* --- MODALS --- */
+  /* --- UI --- */
+  .status-bar { text-align: center; padding: 12px; background: rgba(0,0,0,0.5); font-weight: bold; }
+  
+  /* Color Picker Modal */
   #colorPicker {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 100;
-    display: none; align-items: center; justify-content: center;
-    flex-direction: column;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200;
   }
   .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
-  .color-btn { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; cursor: pointer; transition: 0.2s; }
-  .color-btn:hover { transform: scale(1.1); }
-  
-  #unoBtn {
-    position: absolute; right: 20px; bottom: 160px;
-    width: 80px; height: 80px; border-radius: 50%;
-    background: linear-gradient(45deg, #fbc02d, #ffeb3b);
-    border: 4px solid #fff;
-    color: #d32f2f; font-weight: 900; font-size: 22px; font-style: italic;
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    cursor: pointer; transform: scale(0); transition: 0.3s;
-    animation: pulse 1s infinite;
+  .color-btn { width: 80px; height: 80px; border-radius: 15px; border: 4px solid #fff; cursor: pointer; }
+
+  /* Win Screen */
+  #winScreen {
+    position: fixed; inset: 0; background: rgba(2, 6, 23, 0.95);
+    display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 300;
   }
-  #unoBtn.show { transform: scale(1); }
-  @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(251, 192, 45, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(251, 192, 45, 0); } 100% { box-shadow: 0 0 0 0 rgba(251, 192, 45, 0); } }
 
-  /* --- ANIMATION CLASSES --- */
-  .draw-anim { animation: drawSlide 0.5s ease; }
-  @keyframes drawSlide { from { transform: translateY(-200px) rotate(180deg); opacity: 0; } to { transform: none; opacity: 1; } }
-
-  #winScreen { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 200; color: white; }
-  
-  .status-text {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    font-size: 32px; font-weight: 900; color: white;
-    text-shadow: 0 4px 10px rgba(0,0,0,0.5); pointer-events: none; opacity: 0;
-    transition: opacity 0.5s;
+  .player-area {
+    display: flex; justify-content: center; align-items: flex-end; 
+    height: 160px; padding-bottom: 20px; overflow-x: auto;
   }
-  .status-text.visible { opacity: 1; }
 
+  /* Animations */
+  @keyframes slideIn {
+    from { transform: translateY(150px) scale(0.5); opacity: 0; }
+    to { transform: translateY(0) scale(1); opacity: 1; }
+  }
+  .animate-card { animation: slideIn 0.5s ease-out; }
 </style>
 </head>
 <body>
 
-<div id="colorPicker">
-  <h2 style="color:white; font-size: 2rem;">CHOOSE COLOR</h2>
-  <div class="color-grid">
-    <div class="color-btn" style="background:#d32f2f" onclick="pickColor('red')"></div>
-    <div class="color-btn" style="background:#1976d2" onclick="pickColor('blue')"></div>
-    <div class="color-btn" style="background:#388e3c" onclick="pickColor('green')"></div>
-    <div class="color-btn" style="background:#fbc02d" onclick="pickColor('yellow')"></div>
+<div class="status-bar" id="statusText">Connecting...</div>
+
+<div class="game-board">
+  <div class="opponent-area">
+    <div class="hand-label">Opponent: <b id="oppCount" style="color:var(--accent)">0</b> Cards</div>
+    <div class="card-row" id="opponentHand"></div>
   </div>
+
+  <div class="center-area">
+    <div class="deck-pile" onclick="drawCard()">
+      <div style="text-align:center"><b>+</b><br><small>DRAW</small></div>
+    </div>
+    <div id="discardPile"></div>
+  </div>
+
+  <div class="player-area" id="myHand"></div>
 </div>
 
-<div class="game-table">
-  
-  <div class="top-hud">
-    <div class="avatar-zone" id="oppAvatarZone">
-      <img src="https://i.imgur.com/8Km9tLL.png" class="avatar-img">
-      <div>
-        <div style="font-size:12px; opacity:0.8">OPPONENT</div>
-        <div id="oppName" style="font-weight:bold">Waiting...</div>
-      </div>
-      <div style="background:#333; padding:2px 8px; border-radius:10px; font-size:12px;">Cards: <span id="oppCount">7</span></div>
-    </div>
-    <button style="background:none; border:1px solid #fff; color:#fff; padding:5px 10px; border-radius:5px; cursor:pointer;" onclick="location.href='blog.html'">EXIT</button>
+<div id="colorPicker">
+  <h3>CHOOSE A COLOR</h3>
+  <div class="color-grid">
+    <div class="color-btn c-red" onclick="selectColor('red')"></div>
+    <div class="color-btn c-blue" onclick="selectColor('blue')"></div>
+    <div class="color-btn c-green" onclick="selectColor('green')"></div>
+    <div class="color-btn c-yellow" onclick="selectColor('yellow')"></div>
   </div>
-
-  <div class="center-zone">
-    <div class="card card-back deck" onclick="drawCard()">
-      UNO
-    </div>
-    
-    <div id="discardPile">
-      </div>
-  </div>
-  
-  <div id="centerMsg" class="status-text">YOUR TURN</div>
-
-  <div style="padding: 0 20px;">
-    <div class="avatar-zone" id="myAvatarZone">
-      <img src="https://i.imgur.com/8Km9tLL.png" class="avatar-img" id="myAvatarImg">
-      <div id="myName" style="font-weight:bold">You</div>
-    </div>
-  </div>
-
-  <div class="hand-area" id="myHand">
-    </div>
-  
-  <div id="unoBtn" onclick="callUno()">UNO!</div>
-
 </div>
 
 <div id="winScreen">
-  <h1 id="winTitle" style="font-size:4rem; margin-bottom:10px;">WINNER!</h1>
-  <p id="winSub" style="font-size:1.5rem; color:#aaa">Game Over</p>
-  <button style="margin-top:30px; padding:15px 40px; border-radius:50px; border:none; background:#ffd700; color:#d32f2f; font-weight:bold; font-size:1.2rem; cursor:pointer;" onclick="location.href='blog.html'">BACK TO LOBBY</button>
+  <h1 id="winMsg" style="font-size: 3rem;">WINNER!</h1>
+  <button class="btn" style="padding:15px 40px; background:var(--accent); color:#fff; border:none; border-radius:10px; font-weight:bold; cursor:pointer;" onclick="requestRematch()">REMATCH</button>
+  <button class="btn" style="margin-top:15px; background:transparent; color:#94a3b8; border:none; cursor:pointer;" onclick="location.href='blog.html'">Exit to Lobby</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -247,322 +144,164 @@ const db = getFirestore(app);
 
 const params = new URLSearchParams(window.location.search);
 const roomId = params.get("room");
-const myRole = params.get("role"); // 'host' or 'guest'
+const myRole = params.get("role");
 
 let user = null;
 let gameData = null;
-let pendingCardIndex = -1; // For wild selection
+let pendingWildIndex = null;
 
-/* --- INITIALIZATION --- */
-onAuthStateChanged(auth, u => {
-  if(!u) location.href = "index.html";
+onAuthStateChanged(auth, async (u) => {
+  if(!u) return;
   user = u;
-  document.getElementById("myName").innerText = u.displayName || "You";
-  document.getElementById("myAvatarImg").src = u.photoURL || "https://i.imgur.com/8Km9tLL.png";
-  
-  if(myRole === 'host') startGameLogic();
-  listenToGame();
+  if(myRole === 'host') resetMatch(); // Initial setup
+  subscribeToGame();
 });
 
-async function startGameLogic() {
-  // Check if already started to prevent overwrite on refresh
-  const snap = await getDoc(doc(db, "matches", roomId));
-  if(snap.exists() && snap.data().deck && snap.data().deck.length > 0) return;
-
-  // Build Deck
+// --- REMATCH LOGIC ---
+async function resetMatch() {
   const colors = ['red', 'blue', 'green', 'yellow'];
-  const specials = ['skip', 'reverse', 'draw2'];
+  const vals = ['0','1','2','3','4','5','6','7','8','9','SKIP','+2'];
   let deck = [];
-
   colors.forEach(c => {
-    deck.push({ color: c, type: 'number', val: 0 }); // One 0
-    for(let i=1; i<=9; i++) {
-      deck.push({ color: c, type: 'number', val: i });
-      deck.push({ color: c, type: 'number', val: i });
-    }
-    specials.forEach(s => {
-      deck.push({ color: c, type: 'action', val: s });
-      deck.push({ color: c, type: 'action', val: s });
+    vals.forEach(v => {
+      deck.push({ color: c, val: v, id: Math.random() });
+      if(v !== '0') deck.push({ color: c, val: v, id: Math.random() });
     });
   });
-
-  // Wilds
-  for(let i=0; i<4; i++) {
-    deck.push({ color: 'black', type: 'wild', val: 'wild' });
-    deck.push({ color: 'black', type: 'wild', val: 'wild4' });
-  }
-
-  // Shuffle
+  // Add 4 Wild Cards
+  for(let i=0; i<4; i++) deck.push({ color: 'wild', val: 'WILD', id: Math.random() });
+  
   deck.sort(() => Math.random() - 0.5);
 
-  const hostHand = deck.splice(0, 7);
-  const guestHand = deck.splice(0, 7);
-  
-  // Ensure start card isn't wild for simplicity
-  let startCard = deck.pop();
-  while(startCard.color === 'black') {
-    deck.unshift(startCard);
-    startCard = deck.pop();
-  }
-
   await updateDoc(doc(db, "matches", roomId), {
-    deck, hostHand, guestHand, currentCard: startCard,
-    turn: user.uid, // Host starts
+    deck: deck.slice(15),
+    hostHand: deck.slice(0, 7),
+    guestHand: deck.slice(7, 14),
+    currentCard: deck[14],
+    turn: user.uid,
     winner: null,
-    colorOverride: null // For active wild color
+    status: "playing"
   });
 }
 
-/* --- RENDER ENGINE --- */
-function listenToGame() {
+function subscribeToGame() {
   onSnapshot(doc(db, "matches", roomId), (snap) => {
     gameData = snap.data();
-    if(!gameData) return;
-    
-    renderBoard();
-    
-    // Check Winner
-    if(gameData.winner) {
-      document.getElementById("winScreen").style.display = 'flex';
-      const won = gameData.winner === myRole;
-      document.getElementById("winTitle").innerText = won ? "VICTORY!" : "DEFEAT";
-      document.getElementById("winTitle").style.color = won ? "#ffd700" : "#d32f2f";
-      document.getElementById("winSub").innerText = won ? "You are the UNO Master!" : "Better luck next time.";
+    if (gameData.winner) {
+      document.getElementById("winScreen").style.display = "flex";
+      document.getElementById("winMsg").innerText = gameData.winner === myRole ? "YOU WON! 🎉" : "YOU LOST 💀";
+    } else {
+      document.getElementById("winScreen").style.display = "none";
     }
+    render();
   });
 }
 
-function renderBoard() {
+function render() {
   const isMyTurn = gameData.turn === user.uid;
+  document.getElementById("statusText").innerText = isMyTurn ? "★ YOUR TURN ★" : "Opponent's Turn...";
 
-  // 1. Avatars
-  const oppName = myRole==='host' ? gameData.guestName : gameData.hostName;
-  document.getElementById("oppName").innerText = oppName || "Opponent";
-  
-  if(isMyTurn) {
-    document.getElementById("myAvatarZone").classList.add("active");
-    document.getElementById("oppAvatarZone").classList.remove("active");
-    document.getElementById("centerMsg").innerText = "YOUR TURN";
-    document.getElementById("centerMsg").classList.add("visible");
-  } else {
-    document.getElementById("myAvatarZone").classList.remove("active");
-    document.getElementById("oppAvatarZone").classList.add("active");
-    document.getElementById("centerMsg").classList.remove("visible");
-  }
-
-  // 2. Opponent Cards
-  const oppHandSize = myRole==='host' ? gameData.guestHand.length : gameData.hostHand.length;
-  document.getElementById("oppCount").innerText = oppHandSize;
-
-  // 3. Center Card
+  // Discard Pile
   const cc = gameData.currentCard;
-  // If wild, show chosen color
-  const displayColor = (cc.color === 'black' && gameData.colorOverride) ? gameData.colorOverride : cc.color;
-  
-  document.getElementById("discardPile").innerHTML = createCardHTML(displayColor, cc.val, cc.type);
+  const discardDiv = document.getElementById("discardPile");
+  discardDiv.innerHTML = `<div class="card c-${cc.color} animate-card">${cc.val === 'SKIP' ? '🚫' : cc.val}</div>`;
 
-  // 4. My Hand
+  // Hands
+  const myHand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
   const myHandDiv = document.getElementById("myHand");
   myHandDiv.innerHTML = "";
-  const myHand = myRole==='host' ? gameData.hostHand : gameData.guestHand;
-
-  myHand.forEach((card, idx) => {
+  myHand.forEach((c, i) => {
     const el = document.createElement("div");
-    el.className = "my-card";
-    el.innerHTML = createCardHTML(card.color, card.val, card.type);
-    
-    // Interaction
-    el.onclick = () => tryPlayCard(idx);
-    
-    // Dim invalid cards
-    if(isMyTurn && !isValidMove(card, cc, gameData.colorOverride)) {
-        el.style.filter = "brightness(0.5)";
-    }
-    
+    el.className = `card c-${c.color}`;
+    el.innerHTML = c.val === 'SKIP' ? '🚫' : c.val;
+    el.style.marginLeft = i === 0 ? "0" : "-35px";
+    el.onclick = () => playCard(i);
+    if(!isMyTurn) el.style.opacity = "0.5";
     myHandDiv.appendChild(el);
   });
 
-  // 5. UNO Button Logic
-  if(myHand.length === 2 && isMyTurn) {
-      // Logic: Show UNO button when player has 2 cards and is about to play one
-      // Simplified: Just always show it for now, can refine to require click
-      document.getElementById("unoBtn").classList.add("show");
-  } else {
-      document.getElementById("unoBtn").classList.remove("show");
+  const oppCount = myRole === 'host' ? gameData.guestHand.length : gameData.hostHand.length;
+  document.getElementById("oppCount").innerText = oppCount;
+  const oppDiv = document.getElementById("opponentHand");
+  oppDiv.innerHTML = "";
+  for(let i=0; i<Math.min(oppCount, 15); i++) {
+    const b = document.createElement("div"); b.className = "card-back";
+    oppDiv.appendChild(b);
   }
 }
 
-// Helper: Generate CSS Card
-function createCardHTML(color, val, type) {
-  // Convert val to symbol
-  let symbol = val;
-  if(type === 'action') {
-    if(val === 'skip') symbol = 'oslash;';
-    if(val === 'reverse') symbol = '&#8644;';
-    if(val === 'draw2') symbol = '+2';
-  }
-  if(type === 'wild') {
-    if(val === 'wild') symbol = ''; 
-    if(val === 'wild4') symbol = '+4';
-  }
-
-  // CSS Class setup
-  let bgClass = color;
-  if(color === 'black') bgClass = 'wild-bg'; // generic black
-
-  // Inner Oval color?
-  // Normal cards: White oval.
-  // Wilds: Multi-color BG, Black text.
-  
-  let content = `
-    <div class="card ${bgClass}">
-      <div class="card-inner ${bgClass}">
-        <div class="oval"></div>
-        <div class="symbol">${symbol}</div>
-        <div class="corner-symbol tl">${symbol}</div>
-        <div class="corner-symbol br">${symbol}</div>
-      </div>
-    </div>
-  `;
-  
-  if(type === 'wild') {
-    // Custom Wild Look
-    content = `
-      <div class="card" style="background:black">
-        <div class="card-inner wild-bg" style="border-radius:6px;">
-           <div class="oval" style="background:white"></div>
-           <div class="symbol" style="color:black">${symbol}</div>
-           <div class="corner-symbol tl">${symbol}</div>
-           <div class="corner-symbol br">${symbol}</div>
-        </div>
-      </div>
-    `;
-  }
-  
-  return content;
-}
-
-/* --- LOGIC --- */
-function isValidMove(card, top, override) {
-  // 1. Wilds always valid
-  if(card.color === 'black') return true;
-  
-  // 2. Active color check (handles wild overrides)
-  const activeColor = (top.color === 'black' && override) ? override : top.color;
-  
-  if(card.color === activeColor) return true;
-  if(card.val === top.val) return true; // Match number/symbol
-  
-  return false;
-}
-
-window.tryPlayCard = (index) => {
+window.playCard = async (i) => {
   if(gameData.turn !== user.uid) return;
-  
-  const hand = myRole==='host' ? gameData.hostHand : gameData.guestHand;
-  const card = hand[index];
-  
-  if(!isValidMove(card, gameData.currentCard, gameData.colorOverride)) {
-    // Shake effect?
+  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
+  const card = hand[i];
+  const top = gameData.currentCard;
+
+  // Wild card can always be played. Others must match color or value.
+  if (card.color !== 'wild' && card.color !== top.color && card.val !== top.val) return;
+
+  if (card.color === 'wild') {
+    pendingWildIndex = i;
+    document.getElementById("colorPicker").style.display = "flex";
     return;
   }
 
-  // If Wild, open picker
-  if(card.color === 'black') {
-    pendingCardIndex = index;
-    document.getElementById("colorPicker").style.display = "flex";
-    return; 
-  }
+  await processMove(i, card.color);
+};
 
-  // Play immediately
-  submitMove(index, null);
-}
-
-// Wild Color Selection
-window.pickColor = (color) => {
+window.selectColor = (color) => {
   document.getElementById("colorPicker").style.display = "none";
-  submitMove(pendingCardIndex, color);
-}
+  processMove(pendingWildIndex, color);
+};
 
-async function submitMove(index, wildColor) {
-  const hand = myRole==='host' ? gameData.hostHand : gameData.guestHand;
-  const playedCard = hand.splice(index, 1)[0]; // Remove card
-
-  // Check Win
-  let winner = null;
-  if(hand.length === 0) winner = myRole;
-
-  // Next Turn Logic
-  let nextPlayer = myRole==='host' ? gameData.guest : gameData.host;
-  let opponentHand = myRole==='host' ? gameData.guestHand : gameData.hostHand; // Ref for draw logic
+async function processMove(index, chosenColor) {
+  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
+  const card = hand.splice(index, 1)[0];
   
-  // Handle Special Actions
-  if(playedCard.val === 'skip' || playedCard.val === 'reverse') {
-    // In 2P, Reverse acts like Skip. Keep turn to self?
-    // Usually UNO 2P: Reverse/Skip -> Play again.
-    // Let's implement: Turn stays with current player.
-    nextPlayer = user.uid; 
+  // If it was a wild, we change its "active" color for the next player
+  if(card.color === 'wild') card.color = chosenColor;
+
+  let nextTurn = myRole === 'host' ? gameData.guest : gameData.host;
+  let deck = gameData.deck;
+
+  if (card.val === 'SKIP' || card.val === '+2') {
+    if(card.val === '+2') {
+      const penalty = deck.splice(0, 2);
+      if(myRole === 'host') gameData.guestHand.push(...penalty);
+      else gameData.hostHand.push(...penalty);
+    }
+    nextTurn = user.uid; // Stay on current player
   }
 
-  if(playedCard.val === 'draw2') {
-    // Opponent draws 2 and loses turn
-    const deck = gameData.deck;
-    for(let i=0; i<2; i++) opponentHand.push(deck.pop() || {color:'red',val:0}); // fail-safe
-    nextPlayer = user.uid; // Play again (Standard 2P rule: skip opponent)
-  }
-
-  if(playedCard.val === 'wild4') {
-    const deck = gameData.deck;
-    for(let i=0; i<4; i++) opponentHand.push(deck.pop() || {color:'red',val:0});
-    nextPlayer = user.uid; // Skip opponent
-  }
-
-  // DB Update
-  const updatePayload = {
-    currentCard: playedCard,
-    turn: nextPlayer,
-    colorOverride: wildColor, // null if not wild
-    winner: winner
-  };
-  
-  if(myRole === 'host') {
-    updatePayload.hostHand = hand;
-    updatePayload.guestHand = opponentHand; // Update opp hand if they drew cards
-  } else {
-    updatePayload.guestHand = hand;
-    updatePayload.hostHand = opponentHand;
-  }
-  
-  // Deck might be modified if draw cards happened
-  if(playedCard.val === 'draw2' || playedCard.val === 'wild4') {
-     updatePayload.deck = gameData.deck; 
-  }
-
-  await updateDoc(doc(db, "matches", roomId), updatePayload);
+  await updateDoc(doc(db, "matches", roomId), {
+    currentCard: card,
+    turn: nextTurn,
+    deck: deck,
+    hostHand: gameData.hostHand,
+    guestHand: gameData.guestHand,
+    winner: hand.length === 0 ? myRole : null
+  });
 }
 
 window.drawCard = async () => {
   if(gameData.turn !== user.uid) return;
-  
   const deck = gameData.deck;
-  // Reshuffle discard if empty? (Skip for MVP, assume infinite deck)
-  const newCard = deck.pop(); 
-  
-  const hand = myRole==='host' ? gameData.hostHand : gameData.guestHand;
-  hand.push(newCard);
+  const card = deck.shift();
+  const hand = myRole === 'host' ? gameData.hostHand : gameData.guestHand;
+  hand.push(card);
+  const nextTurn = myRole === 'host' ? gameData.guest : gameData.host;
 
   await updateDoc(doc(db, "matches", roomId), {
     deck: deck,
-    [myRole === 'host' ? 'hostHand' : 'guestHand']: hand,
-    turn: myRole === 'host' ? gameData.guest : gameData.host // Pass turn
+    hostHand: gameData.hostHand,
+    guestHand: gameData.guestHand,
+    turn: nextTurn
   });
-}
+};
 
-// "UNO" Button (Just animation for now)
-window.callUno = () => {
-    document.getElementById("unoBtn").style.transform = "scale(1.2)";
-    setTimeout(() => document.getElementById("unoBtn").style.transform = "scale(1)", 200);
-}
-
+window.requestRematch = () => {
+  if(myRole === 'host') resetMatch();
+  else alert("Waiting for Host to reset...");
+};
 </script>
 </body>
+</html>
