@@ -13,6 +13,3 @@ WebArcade is a browser-based arcade where users can play classic games directly 
 - CSS
 - JavaScript
 - Netlify (Hosting)
-
-## Live Demo
-👉 https://YOUR-NETLIFY-URL.netlify.app
