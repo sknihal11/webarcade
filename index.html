@@ -2,174 +2,280 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>WebArcade</title>
 
 <style>
+/* 1. DEFINE VARIABLES (DEFAULT = DARK MODE) */
 :root {
-  --bg:#020617;
-  --card:#0f172a;
-  --accent:#7c7cff;
-  --text:#e5e7eb;
-  --error:#ff6b6b;
-  --success:#4ade80;
+  --bg-base: #020617;
+  --bg-gradient: radial-gradient(circle at top, #1e293b, #020617);
+  --bg-card: rgba(15, 23, 42, 0.6);
+  --grid-color: rgba(99, 102, 241, 0.15);
+  
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  
+  --accent: #6366f1;
+  --accent-glow: rgba(99, 102, 241, 0.5);
+  
+  --input-bg: rgba(0, 0, 0, 0.3);
+  --input-border: rgba(255, 255, 255, 0.1);
+  
+  --modal-bg: linear-gradient(160deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
 }
 
-* { box-sizing:border-box; }
+/* 2. LIGHT MODE OVERRIDES (AUTOMATIC) */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-base: #f8fafc; /* Very light grey */
+    --bg-gradient: radial-gradient(circle at top, #e2e8f0, #f8fafc);
+    --bg-card: rgba(255, 255, 255, 0.7);
+    --grid-color: rgba(99, 102, 241, 0.08); /* Fainter grid */
+    
+    --text-main: #0f172a; /* Very dark slate */
+    --text-muted: #475569;
+    
+    --accent: #4f46e5;
+    --accent-glow: rgba(79, 70, 229, 0.25); /* softer glow */
+    
+    --input-bg: rgba(255, 255, 255, 0.8);
+    --input-border: #cbd5e1;
+    
+    --modal-bg: linear-gradient(160deg, #ffffff, #f1f5f9);
+  }
+}
+
+* { box-sizing: border-box; }
 
 body {
-  margin:0;
-  font-family:"Segoe UI",system-ui,sans-serif;
-  background:radial-gradient(circle at top,#0f172a,#020617);
-  color:var(--text);
-  min-height:100vh;
+  margin: 0;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  background: var(--bg-base);
+  color: var(--text-main);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  transition: background 0.3s, color 0.3s;
 }
 
-/* HEADER */
+/* --- ANIMATED BACKGROUND --- */
+.retro-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: 
+    linear-gradient(transparent 0%, var(--bg-base) 100%),
+    linear-gradient(0deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent),
+    linear-gradient(90deg, transparent 24%, var(--grid-color) 25%, var(--grid-color) 26%, transparent 27%, transparent 74%, var(--grid-color) 75%, var(--grid-color) 76%, transparent 77%, transparent);
+  background-size: 50px 50px;
+  transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px);
+  animation: moveGrid 10s linear infinite;
+  opacity: 1; 
+  pointer-events: none;
+}
+
+@keyframes moveGrid {
+  0% { transform: perspective(500px) rotateX(60deg) translateY(0) translateZ(-200px); }
+  100% { transform: perspective(500px) rotateX(60deg) translateY(50px) translateZ(-200px); }
+}
+
+/* --- HEADER --- */
 header {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 5%;
+  backdrop-filter: blur(5px);
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 header h1 {
-  margin:0;
-  font-size:24px;
+  margin: 0;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  background: linear-gradient(to right, var(--accent), #a5b4fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 header button {
-  border:none;
-  padding:8px 20px;
-  border-radius:999px;
-  background:linear-gradient(90deg,#6d6df6,#7c7cff);
-  color:white;
-  font-weight:600;
-  cursor:pointer;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 99px;
+  background: linear-gradient(135deg, var(--accent), #818cf8);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 15px var(--accent-glow);
+  transition: transform 0.2s, box-shadow 0.2s;
 }
 
-/* HERO */
+header button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+/* --- HERO SECTION --- */
 .hero {
-  height:calc(100vh - 80px);
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:0 20px;
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 0 20px;
+  animation: fadeIn 1s ease-out;
 }
 
 .hero h2 {
-  font-size:3rem;
-  margin-bottom:10px;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  margin: 0 0 10px 0;
+  line-height: 1.1;
+  animation: float 4s ease-in-out infinite;
 }
 
 .hero p {
-  opacity:.8;
-  max-width:520px;
+  opacity: 0.8;
+  max-width: 600px;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  margin-top: 15px;
+  line-height: 1.6;
+  color: var(--text-muted);
 }
 
-/* MODAL BACKDROP */
+/* --- MODAL --- */
 .modal-backdrop {
-  position:fixed;
-  inset:0;
-  background:rgba(0,0,0,.65);
-  backdrop-filter:blur(8px);
-  display:none;
-  align-items:center;
-  justify-content:center;
-  z-index:10;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+  padding: 20px;
 }
 
-/* MODAL */
 .modal {
-  position:relative;
-  background:linear-gradient(
-    180deg,
-    rgba(255,255,255,.08),
-    rgba(255,255,255,.02)
-  );
-  backdrop-filter:blur(20px);
-  border-radius:20px;
-  width:100%;
-  max-width:380px;
-  padding:28px;
-  box-shadow:0 40px 80px rgba(0,0,0,.5);
-  animation:pop .35s ease;
+  position: relative;
+  background: var(--modal-bg);
+  border: 1px solid var(--input-border);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 400px;
+  padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+  animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  max-height: 90vh;
+  overflow-y: auto;
 }
 
-@keyframes pop {
-  from { transform:scale(.92); opacity:0 }
-  to { transform:scale(1); opacity:1 }
-}
-
-/* CLOSE BUTTON — RESTORED */
+/* Close Btn */
 .close-btn {
-  position:absolute;
-  top:12px;
-  right:14px;
-  font-size:22px;
-  background:none;
-  border:none;
-  color:#9ca3af;
-  cursor:pointer;
+  position: absolute;
+  top: 15px;
+  right: 20px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s;
 }
-.close-btn:hover {
-  color:white;
-}
+.close-btn:hover { color: var(--accent); }
 
 .modal h3 {
-  margin-top:0;
-  margin-bottom:18px;
-  text-align:center;
+  margin: 0 0 24px 0;
+  text-align: center;
+  font-size: 1.8rem;
+  color: var(--text-main);
 }
 
+/* Inputs */
 input {
-  width:100%;
-  padding:12px 14px;
-  border-radius:10px;
-  border:none;
-  background:#020617;
-  color:white;
-  margin-bottom:12px;
-  outline:none;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--input-border);
+  background: var(--input-bg);
+  color: var(--text-main);
+  margin-bottom: 16px;
+  outline: none;
+  font-size: 16px;
+  transition: border-color 0.3s, background 0.3s;
 }
 
-input::placeholder {
-  color:#9ca3af;
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-glow);
 }
 
-.modal button.main-btn {
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:999px;
-  background:var(--accent);
-  font-weight:700;
-  cursor:pointer;
-  margin-top:8px;
+.hidden { display: none; }
+
+/* Main Button */
+.main-btn {
+  width: 100%;
+  padding: 14px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(90deg, var(--accent), #818cf8);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: transform 0.2s, filter 0.2s;
 }
 
+.main-btn:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.main-btn:active { transform: scale(0.98); }
+
+/* Status & Switch */
 .status {
-  margin-top:10px;
-  font-size:14px;
-  text-align:center;
+  margin-top: 15px;
+  text-align: center;
+  font-size: 0.9rem;
+  min-height: 1.5em;
 }
-
-.error { color:var(--error); }
-.success { color:var(--success); }
+.error { color: #ef4444; }
+.success { color: #22c55e; }
 
 .switch {
-  margin-top:12px;
-  font-size:14px;
-  text-align:center;
-  opacity:.85;
-  cursor:pointer;
+  margin-top: 20px;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+}
+.switch span {
+  color: var(--accent);
+  text-decoration: underline;
+  font-weight: 600;
+}
+
+/* --- ANIMATIONS --- */
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { 
+  from { transform: scale(0.9) translateY(20px); opacity: 0; } 
+  to { transform: scale(1) translateY(0); opacity: 1; } 
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 </style>
 </head>
 
 <body>
+
+<div class="retro-bg"></div>
 
 <header>
   <h1>WebArcade 🎮</h1>
@@ -177,29 +283,28 @@ input::placeholder {
 </header>
 
 <div class="hero">
-  <h2>Play. Compete. Relax.</h2>
-  <p>A modern arcade where your progress is saved, your scores matter, and fun never stops.
-  
-  
-  Note:Login must be done to enter the website</p>
+  <h2>Play.<br>Compete.<br>Relax.</h2>
+  <p>Your personal retro arcade dashboard. Save your scores, beat your friends, and play instantly.<br><br>
+  <small style="color: var(--text-muted);">⚠️ Login required to play.</small></p>
 </div>
 
-<!-- MODAL -->
 <div class="modal-backdrop" id="modal" onclick="closeModal(event)">
   <div class="modal">
     <button class="close-btn" onclick="closeModal()">×</button>
 
     <h3 id="modalTitle">Login</h3>
 
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+    <input id="username" type="text" placeholder="Choose a Username" class="hidden" autocomplete="off">
+    
+    <input id="email" type="email" placeholder="Email Address">
+    <input id="password" type="password" placeholder="Password (6+ chars)">
 
     <button class="main-btn" id="actionBtn">Continue</button>
 
     <div class="status" id="status"></div>
 
     <div class="switch" onclick="toggleMode()">
-      New user? Create account
+      <span id="switchText">New user? Create account</span>
     </div>
   </div>
 </div>
@@ -209,61 +314,110 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebas
 import {
   getAuth,
   signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
+  createUserWithEmailAndPassword,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+import {
+  getFirestore,
+  doc,
+  setDoc
+} from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
   authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d"
+  projectId: "webarcade-d4c3d",
+  storageBucket: "webarcade-d4c3d.firebasestorage.app",
+  messagingSenderId: "918209461327",
+  appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
 const modal = document.getElementById("modal");
 const statusEl = document.getElementById("status");
 const actionBtn = document.getElementById("actionBtn");
 const titleEl = document.getElementById("modalTitle");
-const switchEl = document.querySelector(".switch");
+const switchText = document.getElementById("switchText");
+const usernameInput = document.getElementById("username");
 
 let mode = "login";
 
 window.openModal = () => {
   modal.style.display = "flex";
   statusEl.textContent = "";
+  // Reset inputs on open
+  document.getElementById("email").value = "";
+  document.getElementById("password").value = "";
 };
 
 window.closeModal = (e) => {
-  if (!e || e.target === modal) {
+  if (!e || e.target === modal || e.target.classList.contains('close-btn')) {
     modal.style.display = "none";
   }
 };
 
 window.toggleMode = () => {
   mode = mode === "login" ? "signup" : "login";
-  titleEl.textContent = mode === "login" ? "Login" : "Sign Up";
-  switchEl.textContent =
-    mode === "login"
-      ? "New user? Create account"
-      : "Already have an account?";
+  
+  // Update Text
+  titleEl.textContent = mode === "login" ? "Login" : "Join the Arcade";
+  switchText.textContent = mode === "login" 
+    ? "New user? Create account" 
+    : "Already have an account? Login";
+  
+  actionBtn.textContent = mode === "login" ? "Login" : "Sign Up";
+
+  // Toggle Username Field
+  if (mode === "signup") {
+    usernameInput.classList.remove("hidden");
+    usernameInput.focus();
+  } else {
+    usernameInput.classList.add("hidden");
+  }
+  statusEl.textContent = "";
 };
 
 actionBtn.onclick = async () => {
-  statusEl.textContent = "Please wait...";
+  const emailVal = document.getElementById("email").value.trim();
+  const passVal = document.getElementById("password").value;
+  const userVal = usernameInput.value.trim();
+
+  statusEl.textContent = "Processing...";
   statusEl.className = "status";
+
+  if (!emailVal || !passVal) {
+    statusEl.textContent = "Please fill in all fields.";
+    statusEl.classList.add("error");
+    return;
+  }
 
   try {
     if (mode === "login") {
-      await signInWithEmailAndPassword(auth, email.value, password.value);
+      await signInWithEmailAndPassword(auth, emailVal, passVal);
     } else {
-      await createUserWithEmailAndPassword(auth, email.value, password.value);
+      if (!userVal) throw new Error("Username is required");
+      const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
+      await updateProfile(cred.user, { displayName: userVal });
+      await setDoc(doc(db, "users", cred.user.uid), {
+        username: userVal,
+        email: emailVal,
+        createdAt: new Date(),
+        best2048: 0
+      });
     }
-    statusEl.textContent = "Success! Redirecting…";
+
+    statusEl.textContent = "Success! Entering Arcade...";
     statusEl.classList.add("success");
-    location.href = "blog.html";
+    setTimeout(() => { location.href = "blog.html"; }, 1000);
+
   } catch (err) {
-    statusEl.textContent = err.message.replace("Firebase: ","");
+    console.error(err);
+    let msg = err.message;
+    if(msg.includes("Firebase:")) msg = msg.replace("Firebase: ", "").replace(/\(auth\/.*\)\.?/, "");
+    statusEl.textContent = "Error: " + msg;
     statusEl.classList.add("error");
   }
 };
