@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo 3D Extreme</title>
+    <style>
+        :root {
+            --p1: #ff4757; --p2: #2ed573; --p3: #1e90ff; 
+            --p4: #ffa502; --p5: #a55eea; --p6: #2f3542;
+            --board-bg: #f1f2f6;
+        }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; user-select: none; }
+        body { 
+            margin: 0; background: #0a0a0b; color: white; height: 100vh; 
+            overflow: hidden; display: flex; flex-direction: column; align-items: center; 
+        }
+
+        /* --- 3D SCENE SETTINGS --- */
+        .scene {
+            perspective: 1200px; width: 100vw; height: 70vh;
+            display: flex; align-items: center; justify-content: center;
+            margin-top: 20px;
+        }
+        .board-3d {
+            width: 600px; height: 600px; background: var(--board-bg);
+            transform: rotateX(45deg) rotateZ(-10deg);
+            transform-style: preserve-3d;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5), 0 0 20px rgba(255,255,255,0.1);
+            position: relative; transition: transform 0.8s ease-in-out;
+        }
+
+        /* --- PIECE 3D ANIMATION --- */
+        .piece {
+            width: 24px; height: 24px; border-radius: 50%;
+            position: absolute; z-index: 100; cursor: pointer;
+            transform-style: preserve-3d; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .piece::before {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background: inherit; border-radius: 50%; border: 2px solid #fff;
+            transform: translateZ(10px); box-shadow: 0 10px 15px rgba(0,0,0,0.3);
+        }
+        
+        /* The Hop Animation */
+        @keyframes hop {
+            0% { transform: translateZ(0); }
+            50% { transform: translateZ(40px) scale(1.2); }
+            100% { transform: translateZ(0); }
+        }
+        .hopping { animation: hop 0.4s ease-out; }
+
+        /* --- UI OVERLAYS --- */
+        .controls {
+            position: fixed; bottom: 0; width: 100%; height: 150px;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            display: flex; align-items: center; justify-content: center; gap: 30px;
+        }
+        .dice-container {
+            width: 80px; height: 80px; background: #fff; color: #000;
+            border-radius: 15px; display: flex; align-items: center; justify-content: center;
+            font-size: 40px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .dice-rolling { animation: rotateDice 0.2s infinite; }
+        @keyframes rotateDice {
+            0% { transform: rotate(0); } 100% { transform: rotate(360deg); }
+        }
+
+        .player-list { position: fixed; top: 20px; left: 20px; background: rgba(0,0,0,0.5); padding: 15px; border-radius: 10px; }
+        .player-item { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .kick-btn { background: #ff4757; border: none; color: white; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 12px; }
+
+        #leaveBtn { position: fixed; top: 20px; right: 20px; background: #ff4757; color: white; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="player-list" id="playerList">
+    <h3>Players</h3>
+    <div id="playersUI"></div>
+</div>
+
+<button id="leaveBtn" onclick="leaveMatch()">Leave Game</button>
+
+<div class="scene">
+    <div class="board-3d" id="board">
+        <div style="position:absolute; inset:40%; background:#333; transform:translateZ(2px);"></div>
+        </div>
+</div>
+
+<div class="controls">
+    <div id="turnStatus">Waiting...</div>
+    <div class="dice-container" id="dice" onclick="handleRoll()">🎲</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot, updateDoc, arrayRemove, getDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getAuth } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+
+const app = initializeApp({ /* Your Config */ });
+const db = getFirestore(app);
+const auth = getAuth(app);
+const room = new URLSearchParams(window.location.search).get("room");
+
+let game = null;
+let isHost = false;
+
+// --- INITIALIZATION ---
+async function init() {
+    onSnapshot(doc(db, "ludo_matches", room), (snap) => {
+        game = snap.data();
+        if(!game) return;
+        isHost = game.hostId === auth.currentUser.uid;
+        renderPlayers();
+        updateBoard();
+    });
+
+    // Fix: Remove player if they close the website
+    window.addEventListener('beforeunload', leaveMatch);
+}
+
+// --- CORE LOGIC ---
+async function handleRoll() {
+    if(game.turnId !== auth.currentUser.uid) return;
+    
+    const dice = document.getElementById('dice');
+    dice.classList.add('dice-rolling');
+    
+    setTimeout(async () => {
+        const roll = Math.floor(Math.random() * 6) + 1;
+        dice.classList.remove('dice-rolling');
+        dice.innerText = roll;
+        // Logic to update Firestore with move options
+    }, 600);
+}
+
+async function movePieceAnimation(pieceId, steps) {
+    const el = document.getElementById(pieceId);
+    for(let i=0; i < steps; i++) {
+        el.classList.add('hopping');
+        // Calculate next tile coordinates...
+        await new Promise(r => setTimeout(r, 400));
+        el.classList.remove('hopping');
+    }
+}
+
+// --- PLAYER MANAGEMENT ---
+function renderPlayers() {
+    const container = document.getElementById('playersUI');
+    container.innerHTML = game.players.map(p => `
+        <div class="player-item">
+            <span style="color:var(--p${p.colorIdx})">●</span>
+            <span>${p.name}</span>
+            ${isHost && p.uid !== auth.currentUser.uid ? 
+              `<button class="kick-btn" onclick="kickPlayer('${p.uid}')">Kick</button>` : ''}
+        </div>
+    `).join('');
+}
+
+window.kickPlayer = async (uid) => {
+    if(!isHost) return;
+    const playerToKick = game.players.find(p => p.uid === uid);
+    await updateDoc(doc(db, "ludo_matches", room), {
+        players: arrayRemove(playerToKick)
+    });
+};
+
+window.leaveMatch = async () => {
+    if(!game) return;
+    const me = game.players.find(p => p.uid === auth.currentUser.uid);
+    await updateDoc(doc(db, "ludo_matches", room), {
+        players: arrayRemove(me)
+    });
+    window.location.href = "lobby.html";
+};
+
+// --- VS BOT LOGIC ---
+async function processBotTurn() {
+    // Basic AI: Move the piece closest to the finish
+    const roll = Math.floor(Math.random() * 6) + 1;
+    // ... animation and update doc
+}
+
+init();
+</script>
+</body>
+</html>
