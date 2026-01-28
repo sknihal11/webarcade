@@ -1,238 +1,128 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>WebArcade | Multiplayer Lobby</title>
-<style>
-  :root {
-    --bg: #020617; --card-bg: rgba(30, 41, 59, 0.7);
-    --accent: #6366f1; --accent-glow: rgba(99, 102, 241, 0.5);
-    --text: #f8fafc; --muted: #94a3b8; --border: rgba(255, 255, 255, 0.1);
-  }
-
-  body {
-    margin: 0; font-family: "Segoe UI", sans-serif; background: var(--bg);
-    color: var(--text); min-height: 100vh; display: flex; align-items: center; justify-content: center;
-  }
-
-  .lobby-container {
-    width: 90%; max-width: 600px; background: var(--card-bg);
-    border: 1px solid var(--border); border-radius: 24px; padding: 30px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-    text-align: center;
-  }
-
-  h1 { margin: 0 0 10px 0; background: linear-gradient(to right, #fff, var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-  /* --- SLOTS --- */
-  .player-slots {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0;
-  }
-  .slot {
-    background: rgba(0,0,0,0.3); border: 2px dashed var(--border);
-    border-radius: 15px; padding: 15px; display: flex; flex-direction: column;
-    align-items: center; min-height: 100px; justify-content: center;
-    transition: 0.3s;
-  }
-  .slot.occupied { border: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); border-style: solid; }
-  .slot img { width: 50px; height: 50px; border-radius: 50%; margin-bottom: 8px; border: 2px solid var(--accent); }
-  .slot span { font-size: 14px; font-weight: 600; }
-
-  /* --- INPUTS --- */
-  .room-info { margin-bottom: 25px; padding: 15px; background: rgba(0,0,0,0.2); border-radius: 12px; }
-  .room-id { font-family: monospace; font-size: 24px; color: var(--accent); letter-spacing: 2px; }
-
-  input {
-    width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border);
-    background: #0f172a; color: #fff; margin-bottom: 15px; text-align: center;
-  }
-
-  .btn {
-    width: 100%; padding: 14px; border: none; border-radius: 12px;
-    font-weight: 800; cursor: pointer; transition: 0.2s; text-transform: uppercase;
-  }
-  .btn-primary { background: var(--accent); color: white; box-shadow: 0 4px 15px var(--accent-glow); }
-  .btn-secondary { background: #334155; color: white; margin-top: 10px; }
-  .btn:hover { transform: translateY(-2px); filter: brightness(1.1); }
-  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-  .back-btn { margin-top: 20px; display: inline-block; color: var(--muted); text-decoration: none; font-size: 14px; }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebArcade | Lobby</title>
+    <style>
+        :root { --bg: #020617; --accent: #6366f1; --surface: rgba(30, 41, 59, 0.7); }
+        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: var(--surface); padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; text-align: center; backdrop-filter: blur(10px); }
+        .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .slot { background: rgba(0,0,0,0.3); border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+        .slot.active { border: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); }
+        .slot img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; box-sizing: border-box; text-align: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-p { background: var(--accent); color: white; }
+        .btn-s { background: #334155; color: white; }
+        .room-code { font-size: 24px; color: var(--accent); font-family: monospace; letter-spacing: 3px; }
+    </style>
 </head>
 <body>
 
-<div class="lobby-container" id="setupView">
-  <h1>Multiplayer Arena</h1>
-  <p style="color:var(--muted)">Create a room or join a friend</p>
-  
-  <button class="btn btn-primary" onclick="createRoom()">Host New Game</button>
-  
-  <div style="margin: 20px 0; color: var(--muted)">— OR —</div>
-  
-  <input type="text" id="joinInput" placeholder="Enter 6-Digit Code">
-  <button class="btn btn-secondary" onclick="joinRoom()">Join Game</button>
-  
-  <br>
-  <a href="blog.html" class="back-btn">← Back to Arcade</a>
+<div class="card" id="view-setup">
+    <h1>WebArcade Lobby</h1>
+    <button class="btn btn-p" onclick="createRoom()">Host Game</button>
+    <div style="margin: 10px 0; color: #64748b;">— OR —</div>
+    <input type="text" id="joinInput" placeholder="Enter 6-Digit Code">
+    <button class="btn btn-s" onclick="joinRoom()">Join Friend</button>
 </div>
 
-<div class="lobby-container" id="roomView" style="display:none">
-  <h2 id="lobbyTitle">Waiting for Players...</h2>
-  <div class="room-info">
-    <div style="font-size: 12px; color: var(--muted)">ROOM CODE</div>
-    <div class="room-id" id="displayCode">------</div>
-  </div>
-
-  <div class="player-slots">
-    <div class="slot" id="slot0"><span>Waiting...</span></div>
-    <div class="slot" id="slot1"><span>Empty</span></div>
-    <div class="slot" id="slot2"><span>Empty</span></div>
-    <div class="slot" id="slot3"><span>Empty</span></div>
-  </div>
-
-  <button id="startBtn" class="btn btn-primary" onclick="startGame()" style="display:none">Start Game</button>
-  <p id="waitMsg" style="color: var(--muted); font-size: 14px;">Only the host can start the game.</p>
+<div class="card" id="view-lobby" style="display:none">
+    <h2>Room: <span class="room-code" id="codeText">------</span></h2>
+    <div class="slots" id="playerSlots">
+        <div class="slot">Empty</div><div class="slot">Empty</div>
+        <div class="slot">Empty</div><div class="slot">Empty</div>
+    </div>
+    <button id="startBtn" class="btn btn-p" onclick="startGame()" style="display:none">Start Game</button>
+    <button class="btn btn-s" onclick="leaveRoom()">Leave Lobby</button>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot, arrayUnion } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-const app = initializeApp({
-  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-  authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d"
-});
+const app = initializeApp({ apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA", authDomain: "webarcade-d4c3d.firebaseapp.com", projectId: "webarcade-d4c3d" });
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-let user = null;
-let currentRoomId = null;
-let isHost = false;
+let user, currentRoom, isHost = false;
 
 onAuthStateChanged(auth, u => { if(u) user = u; else location.href="index.html"; });
 
-// --- ROOM LOGIC ---
-
 window.createRoom = async () => {
-  const roomId = Math.floor(100000 + Math.random() * 900000).toString();
-  currentRoomId = roomId;
-  isHost = true;
-
-  await setDoc(doc(db, "matches", roomId), {
-    hostId: user.uid,
-    players: [{uid: user.uid, name: user.displayName, photo: user.photoURL}],
-    status: "waiting",
-    createdAt: Date.now()
-  });
-
-  enterLobby();
+    const id = Math.floor(100000 + Math.random() * 900000).toString();
+    currentRoom = id; isHost = true;
+    await setDoc(doc(db, "matches", id), { host: user.uid, players: [{uid: user.uid, name: user.displayName, photo: user.photoURL}], status: "waiting" });
+    showLobby();
 };
 
 window.joinRoom = async () => {
-  const roomId = document.getElementById("joinInput").value.trim();
-  if(roomId.length !== 6) return alert("Enter a valid 6-digit code");
-
-  const snap = await getDoc(doc(db, "matches", roomId));
-  if(!snap.exists()) return alert("Room not found!");
-  if(snap.data().players.length >= 4) return alert("Room is full!");
-
-  currentRoomId = roomId;
-  isHost = false;
-
-  await updateDoc(doc(db, "matches", roomId), {
-    players: arrayUnion({uid: user.uid, name: user.displayName, photo: user.photoURL})
-  });
-
-  enterLobby();
+    const id = document.getElementById("joinInput").value;
+    const snap = await getDoc(doc(db, "matches", id));
+    if(!snap.exists()) return alert("Room not found!");
+    const p = snap.data().players;
+    if(p.length >= 4) return alert("Full!");
+    p.push({uid: user.uid, name: user.displayName, photo: user.photoURL});
+    await updateDoc(doc(db, "matches", id), { players: p });
+    currentRoom = id; showLobby();
 };
 
-function enterLobby() {
-  document.getElementById("setupView").style.display = "none";
-  document.getElementById("roomView").style.display = "block";
-  document.getElementById("displayCode").innerText = currentRoomId;
+function showLobby() {
+    document.getElementById("view-setup").style.display = "none";
+    document.getElementById("view-lobby").style.display = "block";
+    document.getElementById("codeText").innerText = currentRoom;
 
-  // Listen for players
-  onSnapshot(doc(db, "matches", currentRoomId), (snap) => {
-    const data = snap.data();
-    if(!data) return;
-
-    // Check if game started
-    if(data.status === "playing") {
-      location.href = `uno_game.html?room=${currentRoomId}`;
-      return;
-    }
-
-    // Update Slots
-    for(let i=0; i<4; i++) {
-      const slot = document.getElementById(`slot${i}`);
-      const p = data.players[i];
-      if(p) {
-        slot.className = "slot occupied";
-        slot.innerHTML = `<img src="${p.photo || 'https://i.imgur.com/8Km9tLL.png'}"><span>${p.name}</span>`;
-      } else {
-        slot.className = "slot";
-        slot.innerHTML = "<span>Empty</span>";
-      }
-    }
-
-    // Host controls
-    if(isHost) {
-      document.getElementById("startBtn").style.display = "block";
-      document.getElementById("waitMsg").style.display = "none";
-      if(data.players.length < 2) document.getElementById("startBtn").disabled = true;
-      else document.getElementById("startBtn").disabled = false;
-    }
-  });
+    onSnapshot(doc(db, "matches", currentRoom), (snap) => {
+        const data = snap.data(); if(!data) return;
+        if(data.status === "playing") location.href = `uno_game.html?room=${currentRoom}`;
+        
+        const slots = document.getElementById("playerSlots"); slots.innerHTML = "";
+        data.players.forEach(p => {
+            slots.innerHTML += `<div class="slot active"><img src="${p.photo}"><span>${p.name}</span></div>`;
+        });
+        for(let i=data.players.length; i<4; i++) slots.innerHTML += `<div class="slot">Empty</div>`;
+        
+        if(isHost) {
+            document.getElementById("startBtn").style.display = "block";
+            document.getElementById("startBtn").disabled = data.players.length < 2;
+        }
+    });
 }
 
-// --- GAME INITIALIZER (THE BIG PART) ---
+window.leaveRoom = async () => {
+    if(!currentRoom) return;
+    const snap = await getDoc(doc(db, "matches", currentRoom));
+    if(snap.exists()){
+        const p = snap.data().players.filter(x => x.uid !== user.uid);
+        if(p.length === 0) /* delete? */; else await updateDoc(doc(db, "matches", currentRoom), { players: p });
+    }
+    location.reload();
+};
+
+window.addEventListener('beforeunload', () => leaveRoom());
+
 window.startGame = async () => {
-  const snap = await getDoc(doc(db, "matches", currentRoomId));
-  const players = snap.data().players;
-  
-  // 1. Generate Deck (Same as UNO Mobile)
-  const colors = ['red', 'blue', 'green', 'yellow'];
-  const values = ['0','1','2','3','4','5','6','7','8','9','SKIP','REV','+2'];
-  let deck = [];
-  
-  colors.forEach(c => {
-    values.forEach(v => {
-      deck.push({ color: c, val: v, id: Math.random() });
-      if(v !== '0') deck.push({ color: c, val: v, id: Math.random() });
+    const snap = await getDoc(doc(db, "matches", currentRoom));
+    const players = snap.data().players;
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    let deck = [];
+    colors.forEach(c => {
+        ['0','1','2','3','4','5','6','7','8','9','SKIP','REV','+2'].forEach(v => {
+            deck.push({color: c, val: v, id: Math.random()});
+            if(v!=='0') deck.push({color: c, val: v, id: Math.random()});
+        });
     });
-  });
-  for(let i=0; i<4; i++) {
-    deck.push({ color: 'wild', val: 'WILD', id: Math.random() });
-    deck.push({ color: 'wild', val: '+4', id: Math.random() });
-  }
-
-  // 2. Shuffle
-  deck.sort(() => Math.random() - 0.5);
-
-  // 3. Deal to all players
-  let hands = {};
-  let playerList = [];
-
-  players.forEach(p => {
-    hands[p.uid] = deck.splice(0, 7); // Give 7 cards to each
-    playerList.push(p.uid); // Keep list of UIDs for turn rotation
-  });
-
-  const startCard = deck.pop();
-
-  // 4. Update Database
-  await updateDoc(doc(db, "matches", currentRoomId), {
-    status: "playing",
-    players: playerList,
-    hands: hands,
-    deck: deck,
-    currentCard: startCard,
-    turnIndex: 0,
-    direction: 1
-  });
+    for(let i=0; i<4; i++) { deck.push({color:'wild', val:'WILD', id:Math.random()}); deck.push({color:'wild', val:'+4', id:Math.random()}); }
+    deck.sort(() => Math.random() - 0.5);
+    
+    let hands = {}; players.forEach(p => hands[p.uid] = deck.splice(0, 7));
+    await updateDoc(doc(db, "matches", currentRoom), {
+        status: "playing", players: players.map(p => p.uid), 
+        hands, deck, currentCard: deck.pop(), turnIndex: 0, direction: 1
+    });
 };
 </script>
 </body>
