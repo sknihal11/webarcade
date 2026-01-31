@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Arcade 16:9</title>
+    <title>Pong - Arcade Fixed</title>
     <style>
         /* --- STYLES --- */
         :root { --bg-dark: #050505; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
@@ -17,32 +17,32 @@
         }
 
         /* DYNAMIC CONTAINER */
-        /* We remove fixed sizes. The JS will control the size of this to fit the screen */
+        /* This container will be resized by JS to fit the screen */
         #game-container {
             position: relative;
             box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-            border: 2px solid #333;
+            border: 4px solid #222;
             background: #000;
         }
 
-        canvas { display: block; }
+        canvas { display: block; width: 100%; height: 100%; }
 
         /* UI LAYOUT */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
         
         .top-bar { 
-            padding: 2%; 
+            padding: 15px; 
             display: flex; justify-content: space-between; align-items: center;
             pointer-events: auto; 
         }
 
         .score { 
-            color: white; font-size: 4vh; font-weight: 900; 
+            color: white; font-size: 40px; font-weight: 900; 
             text-shadow: 2px 2px 0 #000; letter-spacing: 2px;
         }
         
         button {
-            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); color: white;
+            background: rgba(0,0,0,0.6); border: 2px solid var(--neon-blue); color: white;
             padding: 8px 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
         }
         button:hover { background: var(--neon-blue); color: black; }
@@ -58,11 +58,21 @@
         }
         .hidden { display: none !important; }
         
-        h1 { color: var(--neon-blue); font-size: 8vh; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
+        h1 { color: var(--neon-blue); font-size: 60px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
         .menu-btn { width: 250px; margin: 10px; font-size: 18px; padding: 15px; }
         .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 1px solid #555; width: 150px; margin-bottom: 10px; }
         .room-code { font-size: 30px; color: #0f0; margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
+
+        /* --- MOBILE SPECIFIC SCALING --- */
+        /* Make UI smaller on small screens so it doesn't cover everything */
+        @media(max-width: 600px) {
+            .score { font-size: 24px; }
+            h1 { font-size: 40px; margin-bottom: 10px; }
+            .menu-btn { width: 180px; padding: 10px; font-size: 14px; margin: 5px; }
+            .top-bar { padding: 8px; }
+            button { padding: 5px 10px; font-size: 11px; }
+        }
     </style>
 </head>
 <body>
@@ -124,18 +134,17 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CONSTANTS ---
-        // We use a FIXED logical resolution of 960x540 (16:9)
-        // This ensures multiplayer is fair regardless of screen size.
-        const GAME_W = 960;
-        const GAME_H = 540;
+        // INTERNAL LOGIC RESOLUTION (Fixed 4:3)
+        const LOGICAL_W = 800;
+        const LOGICAL_H = 600;
 
         class PongGame {
             constructor() {
                 this.container = document.getElementById('game-container');
                 
+                // Pixi Application runs at FIXED resolution internally
                 this.app = new PIXI.Application({
-                    width: GAME_W, height: GAME_H, 
+                    width: LOGICAL_W, height: LOGICAL_H, 
                     backgroundColor: 0x000000,
                     resolution: window.devicePixelRatio || 1, 
                     autoDensity: true
@@ -146,39 +155,46 @@
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
-                this.mouseY = GAME_H / 2;
+                this.mouseY = LOGICAL_H / 2;
                 this.score = {L:0, R:0};
                 this.objs = {}; 
 
                 this.initGFX();
                 this.initUI();
                 this.initInput();
-                this.resizeGame(); // Trigger initial resize
-
-                // Listen for window resizing
-                window.addEventListener('resize', () => this.resizeGame());
+                
+                // Resize handling
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
 
                 this.app.ticker.add((d) => this.loop(d));
             }
 
-            // --- RESOLUTION LOGIC ---
-            resizeGame() {
-                // Get available browser space
-                const w = window.innerWidth;
-                const h = window.innerHeight;
+            // --- SCALE LOGIC ---
+            resize() {
+                // Determine available space
+                const winW = window.innerWidth;
+                const winH = window.innerHeight;
                 
-                // Calculate the scale needed to fit the window while keeping 16:9
-                const scale = Math.min(w / GAME_W, h / GAME_H);
+                // Calculate Scale (Contain Ratio)
+                // We limit the Max Width to 800px so big screens see the original size
+                // But on small screens, we shrink to fit.
                 
-                // Apply new size to the container (CSS scales the Canvas)
-                const newW = GAME_W * scale;
-                const newH = GAME_H * scale;
+                let scale = Math.min(winW / LOGICAL_W, winH / LOGICAL_H);
+                
+                // Cap the scale at 1.0 (never bigger than 800x600)
+                // Remove this line if you want it to blow up huge on 4k screens
+                if (scale > 1) scale = 1; 
+
+                // Apply sizing to the Container CSS
+                const newW = LOGICAL_W * scale;
+                const newH = LOGICAL_H * scale;
 
                 this.container.style.width = `${newW}px`;
                 this.container.style.height = `${newH}px`;
                 
-                // Store scale for input calculation
-                this.scaleFactor = scale;
+                // Save scale for Input Math
+                this.currentScale = scale;
             }
 
             initGFX() {
@@ -187,20 +203,20 @@
                 // Middle Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
-                for(let y=0; y<GAME_H; y+=20) { line.moveTo(GAME_W/2, y); line.lineTo(GAME_W/2, y+10); }
+                for(let y=0; y<LOGICAL_H; y+=20) { line.moveTo(LOGICAL_W/2, y); line.lineTo(LOGICAL_W/2, y+10); }
                 this.app.stage.addChild(line);
 
                 // Paddles
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); g.drawRect(-8, -50, 16, 100); g.endFill(); // Slightly taller paddles for 16:9
-                    g.x = x; g.y = GAME_H/2;
+                    g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
+                    g.x = x; g.y = LOGICAL_H/2;
                     this.app.stage.addChild(g);
                     return g;
                 };
                 
-                this.objs.L = makeRect(0xff0055, 40);  
-                this.objs.R = makeRect(0x00f3ff, GAME_W - 40); 
+                this.objs.L = makeRect(0xff0055, 30);  
+                this.objs.R = makeRect(0x00f3ff, LOGICAL_W - 30); 
                 
                 // Ball
                 this.objs.ball = new PIXI.Graphics();
@@ -231,16 +247,17 @@
 
             initInput() {
                 const onMove = (e) => {
-                    if(!this.scaleFactor) return;
+                    if(!this.currentScale) return;
 
                     // Get Client coordinates
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
                     const rect = this.app.view.getBoundingClientRect();
                     
-                    // Convert screen pixel to Game Logic Pixel (using the scale factor)
-                    const relY = (clientY - rect.top) / this.scaleFactor;
+                    // Math: (MouseY on Screen - Top of Canvas) / Scale Factor
+                    // This maps the tiny phone pixels back to the 0-600 Game World
+                    const relY = (clientY - rect.top) / this.currentScale;
                     
-                    this.mouseY = Math.max(50, Math.min(GAME_H - 50, relY));
+                    this.mouseY = Math.max(40, Math.min(LOGICAL_H - 40, relY));
                 };
 
                 window.addEventListener('mousemove', onMove);
@@ -347,7 +364,7 @@
                         const dy = this.objs.ball.y - p.y;
                         if(Math.abs(dy)>10) p.y += (dy>0?6:-6) * delta;
                     }
-                    p.y = Math.max(50, Math.min(GAME_H - 50, p.y));
+                    p.y = Math.max(40, Math.min(LOGICAL_H - 40, p.y));
                 };
 
                 if(this.mode === 'ai') {
@@ -379,11 +396,11 @@
                 b.y += b.vy * delta;
 
                 // Wall Bounce
-                if(b.y < 10 || b.y > GAME_H - 10) b.vy *= -1;
+                if(b.y < 10 || b.y > LOGICAL_H - 10) b.vy *= -1;
 
                 // Paddle Hit Check
                 const hit = (p) => {
-                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-60 && b.y < p.y+60;
+                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-50 && b.y < p.y+50;
                 };
 
                 if(hit(this.objs.L)) { 
@@ -399,15 +416,15 @@
 
                 // Score
                 if(b.x < -20) { this.score.R++; this.resetBall(1); }
-                if(b.x > GAME_W + 20) { this.score.L++; this.resetBall(-1); }
+                if(b.x > LOGICAL_W + 20) { this.score.L++; this.resetBall(-1); }
                 
                 this.updateScore();
                 if(this.score.L >= 10 || this.score.R >= 10) this.gameOver();
             }
 
             resetBall(dir) {
-                this.objs.ball.x = GAME_W / 2; 
-                this.objs.ball.y = GAME_H / 2;
+                this.objs.ball.x = LOGICAL_W / 2; 
+                this.objs.ball.y = LOGICAL_H / 2;
                 this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 7;
                 this.objs.ball.vy = (Math.random()*6)-3;
             }
