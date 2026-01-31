@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pong - Arcade Multiplayer</title>
+    <style>
+        /* --- VARIABLES --- */
+        :root {
+            --bg-dark: #111;
+            --cabinet-color: #222;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --neon-green: #00ff00;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
+
+        body {
+            min-height: 100vh;
+            background-color: var(--bg-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            user-select: none;
+            touch-action: none;
+        }
+
+        /* --- ARCADE AMBIANCE --- */
+        .arcade-room {
+            position: fixed; inset: 0; z-index: -1;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+        }
+
+        .arcade-glow {
+            position: absolute; inset: 0;
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* --- GAME CABINET --- */
+        #game-wrapper {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: 800px;
+            max-height: 600px;
+            aspect-ratio: 4/3;
+            background: #000;
+            border: 4px solid var(--cabinet-color);
+            border-radius: 4px;
+            box-shadow: 0 0 0 2px #000, 0 0 20px var(--neon-blue);
+            cursor: none; /* Hide default cursor inside game for immersion */
+        }
+
+        /* Show cursor when in menus (checking for ui-active class if needed, or just let UI overlay handle it) */
+        #game-wrapper:has(.menu-screen:not(.hidden)) {
+            cursor: default;
+        }
+        #game-wrapper:has(.top-bar:hover) {
+            cursor: default;
+        }
+
+        @media (max-width: 800px) {
+            #game-wrapper { border-width: 2px; }
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated; 
+        }
+
+        /* --- UI OVERLAYS --- */
+        .ui-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 50;
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .top-bar {
+            width: 100%; padding: 15px;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: auto;
+        }
+
+        .score-display {
+            font-size: clamp(30px, 6vw, 50px);
+            font-weight: 900; color: white; 
+            text-shadow: 3px 3px 0 #000;
+            position: absolute; left: 50%; transform: translateX(-50%); top: 15px;
+        }
+
+        .icon-btn {
+            background: rgba(0,0,0,0.5); border: 2px solid var(--neon-blue);
+            color: var(--neon-blue); padding: 8px 12px; cursor: pointer;
+            font-weight: bold; font-size: 14px; text-transform: uppercase;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.2);
+            transition: 0.2s;
+            border-radius: 4px;
+        }
+        .icon-btn:active { transform: scale(0.95); }
+        .icon-btn.red { border-color: var(--neon-pink); color: var(--neon-pink); }
+
+        /* MENUS */
+        .menu-screen {
+            position: absolute; inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 100; pointer-events: auto;
+            padding: 20px;
+        }
+        .hidden { display: none !important; }
+
+        h1 {
+            font-size: clamp(40px, 10vw, 60px); 
+            color: var(--neon-blue); margin-bottom: 30px;
+            text-shadow: 0 0 20px var(--neon-blue); letter-spacing: 5px;
+            text-align: center;
+        }
+
+        .menu-btn {
+            background: transparent; border: 2px solid white; color: white;
+            padding: 15px 30px; font-size: 18px; margin: 10px; cursor: pointer;
+            width: 100%; max-width: 250px; text-align: center; transition: 0.2s;
+            text-transform: uppercase; letter-spacing: 2px;
+            border-radius: 4px;
+        }
+        .menu-btn:active { background: white; color: black; box-shadow: 0 0 20px white; }
+
+        /* LOBBY */
+        .input-group { margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;}
+        input {
+            padding: 10px; font-size: 20px; background: #222; border: 2px solid #555;
+            color: white; text-align: center; width: 140px; border-radius: 4px;
+        }
+        input:focus { border-color: var(--neon-green); outline: none; }
+        
+        .room-code-display {
+            font-size: 24px; color: var(--neon-green); margin-bottom: 20px;
+            border: 2px dashed var(--neon-green); padding: 10px 20px;
+        }
+        
+        .status-msg { margin-top: 15px; color: #aaa; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <div class="arcade-room"><div class="arcade-glow"></div></div>
+
+    <div id="game-wrapper">
+        <div class="ui-layer">
+            <div class="top-bar">
+                <button class="icon-btn red" id="leaveBtn">Exit</button>
+                <div class="score-display" id="scoreEl">0 | 0</div>
+                <button class="icon-btn" id="pauseBtn">Pause</button>
+            </div>
+
+            <div id="mainMenu" class="menu-screen">
+                <h1>PONG</h1>
+                <button class="menu-btn" id="btnSingle">Play vs AI</button>
+                <button class="menu-btn" id="btnMulti">Multiplayer</button>
+                <div style="margin-top:20px; font-size: 12px; color: #666">MOUSE OR TOUCH TO MOVE</div>
+            </div>
+
+            <div id="lobbyScreen" class="menu-screen hidden">
+                <h1>LOBBY</h1>
+                <div id="lobbyControls" style="display: flex; flex-direction: column; align-items: center;">
+                    <button class="menu-btn" id="btnCreateRoom">Create Room</button>
+                    <div style="margin: 10px; color:#666">- OR -</div>
+                    <div class="input-group">
+                        <input type="number" id="roomInput" placeholder="Code" maxlength="4">
+                        <button class="menu-btn" id="btnJoinRoom" style="width: auto;">JOIN</button>
+                    </div>
+                </div>
+                <div id="waitingArea" class="hidden" style="text-align: center;">
+                    <div class="room-code-display">ROOM: <span id="displayRoomCode">----</span></div>
+                    <div class="status-msg" id="lobbyStatus">Waiting for player...</div>
+                </div>
+                <button class="icon-btn red" id="backToMenu" style="margin-top:30px">Back</button>
+            </div>
+
+            <div id="pauseMenu" class="menu-screen hidden" style="background: rgba(0,0,0,0.6);">
+                <h1 style="font-size: 40px;">PAUSED</h1>
+                <button class="menu-btn" id="btnResume">RESUME</button>
+            </div>
+
+            <div id="gameOverScreen" class="menu-screen hidden">
+                <h1 id="winnerText">WINNER</h1>
+                <div style="font-size: 24px; color: white; margin-bottom: 20px;">
+                    <span id="finalScore">0 - 0</span>
+                </div>
+                <button class="menu-btn" id="btnRestart">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, update, remove, get, child, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d",
+            storageBucket: "webarcade-d4c3d.firebasestorage.app",
+            messagingSenderId: "918209461327",
+            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        class Game {
+            constructor() {
+                const wrapper = document.getElementById('game-wrapper');
+                
+                this.app = new PIXI.Application({
+                    width: 800, height: 600, backgroundColor: 0x000000,
+                    antialias: true, resolution: window.devicePixelRatio || 1, 
+                    autoDensity: true, backgroundAlpha: 0,
+                    powerPreference: 'high-performance'
+                });
+                
+                wrapper.appendChild(this.app.view);
+
+                // Game Variables
+                this.state = { mode: null, playing: false, paused: false };
+                this.room = { id: null, role: null }; 
+                
+                this.objects = {};
+                this.score = { left: 0, right: 0 };
+                this.keys = {};
+                this.pointerY = null; // Unifies Mouse & Touch Y position
+
+                this.setupUI();
+                this.setupGraphics();
+                this.setupInput();
+                
+                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.5, radius: 1})];
+                this.app.ticker.add(delta => this.loop(delta));
+            }
+
+            setupUI() {
+                this.screens = {
+                    main: document.getElementById('mainMenu'),
+                    lobby: document.getElementById('lobbyScreen'),
+                    pause: document.getElementById('pauseMenu'),
+                    over: document.getElementById('gameOverScreen')
+                };
+
+                const bind = (id, fn) => document.getElementById(id).onclick = fn;
+
+                bind('btnSingle', () => this.startGame('ai'));
+                bind('btnMulti', () => this.showLobby());
+                bind('btnCreateRoom', () => this.createRoom());
+                bind('btnJoinRoom', () => this.joinRoom());
+                bind('backToMenu', () => this.resetGame());
+                bind('pauseBtn', () => this.togglePause());
+                bind('btnResume', () => this.togglePause());
+                bind('btnRestart', () => this.resetGame());
+                bind('leaveBtn', () => {
+                    this.cleanupFirebase();
+                    window.location.href = 'blog.html';
+                });
+            }
+
+            setupGraphics() {
+                const court = new PIXI.Graphics();
+                court.lineStyle(4, 0x333333);
+                for (let y = 0; y < 600; y += 20) { court.moveTo(400, y); court.lineTo(400, y + 10); }
+                this.app.stage.addChild(court);
+
+                const ball = new PIXI.Graphics();
+                ball.beginFill(0xffff00); ball.drawRect(-10, -10, 20, 20); ball.endFill();
+                ball.filters = [new PIXI.filters.GlowFilter({distance: 12, outerStrength: 1.5, color: 0xffff00})];
+                this.app.stage.addChild(ball);
+                this.objects.ball = { g: ball, vx: 0, vy: 0 };
+
+                const createPaddle = (color, x) => {
+                    const p = new PIXI.Graphics();
+                    p.beginFill(color); p.drawRect(-8, -40, 16, 80); p.endFill();
+                    p.x = x; p.y = 300;
+                    p.filters = [new PIXI.filters.GlowFilter({distance: 10, outerStrength: 1.2, color: color})];
+                    this.app.stage.addChild(p);
+                    return { g: p };
+                };
+
+                this.objects.left = createPaddle(0xff0044, 30);
+                this.objects.right = createPaddle(0x00f3ff, 770);
+                this.objects.ball.g.visible = false;
+            }
+
+            setupInput() {
+                // Keyboard
+                window.addEventListener('keydown', e => this.keys[e.key] = true);
+                window.addEventListener('keyup', e => this.keys[e.key] = false);
+
+                // Unified Pointer (Mouse + Touch)
+                const canvas = this.app.view;
+                
+                const handlePointer = (e) => {
+                    let clientY;
+                    
+                    if (e.type.startsWith('touch')) {
+                        e.preventDefault(); 
+                        if(e.touches.length > 0) clientY = e.touches[0].clientY;
+                    } else {
+                        // Mouse
+                        clientY = e.clientY;
+                    }
+                    
+                    if (clientY === undefined) return;
+
+                    const rect = canvas.getBoundingClientRect();
+                    // Map visual CSS pixels to Game Logic pixels (800x600)
+                    const scaleY = 600 / rect.height;
+                    let gameY = (clientY - rect.top) * scaleY;
+                    
+                    // Clamp to court boundaries
+                    gameY = Math.max(40, Math.min(560, gameY));
+                    this.pointerY = gameY;
+                };
+
+                // Touch Events
+                canvas.addEventListener('touchstart', handlePointer, { passive: false });
+                canvas.addEventListener('touchmove', handlePointer, { passive: false });
+                canvas.addEventListener('touchend', () => { this.pointerY = null; }, { passive: false });
+                
+                // Mouse Events
+                canvas.addEventListener('mousemove', handlePointer);
+                canvas.addEventListener('mouseleave', () => { this.pointerY = null; });
+            }
+
+            resetGame() {
+                this.cleanupFirebase();
+                this.state.playing = false;
+                this.state.paused = false;
+                this.state.mode = null;
+                this.objects.ball.g.visible = false;
+                
+                Object.values(this.screens).forEach(s => s.classList.add('hidden'));
+                this.screens.main.classList.remove('hidden');
+                document.getElementById('lobbyControls').classList.remove('hidden');
+                document.getElementById('waitingArea').classList.add('hidden');
+                document.getElementById('roomInput').value = "";
+                document.getElementById('lobbyStatus').innerText = "Waiting for player...";
+            }
+
+            startGame(mode) {
+                this.state.mode = mode;
+                this.screens.main.classList.add('hidden');
+                this.screens.lobby.classList.add('hidden');
+                
+                this.resetBall(Math.random() > 0.5 ? 1 : -1);
+                this.objects.left.g.y = 300;
+                this.objects.right.g.y = 300;
+                this.score = { left: 0, right: 0 };
+                this.updateScoreUI();
+                
+                this.objects.ball.g.visible = true;
+                this.state.playing = true;
+            }
+
+            loop(delta) {
+                if (!this.state.playing || this.state.paused) return;
+
+                // 1. INPUT HANDLING
+                const speed = 8 * delta;
+                const isHost = (this.state.mode === 'online' && this.room.role === 'host');
+                const isGuestOrAI = (this.state.mode === 'ai' || (this.state.mode === 'online' && this.room.role === 'guest'));
+
+                let activePaddle = null;
+                if (isHost) activePaddle = this.objects.left.g;
+                if (isGuestOrAI) activePaddle = this.objects.right.g;
+
+                if (activePaddle) {
+                    if (this.pointerY !== null) {
+                        // Mouse/Touch: Direct mapping with slight smoothing for feel
+                        // Using 0.3 factor makes it very responsive (near instant) but not jittery
+                        activePaddle.y += (this.pointerY - activePaddle.y) * 0.4 * delta; 
+                    } else {
+                        // Keyboard Fallback
+                        if (this.keys['ArrowUp'] || this.keys['w']) activePaddle.y -= speed;
+                        if (this.keys['ArrowDown'] || this.keys['s']) activePaddle.y += speed;
+                    }
+                    activePaddle.y = Math.max(40, Math.min(560, activePaddle.y));
+                }
+
+                // 2. NETWORK SYNC & PHYSICS
+                if (this.state.mode === 'online') {
+                    if (this.room.role === 'host') {
+                        this.updatePhysics(delta);
+                        this.syncHost();
+                    } else {
+                        this.syncGuest();
+                    }
+                } 
+                else if (this.state.mode === 'ai') {
+                    this.updateAI(delta);
+                    this.updatePhysics(delta);
+                }
+            }
+
+            updateAI(delta) {
+                const dy = this.objects.ball.g.y - this.objects.left.g.y;
+                const aiSpeed = 5 * delta;
+                if (Math.abs(dy) > 10) {
+                    this.objects.left.g.y += dy > 0 ? aiSpeed : -aiSpeed;
+                }
+                this.objects.left.g.y = Math.max(40, Math.min(560, this.objects.left.g.y));
+            }
+
+            updatePhysics(delta) {
+                const b = this.objects.ball;
+                
+                b.g.x += b.vx * delta;
+                b.g.y += b.vy * delta;
+
+                if (b.g.y <= 10 || b.g.y >= 590) b.vy *= -1;
+
+                if (this.checkColl(b.g, this.objects.left.g)) {
+                    b.vx = Math.abs(b.vx * 1.05);
+                    b.vy = (b.g.y - this.objects.left.g.y) * 0.1;
+                }
+                if (this.checkColl(b.g, this.objects.right.g)) {
+                    b.vx = -Math.abs(b.vx * 1.05);
+                    b.vy = (b.g.y - this.objects.right.g.y) * 0.1;
+                }
+
+                if (b.g.x < 0) {
+                    this.score.right++;
+                    this.resetBall(1);
+                } else if (b.g.x > 800) {
+                    this.score.left++;
+                    this.resetBall(-1);
+                }
+                
+                this.updateScoreUI();
+                if (this.score.left >= 10 || this.score.right >= 10) this.gameOver();
+            }
+
+            resetBall(dir) {
+                const b = this.objects.ball;
+                b.g.x = 400; b.g.y = 300;
+                b.vx = dir * 6; b.vy = (Math.random()*6)-3;
+            }
+
+            checkColl(b, p) {
+                const bB = b.getBounds(); const pB = p.getBounds();
+                return bB.x + bB.width > pB.x && bB.x < pB.x + pB.width && 
+                       bB.y + bB.height > pB.y && bB.y < pB.y + pB.height;
+            }
+
+            // --- FIREBASE ---
+            showLobby() {
+                this.screens.main.classList.add('hidden');
+                this.screens.lobby.classList.remove('hidden');
+            }
+
+            async createRoom() {
+                const code = Math.floor(1000 + Math.random() * 9000).toString();
+                this.room.id = code;
+                this.room.role = 'host';
+                
+                const roomRef = ref(db, 'rooms/' + code);
+                await set(roomRef, { host: true, status: 'waiting', timestamp: Date.now() });
+                onDisconnect(roomRef).remove();
+
+                document.getElementById('lobbyControls').classList.add('hidden');
+                document.getElementById('waitingArea').classList.remove('hidden');
+                document.getElementById('displayRoomCode').innerText = code;
+
+                onValue(roomRef, (snap) => {
+                    const data = snap.val();
+                    if (data && data.guest) {
+                        document.getElementById('lobbyStatus').innerText = "Player Connected!";
+                        setTimeout(() => this.startGame('online'), 1000);
+                    }
+                });
+            }
+
+            async joinRoom() {
+                const code = document.getElementById('roomInput').value;
+                if (code.length !== 4) return alert("Enter 4-digit code");
+                
+                const roomRef = ref(db, 'rooms/' + code);
+                const snap = await get(roomRef);
+
+                if (snap.exists() && snap.val().status === 'waiting') {
+                    this.room.id = code;
+                    this.room.role = 'guest';
+                    await update(roomRef, { guest: true, status: 'playing' });
+                    onDisconnect(roomRef).remove();
+                    this.startGame('online');
+                    this.setupOnlineListeners();
+                } else {
+                    alert("Room unavailable");
+                }
+            }
+
+            setupOnlineListeners() {
+                const roomRef = ref(db, 'rooms/' + this.room.id);
+                onValue(roomRef, (snap) => {
+                    if (!snap.exists()) { alert("Connection Lost"); this.resetGame(); }
+                });
+
+                if (this.room.role === 'guest') {
+                    onValue(child(roomRef, 'gameState'), (snap) => {
+                        const s = snap.val();
+                        if (s) {
+                            this.objects.ball.g.x = s.bx;
+                            this.objects.ball.g.y = s.by;
+                            this.objects.left.g.y = s.ly;
+                            this.score = s.score;
+                            this.updateScoreUI();
+                        }
+                    });
+                } else {
+                    onValue(child(roomRef, 'guestY'), (snap) => {
+                        if (snap.exists()) this.objects.right.g.y = snap.val();
+                    });
+                }
+            }
+
+            syncHost() {
+                update(ref(db, 'rooms/' + this.room.id + '/gameState'), {
+                    bx: this.objects.ball.g.x, by: this.objects.ball.g.y,
+                    ly: this.objects.left.g.y, score: this.score
+                });
+            }
+
+            syncGuest() {
+                set(ref(db, 'rooms/' + this.room.id + '/guestY'), this.objects.right.g.y);
+            }
+
+            cleanupFirebase() {
+                if (this.room.id) {
+                    remove(ref(db, 'rooms/' + this.room.id));
+                    this.room.id = null;
+                }
+            }
+
+            togglePause() {
+                if (!this.state.playing) return;
+                this.state.paused = !this.state.paused;
+                this.screens.pause.classList.toggle('hidden', !this.state.paused);
+            }
+
+            updateScoreUI() {
+                document.getElementById('scoreEl').innerText = `${this.score.left} | ${this.score.right}`;
+            }
+
+            gameOver() {
+                this.state.playing = false;
+                this.cleanupFirebase();
+                const msg = this.score.left > this.score.right ? "LEFT WINS" : "RIGHT WINS";
+                document.getElementById('winnerText').innerText = msg;
+                document.getElementById('finalScore').innerText = `${this.score.left} - ${this.score.right}`;
+                this.screens.over.classList.remove('hidden');
+            }
+        }
+
+        const game = new Game();
+    </script>
+</body>
+</html>
