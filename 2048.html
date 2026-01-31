@@ -12,6 +12,7 @@
   --accent: #6366f1;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
+  --danger: #ef4444;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; font-family:"Segoe UI", sans-serif; }
@@ -28,7 +29,6 @@ body {
   user-select: none;
 }
 
-/* BACKGROUND GRID ANIMATION */
 .retro-bg {
   position: fixed; inset: 0; z-index: -1;
   background: 
@@ -40,7 +40,6 @@ body {
   pointer-events: none;
 }
 
-/* MAIN CONTAINER */
 .scene {
   display: flex; gap: 20px;
   padding: 20px;
@@ -52,31 +51,17 @@ body {
   max-width: 800px;
   width: 100%;
   justify-content: center;
+  position: relative;
 }
 
 @media(max-width: 850px) {
   .scene { flex-direction: column; align-items: center; max-width: 450px; }
 }
 
-/* --- GAME SECTION --- */
-.game-container {
-  width: 100%;
-  max-width: 360px; /* Locks width to prevent shifting */
-}
+.game-container { width: 100%; max-width: 360px; position: relative; }
 
-/* TOP BAR (FIXED OVERLAP) */
-.top-bar {
-  display: flex; 
-  flex-wrap: wrap; /* Allows wrapping if screen is tiny */
-  justify-content: space-between; 
-  align-items: center;
-  margin-bottom: 16px;
-  gap: 10px;
-}
-
-.header-row {
-  display: flex; justify-content: space-between; width: 100%; align-items: center;
-}
+.top-bar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; }
+.header-row { display: flex; justify-content: space-between; width: 100%; align-items: center; }
 
 .back-btn {
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
@@ -84,29 +69,13 @@ body {
   cursor: pointer; font-size: 13px; font-weight: 600;
   border-radius: 8px; text-decoration: none;
 }
-.back-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+.title { font-size: 28px; font-weight: 800; color: var(--text-main); text-shadow: 0 0 15px rgba(99,102,241,0.5); }
 
-.title {
-  font-size: 28px; font-weight: 800;
-  color: var(--text-main);
-  text-shadow: 0 0 15px rgba(99,102,241,0.5);
-}
-
-.score-box {
-  display: flex; gap: 8px; margin-top: 5px; width: 100%;
-}
-.score-card {
-  flex: 1;
-  background: #0f172a;
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 8px;
-  padding: 8px;
-  text-align: center;
-}
+.score-box { display: flex; gap: 8px; margin-top: 5px; width: 100%; }
+.score-card { flex: 1; background: #0f172a; border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; padding: 8px; text-align: center; }
 .score-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
 .score-val { font-size: 16px; font-weight: bold; color: #fff; }
 
-/* BOARD (STABLE) */
 .board-bg {
   background: #0f172a;
   padding: 10px; border-radius: 10px;
@@ -116,104 +85,86 @@ body {
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(4, 1fr);
   gap: 10px;
-  touch-action: none; /* Critical for swipe */
+  touch-action: none;
+  position: relative;
 }
 
-/* Mobile Adjustment */
-@media(max-width: 360px) {
-  .board-bg { width: 300px; height: 300px; gap: 8px; padding: 8px; }
+/* GAME OVER OVERLAY */
+#game-over {
+  position: absolute; inset: 0;
+  background: rgba(15, 23, 42, 0.9);
+  display: none; flex-direction: column;
+  align-items: center; justify-content: center;
+  border-radius: 10px; z-index: 5;
+  backdrop-filter: blur(4px);
 }
+#game-over h2 { color: var(--danger); font-size: 32px; margin-bottom: 10px; }
+.retry-btn {
+  background: var(--accent); color: white; border: none;
+  padding: 10px 20px; border-radius: 8px; font-weight: bold;
+  cursor: pointer; transition: 0.2s;
+}
+.retry-btn:hover { transform: scale(1.05); }
 
-/* TILES */
+@media(max-width: 360px) { .board-bg { width: 300px; height: 300px; gap: 8px; padding: 8px; } }
+
 .cell {
-  width: 100%; height: 100%;
-  border-radius: 6px;
+  width: 100%; height: 100%; border-radius: 6px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 28px; font-weight: bold;
-  background: rgba(255,255,255,0.03); /* Empty cell color */
+  font-size: 28px; font-weight: bold; background: rgba(255,255,255,0.03);
   transition: transform 0.1s, background 0.15s;
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); /* Subtle inner border */
 }
 
-/* POP ANIMATION */
-.pop { animation: pop 0.2s ease-in-out; }
-@keyframes pop {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.15); }
-  100% { transform: scale(1); }
-}
-
-/* TILE COLORS (Vibrant & Neon) */
-.t-2 { background: #e2e8f0; color: #334155; box-shadow: 0 2px 0 #cbd5e1; }
-.t-4 { background: #fef08a; color: #854d0e; box-shadow: 0 2px 0 #fde047; }
-.t-8 { background: #f97316; color: white; box-shadow: 0 2px 0 #ea580c; }
-.t-16 { background: #ef4444; color: white; box-shadow: 0 2px 0 #dc2626; }
-.t-32 { background: #ec4899; color: white; box-shadow: 0 2px 0 #db2777; }
-.t-64 { background: #a855f7; color: white; box-shadow: 0 2px 0 #9333ea; }
+.t-2 { background: #e2e8f0; color: #334155; }
+.t-4 { background: #fef08a; color: #854d0e; }
+.t-8 { background: #f97316; color: white; }
+.t-16 { background: #ef4444; color: white; }
+.t-32 { background: #ec4899; color: white; }
+.t-64 { background: #a855f7; color: white; }
 .t-128 { background: #6366f1; color: white; box-shadow: 0 0 10px #6366f1; font-size: 24px; }
 .t-256 { background: #3b82f6; color: white; box-shadow: 0 0 15px #3b82f6; font-size: 24px; }
 .t-512 { background: #14b8a6; color: white; box-shadow: 0 0 20px #14b8a6; font-size: 24px; }
 .t-1024 { background: #22c55e; color: white; box-shadow: 0 0 25px #22c55e; font-size: 20px; }
 .t-2048 { background: #eab308; color: white; box-shadow: 0 0 30px #eab308; font-size: 20px; }
 
-/* LEADERBOARD */
-.leaderboard {
-  width: 100%;
-  background: rgba(30, 41, 59, 0.5);
-  border-radius: 12px; padding: 15px;
-  border: 1px solid rgba(255,255,255,0.05);
-}
+.leaderboard { width: 100%; background: rgba(30, 41, 59, 0.5); border-radius: 12px; padding: 15px; border: 1px solid rgba(255,255,255,0.05); }
 .leaderboard h3 { font-size: 16px; margin-bottom: 12px; color: var(--accent); text-align: center; }
-.entry {
-  display: flex; justify-content: space-between;
-  padding: 8px 10px; 
-  background: rgba(0,0,0,0.2);
-  margin-bottom: 6px;
-  border-radius: 6px;
-  font-size: 13px;
-}
+.entry { display: flex; justify-content: space-between; padding: 8px 10px; background: rgba(0,0,0,0.2); margin-bottom: 6px; border-radius: 6px; font-size: 13px; }
 .rank { font-weight: bold; color: #fbbf24; margin-right: 8px; }
 </style>
 </head>
 
 <body>
-
 <div class="retro-bg"></div>
 
 <div class="scene">
-
   <div class="game-container">
     <div class="top-bar">
       <div class="header-row">
         <a href="blog.html" class="back-btn">← Back</a>
         <div class="title">2048</div>
-        <div style="width: 50px;"></div> </div>
-      
+        <div style="width: 50px;"></div>
+      </div>
       <div class="score-box">
-        <div class="score-card">
-          <div class="score-label">Score</div>
-          <div class="score-val" id="score">0</div>
-        </div>
-        <div class="score-card">
-          <div class="score-label">Best</div>
-          <div class="score-val" id="best">0</div>
-        </div>
+        <div class="score-card"><div class="score-label">Score</div><div class="score-val" id="score">0</div></div>
+        <div class="score-card"><div class="score-label">Best</div><div class="score-val" id="best">0</div></div>
       </div>
     </div>
     
     <div class="board-bg" id="board">
+      <div id="game-over">
+        <h2>Game Over!</h2>
+        <button class="retry-btn" onclick="location.reload()">Try Again</button>
       </div>
-    
-    <div style="text-align:center; font-size:12px; color:#64748b; margin-top:15px;">
-      Use Arrow Keys or Swipe
     </div>
+    
+    <div style="text-align:center; font-size:12px; color:#64748b; margin-top:15px;">Use Arrow Keys or Swipe</div>
   </div>
 
   <div class="leaderboard">
     <h3>🏆 Top Players</h3>
     <div id="leaderboard">Loading...</div>
   </div>
-
 </div>
 
 <script type="module">
@@ -239,8 +190,8 @@ const boardEl = document.getElementById("board");
 const scoreEl = document.getElementById("score");
 const bestEl = document.getElementById("best");
 const lbEl = document.getElementById("leaderboard");
+const gameOverEl = document.getElementById("game-over");
 
-/* --- INITIALIZATION --- */
 onAuthStateChanged(auth, async (u) => {
   user = u;
   if(user) {
@@ -255,7 +206,6 @@ onAuthStateChanged(auth, async (u) => {
   loadLeaderboard();
 });
 
-/* --- GAME LOGIC --- */
 function initGame() {
   board = Array.from({length:4}, () => Array(4).fill(0));
   score = 0;
@@ -264,15 +214,15 @@ function initGame() {
 }
 
 function drawBoard() {
-  boardEl.innerHTML = "";
-  board.forEach((row, r) => {
-    row.forEach((val, c) => {
+  const cells = boardEl.querySelectorAll(".cell");
+  cells.forEach(c => c.remove());
+  board.forEach((row) => {
+    row.forEach((val) => {
       const cell = document.createElement("div");
       cell.className = "cell";
       if(val > 0) {
         cell.textContent = val;
         cell.classList.add(`t-${val}`);
-        // Add pop class for animation (handled by logic below mostly, simple re-render here)
       }
       boardEl.appendChild(cell);
     });
@@ -291,9 +241,6 @@ function addRandom() {
   if(empty.length === 0) return;
   let spot = empty[Math.floor(Math.random() * empty.length)];
   board[spot.x][spot.y] = Math.random() > 0.9 ? 4 : 2;
-  
-  // Quick hack to animate the specific new cell
-  // In a full React/Vue app we would track IDs, but here re-draw works fast enough
 }
 
 function slide(row) {
@@ -310,9 +257,8 @@ function slide(row) {
 
 function move(dir) {
   let oldStr = JSON.stringify(board);
-  
   if(dir === 'left') board = board.map(r => slide(r));
-  else if(dir === 'right') board = board.map(r => slide(r.reverse()).reverse());
+  else if(dir === 'right') board = board.map(r => slide([...r].reverse()).reverse());
   else if(dir === 'up') {
     for(let c=0; c<4; c++) {
       let col = [board[0][c], board[1][c], board[2][c], board[3][c]];
@@ -331,19 +277,35 @@ function move(dir) {
   if(JSON.stringify(board) !== oldStr) {
     addRandom();
     drawBoard();
-    
-    // Save High Score
     if(score > best) {
       best = score;
       localStorage.setItem("best2048", best);
       if(user) setDoc(doc(db,"users",user.uid), { best2048: best }, { merge: true }).then(loadLeaderboard);
     }
+    checkGameOver();
   }
 }
 
-/* --- LEADERBOARD --- */
+// --- NEW: GAME OVER LOGIC ---
+function checkGameOver() {
+  // Check for empty spots
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      if (board[r][c] === 0) return;
+    }
+  }
+  // Check for possible merges
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      let val = board[r][c];
+      if ((r < 3 && val === board[r+1][c]) || (c < 3 && val === board[r][c+1])) return;
+    }
+  }
+  // If we reach here, no moves left
+  gameOverEl.style.display = "flex";
+}
+
 async function loadLeaderboard() {
-  lbEl.innerHTML = "Loading...";
   try {
     const s = await getDocs(collection(db, "users"));
     let d = [];
@@ -352,20 +314,17 @@ async function loadLeaderboard() {
        if(dd.best2048 > 0) d.push({n: dd.username || "Anon", s: dd.best2048});
     });
     d.sort((a,b) => b.s - a.s);
-    
     lbEl.innerHTML = "";
     if(d.length === 0) lbEl.innerHTML = "<div style='text-align:center;font-size:12px'>No scores yet</div>";
-    
     d.slice(0,5).forEach((p, i) => {
       const div = document.createElement("div");
       div.className = "entry";
       div.innerHTML = `<div><span class="rank">#${i+1}</span> ${p.n.substring(0,10)}</div> <div>${p.s}</div>`;
       lbEl.appendChild(div);
     });
-  } catch(e){ console.log(e); lbEl.innerHTML = "Offline"; }
+  } catch(e){ lbEl.innerHTML = "Offline"; }
 }
 
-/* --- CONTROLS --- */
 document.addEventListener("keydown", e => {
   if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].includes(e.key)) {
     e.preventDefault();
@@ -374,16 +333,15 @@ document.addEventListener("keydown", e => {
 });
 
 let tsX, tsY;
-boardEl.addEventListener("touchstart", e => { tsX=e.touches[0].clientX; tsY=e.touches[0].clientY; e.preventDefault(); }, {passive:false});
+boardEl.addEventListener("touchstart", e => { tsX=e.touches[0].clientX; tsY=e.touches[0].clientY; }, {passive:true});
 boardEl.addEventListener("touchend", e => {
   let dX = e.changedTouches[0].clientX - tsX;
   let dY = e.changedTouches[0].clientY - tsY;
   if(Math.abs(dX) > Math.abs(dY) && Math.abs(dX)>30) move(dX>0?"right":"left");
   else if(Math.abs(dY) > 30) move(dY>0?"down":"up");
-}, {passive:false});
+}, {passive:true});
 
 initGame();
 </script>
-
 </body>
 </html>
