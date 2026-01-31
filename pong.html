@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong - Ultimate</title>
+    <title>Neon Pong - Final</title>
     <style>
         /* --- RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -12,20 +12,17 @@
             background-color: #000;
             overflow: hidden;
             width: 100vw; height: 100vh;
-            font-family: "Courier New", Courier, monospace; /* Retro Font */
+            font-family: "Courier New", Courier, monospace;
             display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- CANVAS CONTAINER --- */
-        /* We let JS handle the size, this just positions it */
         canvas {
             display: block;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2); /* Big Glow */
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
             background: #050505;
         }
 
-        /* --- TOUCH CONTROLS --- */
-        /* Invisible layers over the left/right sides */
+        /* --- CONTROLS --- */
         .touch-zone { position: absolute; top:0; bottom:0; width: 50%; z-index: 10; }
         #leftZone { left: 0; }
         #rightZone { right: 0; }
@@ -38,20 +35,17 @@
         }
         .interactive { pointer-events: auto; }
 
-        /* SCORE BOARD */
+        /* HUD */
         .hud { 
-            width: 100%; padding-top: 20px;
-            display: flex; justify-content: center; gap: 100px;
+            width: 100%; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .score { 
-            font-size: 60px; font-weight: bold; opacity: 0.8;
-            text-shadow: 0 0 10px currentColor;
-        }
+        .score-box { display: flex; gap: 80px; font-size: 60px; font-weight: bold; text-shadow: 0 0 10px currentColor; }
 
         /* MENUS */
         .screen {
             position: absolute; inset: 0; 
-            background: rgba(0,0,0,0.85);
+            background: rgba(0,0,0,0.9);
             backdrop-filter: blur(4px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.3s;
@@ -60,11 +54,10 @@
 
         h1 {
             color: #fff; font-size: 50px; margin-bottom: 30px; letter-spacing: 5px;
-            text-shadow: 0 0 20px #00f3ff;
-            text-transform: uppercase;
+            text-shadow: 0 0 20px #00f3ff; text-transform: uppercase; text-align: center;
         }
 
-        /* NEON BUTTONS */
+        /* BUTTONS */
         button {
             background: rgba(0,0,0,0.6); 
             border: 2px solid #fff; color: #fff;
@@ -73,14 +66,20 @@
             text-transform: uppercase; cursor: pointer;
             box-shadow: 0 0 10px rgba(255,255,255,0.1);
             transition: all 0.2s;
-            min-width: 250px;
+            min-width: 200px;
         }
         button:active { transform: scale(0.95); background: #222; }
         
         .btn-cyan { border-color: #00f3ff; color: #00f3ff; text-shadow: 0 0 5px #00f3ff; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
         .btn-pink { border-color: #ff0055; color: #ff0055; text-shadow: 0 0 5px #ff0055; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
         
-        /* INPUT FIELDS */
+        /* EXIT BUTTON (Small & Red) */
+        .btn-exit {
+            border-color: #ff3333; color: #ff3333;
+            padding: 10px 20px; min-width: auto; font-size: 14px;
+            box-shadow: 0 0 5px rgba(255, 50, 50, 0.5);
+        }
+
         input {
             background: transparent; border: none; border-bottom: 2px solid #00f3ff;
             color: #fff; font-size: 30px; text-align: center; letter-spacing: 5px;
@@ -94,10 +93,13 @@
     <div id="rightZone" class="touch-zone interactive"></div>
 
     <div class="ui-layer">
-        <div class="hud">
-            <div class="score" style="color:#ff0055" id="scoreL">0</div>
-            <div class="score" style="color:#00f3ff" id="scoreR">0</div>
-        </div>
+        <div class="hud hidden" id="gameHud">
+            <button class="btn-exit interactive" id="btnExit">EXIT</button>
+            <div class="score-box">
+                <div style="color:#ff0055" id="scoreL">0</div>
+                <div style="color:#00f3ff" id="scoreR">0</div>
+            </div>
+            <div style="width: 80px;"></div> </div>
 
         <div id="menuScreen" class="screen interactive">
             <h1>NEON PONG</h1>
@@ -118,7 +120,7 @@
             </div>
             
             <div id="lobbyWait" class="hidden" style="text-align:center">
-                <p style="color:#aaa">YOUR ROOM CODE:</p>
+                <p style="color:#aaa">ROOM CODE:</p>
                 <h2 style="color:#0f0; font-size:60px; margin:10px; text-shadow: 0 0 20px #0f0" id="codeDisp">----</h2>
                 <p style="color:#fff; margin-top:20px">Waiting for opponent...</p>
             </div>
@@ -149,13 +151,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CONSTANTS ---
-        const W = 800; // Game Logic Width
-        const H = 600; // Game Logic Height
+        const W = 800;
+        const H = 600;
 
         class PongGame {
             constructor() {
-                // Initialize Pixi
                 this.app = new PIXI.Application({
                     width: W, height: H, backgroundColor: 0x050505,
                     resolution: window.devicePixelRatio || 1,
@@ -164,7 +164,6 @@
                 
                 document.body.appendChild(this.app.view);
                 
-                // State
                 this.state = {
                     playing: false, mode: '', role: '', room: null,
                     score: {L:0, R:0},
@@ -174,61 +173,36 @@
                 
                 this.inputY = H/2;
                 this.scaleFactor = 1;
-                this.canvasBounds = {top:0, left:0};
 
                 this.initGFX();
                 this.initUI();
                 this.initInput();
-                
-                // Force perfect sizing immediately
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
-                
-                // Game Loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
-            // --- THE FIX: MANUAL RESIZING ---
             resize() {
                 const screenW = window.innerWidth;
                 const screenH = window.innerHeight;
-                
-                // Calculate Scale to fit within screen (Letterboxing)
                 const scale = Math.min(screenW / W, screenH / H);
-                
-                const newW = W * scale;
-                const newH = H * scale;
-
-                // Apply size to Canvas Style (Visual only)
-                this.app.view.style.width = `${newW}px`;
-                this.app.view.style.height = `${newH}px`;
-                
-                // Center the canvas manually if needed (Flexbox does most of this, but this is safe)
+                this.app.view.style.width = `${W * scale}px`;
+                this.app.view.style.height = `${H * scale}px`;
                 this.scaleFactor = scale;
             }
 
             initGFX() {
-                // 1. Bloom Filter (The Glow)
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
-
-                // 2. Dashed Line (The "Net")
+                
                 const net = new PIXI.Graphics();
                 net.beginFill(0x333333);
                 for(let y=10; y<H; y+=40) net.drawRect(W/2-2, y, 4, 20);
                 this.app.stage.addChild(net);
 
-                // 3. Paddles
                 const makePad = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); 
-                    g.drawRect(-10,-60,20,120); // Taller paddles
-                    g.endFill();
-                    
-                    // Inner white core for "Hot" look
-                    g.beginFill(0xffffff, 0.5);
-                    g.drawRect(-4, -50, 8, 100);
-                    g.endFill();
-
+                    g.beginFill(c); g.drawRect(-10,-60,20,120); g.endFill();
+                    g.beginFill(0xffffff, 0.5); g.drawRect(-4, -50, 8, 100); g.endFill();
                     g.x = x; g.y = H/2;
                     this.app.stage.addChild(g);
                     return g;
@@ -236,39 +210,21 @@
                 this.gfxL = makePad(0xff0055, 40);
                 this.gfxR = makePad(0x00f3ff, W-40);
 
-                // 4. Ball
                 this.ball = new PIXI.Graphics();
-                this.ball.beginFill(0xffffff); 
-                this.ball.drawRect(-12,-12,24,24);
+                this.ball.beginFill(0xffffff); this.ball.drawRect(-12,-12,24,24);
                 this.app.stage.addChild(this.ball);
             }
 
             initInput() {
-                // Handle Input logic
                 const onInput = (clientY) => {
                     if(!this.state.playing) return;
-                    
-                    // Get Bounds of the resized canvas
                     const rect = this.app.view.getBoundingClientRect();
-
-                    // Math: (TouchPos - CanvasTop) / Scale
-                    // This maps the touch to the 800x600 internal logic
                     let relativeY = (clientY - rect.top) / this.scaleFactor;
-                    
-                    // Clamp to screen
                     this.inputY = Math.max(60, Math.min(H-60, relativeY));
                 };
 
-                // Mouse
                 window.addEventListener('mousemove', (e) => onInput(e.clientY));
-
-                // Touch (Prevent scrolling + Handle Input)
-                const touchHandler = (e) => {
-                    e.preventDefault(); // CRITICAL: Stops screen moving
-                    onInput(e.touches[0].clientY);
-                };
-                
-                // Add listeners to the invisible touch zones for maximum responsiveness
+                const touchHandler = (e) => { e.preventDefault(); onInput(e.touches[0].clientY); };
                 const zones = document.querySelectorAll('.touch-zone');
                 zones.forEach(z => {
                     z.addEventListener('touchmove', touchHandler, {passive:false});
@@ -283,50 +239,70 @@
                 get('btnBack').onclick = () => { get('lobbyScreen').classList.add('hidden'); get('menuScreen').classList.remove('hidden'); };
                 get('btnHost').onclick = () => this.host();
                 get('btnJoin').onclick = () => this.join();
+                
+                // EXIT BUTTON LOGIC
+                get('btnExit').onclick = () => this.manualExit();
             }
 
-            // --- GAME LOOP ---
+            // --- GAME LOGIC ---
+
+            startAI() {
+                this.state.mode = 'ai';
+                this.state.playing = true;
+                this.resetBall();
+                document.getElementById('menuScreen').classList.add('hidden');
+                document.getElementById('gameHud').classList.remove('hidden');
+            }
+
+            manualExit() {
+                this.stopGame("YOU LEFT");
+                // If online, cleanup Firebase
+                if(this.state.room) {
+                    if(this.state.role === 'host') remove(ref(db, 'rooms/'+this.state.room));
+                    else update(ref(db, 'rooms/'+this.state.room), { g: null, status: 'ended' });
+                }
+                window.location.reload();
+            }
+
+            stopGame(reason) {
+                this.state.playing = false;
+                document.getElementById('gameHud').classList.add('hidden');
+                document.getElementById('winMsg').innerText = reason || "GAME OVER";
+                document.getElementById('overScreen').classList.remove('hidden');
+            }
+
             loop(delta) {
                 if(!this.state.playing) return;
                 const s = this.state;
                 const lerp = (a, b, n) => (1 - n) * a + n * b;
 
-                // 1. PADDLES
                 if(s.mode === 'ai') {
-                    s.pL = this.inputY; // Instant
-                    // AI
+                    s.pL = this.inputY;
                     let target = s.bx > W/2 ? s.by : H/2;
                     s.pR = lerp(s.pR, target, 0.08);
                 } 
                 else if (s.mode === 'online') {
-                    // INSTANT RESPONSE for Local Player
                     if(s.role === 'host') s.pL = this.inputY;
                     else s.pR = this.inputY;
                 }
 
-                // 2. BALL
                 s.bx += s.bvx * delta;
                 s.by += s.bvy * delta;
 
-                // Walls
                 if(s.by < 10 || s.by > H - 10) { s.bvy *= -1; s.by = Math.max(10, Math.min(H-10, s.by)); }
 
-                // Hit Logic (Host Authoritative)
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
                     this.checkHit(s.pL, 40, 1);
                     this.checkHit(s.pR, W-40, -1);
-                    
                     if(s.bx < -20) { s.score.R++; this.resetBall(1); }
                     if(s.bx > W+20) { s.score.L++; this.resetBall(-1); }
                 }
 
-                // 3. DRAW
                 this.gfxL.y = s.pL;
                 this.gfxR.y = s.pR;
                 this.ball.x = s.bx;
                 this.ball.y = s.by;
 
-                // 4. NET SYNC (30ms throttle)
                 if(s.mode === 'online') {
                     const now = Date.now();
                     if(now - (this.lastNet || 0) > 30) {
@@ -338,11 +314,10 @@
 
             checkHit(py, px, dir) {
                 const s = this.state;
-                // Collision Box
                 if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
-                    s.bvx = Math.abs(s.bvx) * 1.05; // Speed up
+                    s.bvx = Math.abs(s.bvx) * 1.05;
                     if (dir === -1) s.bvx *= -1;
-                    s.bvy = (s.by - py) * 0.15; // Spin
+                    s.bvy = (s.by - py) * 0.15;
                 }
             }
 
@@ -351,27 +326,17 @@
                 s.bx = W/2; s.by = H/2;
                 s.bvx = (dir || (Math.random()>.5?1:-1)) * 9;
                 s.bvy = (Math.random()*8)-4;
-                
-                // Update Score UI
                 document.getElementById('scoreL').innerText = s.score.L;
                 document.getElementById('scoreR').innerText = s.score.R;
                 
                 if(s.score.L >= 10 || s.score.R >= 10) {
-                    s.playing = false;
-                    document.getElementById('winMsg').innerText = s.score.L > s.score.R ? "RED WINS" : "BLUE WINS";
-                    document.getElementById('overScreen').classList.remove('hidden');
+                    this.stopGame(s.score.L > s.score.R ? "RED WINS" : "BLUE WINS");
                     if(s.room) remove(ref(db, 'rooms/'+s.room));
                 }
             }
 
-            startAI() {
-                this.state.mode = 'ai';
-                this.state.playing = true;
-                this.resetBall();
-                document.getElementById('menuScreen').classList.add('hidden');
-            }
+            // --- NETWORK WITH DISCONNECT HANDLING ---
 
-            // --- NETWORK ---
             async host() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.state.room = code;
@@ -382,18 +347,28 @@
 
                 const r = ref(db, 'rooms/'+code);
                 await set(r, { h: true });
-                onDisconnect(r).remove();
+                onDisconnect(r).remove(); // If Host closes tab, destroy room
 
                 onValue(r, (snap) => {
                     const d = snap.val();
-                    if(d && d.g && !this.state.playing) {
+                    if(!d) return; 
+
+                    // Start Game when Guest joins
+                    if(d.g && !this.state.playing) {
                         this.state.mode = 'online';
                         this.state.playing = true;
                         this.resetBall();
                         document.getElementById('lobbyScreen').classList.add('hidden');
+                        document.getElementById('gameHud').classList.remove('hidden');
                     }
-                    if(d && d.gy) {
-                         // Smooth Guest Ghost
+                    
+                    // STOP GAME if Guest leaves
+                    if(this.state.playing && !d.g) {
+                        this.stopGame("OPPONENT LEFT");
+                        remove(ref(db, 'rooms/'+code));
+                    }
+
+                    if(d.gy) {
                          const lerp = (a,b,n) => (1-n)*a+n*b;
                          this.state.pR = lerp(this.state.pR, d.gy, 0.4);
                     }
@@ -405,14 +380,29 @@
                 if(!code) return;
                 const r = ref(db, 'rooms/'+code);
                 const snap = await get(r);
+                
                 if(snap.exists()) {
                     this.state.room = code;
                     this.state.role = 'guest';
+                    
+                    // If Guest closes tab, remove 'g' from DB
                     await update(r, { g: true });
+                    onDisconnect(ref(db, 'rooms/'+code+'/g')).remove();
+
                     this.state.mode = 'online';
                     this.state.playing = true;
                     document.getElementById('lobbyScreen').classList.add('hidden');
-                    onValue(r, (s) => this.onServer(s.val()));
+                    document.getElementById('gameHud').classList.remove('hidden');
+                    
+                    onValue(r, (s) => {
+                        const d = s.val();
+                        // STOP GAME if Room (Host) disappears
+                        if(!d) {
+                            this.stopGame("HOST DISCONNECTED");
+                            return;
+                        }
+                        this.onServer(d);
+                    });
                 } else alert("Invalid Code");
             }
 
