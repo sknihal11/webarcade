@@ -45,15 +45,37 @@
     padding: 14px;
     margin-bottom: 14px;
     border-radius: 10px;
-    border: none;
+    border: 2px solid transparent;
     outline: none;
     background: rgba(255,255,255,0.1);
     color: white;
     font-size: 15px;
+    transition: border-color 0.3s;
   }
 
   input::placeholder {
     color: #cbd5f5;
+  }
+
+  input.valid {
+    border-color: #22c55e;
+  }
+
+  input.invalid {
+    border-color: #ef4444;
+  }
+
+  .error-msg {
+    color: #ef4444;
+    font-size: 12px;
+    margin-top: -10px;
+    margin-bottom: 10px;
+    padding-left: 5px;
+    display: none;
+  }
+
+  .error-msg.show {
+    display: block;
   }
 
   button {
@@ -69,9 +91,14 @@
     transition: transform .2s, box-shadow .2s;
   }
 
-  button:hover {
+  button:hover:not(:disabled) {
     transform: translateY(-2px);
     box-shadow: 0 10px 25px rgba(99,102,241,.5);
+  }
+
+  button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .link {
@@ -90,6 +117,11 @@
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: none; }
   }
+
+  .loading {
+    pointer-events: none;
+    opacity: 0.7;
+  }
 </style>
 </head>
 
@@ -99,13 +131,16 @@
   <h1>WebArcade 🎮</h1>
   <p>Create your account</p>
 
-  <!-- NEW -->
-  <input id="username" type="text" placeholder="Username" />
+  <input id="username" type="text" placeholder="Username (3-20 chars, alphanumeric)" maxlength="20" />
+  <div class="error-msg" id="usernameError"></div>
 
-  <input id="email" type="email" placeholder="Email" />
+  <input id="email" type="email" placeholder="Email (must be real)" />
+  <div class="error-msg" id="emailError"></div>
+
   <input id="password" type="password" placeholder="Password (min 6 chars)" />
+  <div class="error-msg" id="passwordError"></div>
 
-  <button onclick="signupUser()">Sign Up</button>
+  <button id="signupBtn" onclick="signupUser()">Sign Up</button>
 
   <div class="link">
     Already have an account?
@@ -124,7 +159,11 @@
   import {
     getFirestore,
     doc,
-    setDoc
+    setDoc,
+    collection,
+    query,
+    where,
+    getDocs
   } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -140,37 +179,296 @@
   const auth = getAuth(app);
   const db = getFirestore(app);
 
-  window.signupUser = async function () {
-    const username = document.getElementById("username").value.trim();
-    const email = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value;
+  // --- VALIDATION HELPERS ---
+  
+  function validateUsername(username) {
+    if (!username || username.length < 3) {
+      return "Username must be at least 3 characters";
+    }
+    if (username.length > 20) {
+      return "Username must be less than 20 characters";
+    }
+    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+      return "Username can only contain letters, numbers, and underscores";
+    }
+    return null;
+  }
 
-    if (!username) {
-      alert("Please enter a username");
+  function validateEmail(email) {
+    if (!email) {
+      return "Email is required";
+    }
+    
+    // Basic email pattern
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email)) {
+      return "Please enter a valid email address";
+    }
+    
+    // Check for common fake/temporary email domains
+    const blockedDomains = [
+      'test.com', 'fake.com', 'example.com', 'mail.com',
+      'tempmail.com', '10minutemail.com', 'guerrillamail.com',
+      'mailinator.com', 'throwaway.email', 'temp-mail.org',
+      'fakeinbox.com', 'yopmail.com'
+    ];
+    
+    const domain = email.split('@')[1]?.toLowerCase();
+    if (blockedDomains.includes(domain)) {
+      return "Please use a real email address, not temporary/fake emails";
+    }
+    
+    // Check for suspicious patterns
+    const suspiciousPatterns = [
+      /^test\d*@/i,
+      /^fake\d*@/i,
+      /^demo\d*@/i,
+      /^admin@/i,
+      /^sample@/i,
+      /^user\d+@/i
+    ];
+    
+    for (let pattern of suspiciousPatterns) {
+      if (pattern.test(email)) {
+        return "Please use a real email address";
+      }
+    }
+    
+    // Check for common email providers (whitelist approach)
+    const trustedDomains = [
+      'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
+      'icloud.com', 'protonmail.com', 'aol.com', 'zoho.com',
+      'live.com', 'msn.com', 'yandex.com', 'mail.ru'
+    ];
+    
+    if (!trustedDomains.includes(domain)) {
+      // Still allow but warn
+      return null; // You could make this stricter by returning an error
+    }
+    
+    return null;
+  }
+
+  function validatePassword(password) {
+    if (!password || password.length < 6) {
+      return "Password must be at least 6 characters";
+    }
+    return null;
+  }
+
+  // --- CHECK USERNAME UNIQUENESS ---
+  
+  async function isUsernameTaken(username) {
+    try {
+      const usersRef = collection(db, "users");
+      const q = query(usersRef, where("usernameLower", "==", username.toLowerCase()));
+      const snapshot = await getDocs(q);
+      return !snapshot.empty;
+    } catch (error) {
+      console.error("Error checking username:", error);
+      return false;
+    }
+  }
+
+  // --- EMAIL EXISTENCE CHECK (Simple DNS/MX Check Simulation) ---
+  
+  async function checkEmailExists(email) {
+    // Extract domain
+    const domain = email.split('@')[1];
+    if (!domain) return false;
+    
+    try {
+      // Try to verify the domain exists by checking if it's resolvable
+      // We'll use a simple fetch to a public DNS-over-HTTPS service
+      const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+      const data = await response.json();
+      
+      // If MX records exist, the domain can receive emails
+      if (data.Answer && data.Answer.length > 0) {
+        return true;
+      }
+      
+      // If no MX records, check if domain at least exists (A record)
+      const aResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
+      const aData = await aResponse.json();
+      
+      return aData.Answer && aData.Answer.length > 0;
+    } catch (error) {
+      console.error("Email domain check failed:", error);
+      // If check fails, allow signup (don't block due to network issues)
+      return true;
+    }
+  }
+
+  // --- UI HELPERS ---
+  
+  const inputs = {
+    username: document.getElementById("username"),
+    email: document.getElementById("email"),
+    password: document.getElementById("password")
+  };
+
+  const errors = {
+    username: document.getElementById("usernameError"),
+    email: document.getElementById("emailError"),
+    password: document.getElementById("passwordError")
+  };
+
+  function showError(field, message) {
+    inputs[field].classList.remove("valid");
+    inputs[field].classList.add("invalid");
+    errors[field].textContent = message;
+    errors[field].classList.add("show");
+  }
+
+  function clearError(field) {
+    inputs[field].classList.remove("invalid");
+    inputs[field].classList.add("valid");
+    errors[field].classList.remove("show");
+  }
+
+  // --- REAL-TIME VALIDATION ---
+  
+  let usernameTimeout;
+  inputs.username.addEventListener("input", async (e) => {
+    const username = e.target.value.trim();
+    const error = validateUsername(username);
+    
+    if (error) {
+      showError("username", error);
+    } else {
+      // Debounce username check
+      clearTimeout(usernameTimeout);
+      usernameTimeout = setTimeout(async () => {
+        const taken = await isUsernameTaken(username);
+        if (taken) {
+          showError("username", "Username already taken");
+        } else {
+          clearError("username");
+        }
+      }, 500);
+    }
+  });
+
+  let emailTimeout;
+  inputs.email.addEventListener("input", (e) => {
+    const email = e.target.value.trim();
+    const error = validateEmail(email);
+    
+    if (error) {
+      showError("email", error);
+    } else {
+      clearError("email");
+      
+      // Debounce email domain check
+      clearTimeout(emailTimeout);
+      emailTimeout = setTimeout(async () => {
+        const exists = await checkEmailExists(email);
+        if (!exists) {
+          showError("email", "Email domain doesn't exist or can't receive emails");
+        }
+      }, 800);
+    }
+  });
+
+  inputs.password.addEventListener("input", (e) => {
+    const password = e.target.value;
+    const error = validatePassword(password);
+    
+    if (error) {
+      showError("password", error);
+    } else {
+      clearError("password");
+    }
+  });
+
+  // --- SIGNUP FUNCTION ---
+
+  window.signupUser = async function () {
+    const username = inputs.username.value.trim();
+    const email = inputs.email.value.trim();
+    const password = inputs.password.value;
+
+    // Validate all fields
+    const usernameError = validateUsername(username);
+    const emailError = validateEmail(email);
+    const passwordError = validatePassword(password);
+
+    if (usernameError) {
+      showError("username", usernameError);
+      return;
+    }
+    if (emailError) {
+      showError("email", emailError);
+      return;
+    }
+    if (passwordError) {
+      showError("password", passwordError);
       return;
     }
 
+    // Check username uniqueness
+    const taken = await isUsernameTaken(username);
+    if (taken) {
+      showError("username", "Username already taken");
+      return;
+    }
+
+    // Check email domain exists
+    const emailExists = await checkEmailExists(email);
+    if (!emailExists) {
+      showError("email", "Email domain doesn't exist. Please use a real email.");
+      return;
+    }
+
+    // Disable button during signup
+    const btn = document.getElementById("signupBtn");
+    btn.disabled = true;
+    btn.textContent = "Creating Account...";
+    document.querySelector(".card").classList.add("loading");
+
     try {
+      // Create Firebase Auth account
       const cred = await createUserWithEmailAndPassword(auth, email, password);
 
-      // ✅ Set display name
+      // Set display name
       await updateProfile(cred.user, {
         displayName: username
       });
 
-      // ✅ Create Firestore user document
+      // Create Firestore user document
       await setDoc(doc(db, "users", cred.user.uid), {
         username: username,
+        usernameLower: username.toLowerCase(),
         email: email,
         best2048: 0,
+        bestFlappy: 0,
         createdAt: new Date()
       });
 
-      alert("Account created 🎉");
+      alert("Account created! 🎉");
       window.location.href = "index.html";
 
     } catch (error) {
-      alert(error.message);
+      // Re-enable button on error
+      btn.disabled = false;
+      btn.textContent = "Sign Up";
+      document.querySelector(".card").classList.remove("loading");
+
+      let errorMessage = error.message;
+      
+      if (error.code === "auth/email-already-in-use") {
+        errorMessage = "This email is already registered. Try logging in instead.";
+        showError("email", "Email already in use");
+      } else if (error.code === "auth/invalid-email") {
+        errorMessage = "Invalid email format";
+        showError("email", "Invalid email");
+      } else if (error.code === "auth/weak-password") {
+        errorMessage = "Password is too weak";
+        showError("password", "Password too weak");
+      }
+      
+      alert(errorMessage);
     }
   };
 </script>
