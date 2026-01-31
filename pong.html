@@ -3,56 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Arcade</title>
+    <title>Pong - Arcade 16:9</title>
     <style>
         /* --- STYLES --- */
-        :root { --bg-dark: #111; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
+        :root { --bg-dark: #050505; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
         
         body {
             background-color: var(--bg-dark);
             height: 100vh; width: 100vw;
             display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none; /* Prevents scroll on mobile */
+            overflow: hidden; touch-action: none;
         }
 
-        /* CABINET CONTAINER - RESPONSIVE FIX */
-        #game-wrapper {
+        /* DYNAMIC CONTAINER */
+        /* We remove fixed sizes. The JS will control the size of this to fit the screen */
+        #game-container {
             position: relative;
-            /* This ensures it fits on mobile screens */
-            width: 100%; max-width: 800px;
-            aspect-ratio: 4/3; 
-            background: #000; border: 4px solid #222;
-            box-shadow: 0 0 20px var(--neon-blue);
-            cursor: none; 
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
+            border: 2px solid #333;
+            background: #000;
         }
 
-        #game-wrapper.menu-active { cursor: default; }
-
-        canvas { width: 100%; height: 100%; display: block; }
+        canvas { display: block; }
 
         /* UI LAYOUT */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
         
         .top-bar { 
-            padding: 15px; 
+            padding: 2%; 
             display: flex; justify-content: space-between; align-items: center;
             pointer-events: auto; 
         }
 
         .score { 
-            color: white; font-size: 30px; font-weight: 900; 
+            color: white; font-size: 4vh; font-weight: 900; 
             text-shadow: 2px 2px 0 #000; letter-spacing: 2px;
         }
         
-        /* BUTTON STYLES */
         button {
-            background: rgba(0,0,0,0.6); border: 2px solid var(--neon-blue); color: white;
-            padding: 8px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); color: white;
+            padding: 8px 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
         }
         button:hover { background: var(--neon-blue); color: black; }
         
-        /* Red Exit Button */
         .btn-red { border-color: var(--neon-pink); color: var(--neon-pink); }
         .btn-red:hover { background: var(--neon-pink); color: white; }
 
@@ -64,24 +58,16 @@
         }
         .hidden { display: none !important; }
         
-        h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
+        h1 { color: var(--neon-blue); font-size: 8vh; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
-        .menu-btn { width: 200px; margin: 10px; font-size: 16px; padding: 15px; }
-        
-        .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 2px solid #555; width: 150px; margin-bottom: 10px; }
+        .menu-btn { width: 250px; margin: 10px; font-size: 18px; padding: 15px; }
+        .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 1px solid #555; width: 150px; margin-bottom: 10px; }
         .room-code { font-size: 30px; color: #0f0; margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
-
-        /* MOBILE ADJUSTMENTS */
-        @media(max-width: 600px) {
-            .score { font-size: 20px; }
-            h1 { font-size: 30px; }
-            button { padding: 5px 10px; font-size: 12px; }
-        }
     </style>
 </head>
 <body>
 
-    <div id="game-wrapper" class="menu-active">
+    <div id="game-container">
         <div class="ui-layer">
             <div class="top-bar">
                 <button class="btn-red" id="topExitBtn">Exit</button>
@@ -138,72 +124,97 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
+        // --- CONSTANTS ---
+        // We use a FIXED logical resolution of 960x540 (16:9)
+        // This ensures multiplayer is fair regardless of screen size.
+        const GAME_W = 960;
+        const GAME_H = 540;
+
         class PongGame {
             constructor() {
-                this.wrapper = document.getElementById('game-wrapper');
+                this.container = document.getElementById('game-container');
                 
-                // Fixed internal resolution 800x600, CSS handles scaling
                 this.app = new PIXI.Application({
-                    width: 800, height: 600, backgroundColor: 0x000000,
+                    width: GAME_W, height: GAME_H, 
+                    backgroundColor: 0x000000,
                     resolution: window.devicePixelRatio || 1, 
                     autoDensity: true
                 });
                 
-                this.wrapper.appendChild(this.app.view);
+                this.container.appendChild(this.app.view);
                 
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
-                this.mouseY = 300;
+                this.mouseY = GAME_H / 2;
                 this.score = {L:0, R:0};
                 this.objs = {}; 
 
                 this.initGFX();
                 this.initUI();
                 this.initInput();
+                this.resizeGame(); // Trigger initial resize
 
-                // Start loop
+                // Listen for window resizing
+                window.addEventListener('resize', () => this.resizeGame());
+
                 this.app.ticker.add((d) => this.loop(d));
             }
 
+            // --- RESOLUTION LOGIC ---
+            resizeGame() {
+                // Get available browser space
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                
+                // Calculate the scale needed to fit the window while keeping 16:9
+                const scale = Math.min(w / GAME_W, h / GAME_H);
+                
+                // Apply new size to the container (CSS scales the Canvas)
+                const newW = GAME_W * scale;
+                const newH = GAME_H * scale;
+
+                this.container.style.width = `${newW}px`;
+                this.container.style.height = `${newH}px`;
+                
+                // Store scale for input calculation
+                this.scaleFactor = scale;
+            }
+
             initGFX() {
-                // Glow effect
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
                 // Middle Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
-                for(let y=0; y<600; y+=20) { line.moveTo(400,y); line.lineTo(400,y+10); }
+                for(let y=0; y<GAME_H; y+=20) { line.moveTo(GAME_W/2, y); line.lineTo(GAME_W/2, y+10); }
                 this.app.stage.addChild(line);
 
                 // Paddles
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
-                    g.x = x; g.y = 300;
+                    g.beginFill(c); g.drawRect(-8, -50, 16, 100); g.endFill(); // Slightly taller paddles for 16:9
+                    g.x = x; g.y = GAME_H/2;
                     this.app.stage.addChild(g);
                     return g;
                 };
                 
-                this.objs.L = makeRect(0xff0055, 30);  
-                this.objs.R = makeRect(0x00f3ff, 770); 
+                this.objs.L = makeRect(0xff0055, 40);  
+                this.objs.R = makeRect(0x00f3ff, GAME_W - 40); 
                 
                 // Ball
                 this.objs.ball = new PIXI.Graphics();
                 this.objs.ball.beginFill(0xffff00); 
                 this.objs.ball.drawRect(-10,-10,20,20); 
                 this.objs.ball.endFill();
-                this.objs.ball.vx = 0; 
-                this.objs.ball.vy = 0;
                 this.app.stage.addChild(this.objs.ball);
                 this.objs.ball.visible = false;
             }
 
             initUI() {
                 const get = (id) => document.getElementById(id);
-                
-                // Navigation
                 const exit = () => window.location.href = 'blog.html';
+                
                 get('topExitBtn').onclick = exit;
                 get('btnExitMenu').onclick = exit;
 
@@ -220,15 +231,16 @@
 
             initInput() {
                 const onMove = (e) => {
-                    // Mobile & Desktop Responsive Coordinate Fix
-                    const rect = this.app.view.getBoundingClientRect();
+                    if(!this.scaleFactor) return;
+
+                    // Get Client coordinates
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const rect = this.app.view.getBoundingClientRect();
                     
-                    // Scale touch input to game coordinate (0-600)
-                    const scaleY = 600 / rect.height; 
+                    // Convert screen pixel to Game Logic Pixel (using the scale factor)
+                    const relY = (clientY - rect.top) / this.scaleFactor;
                     
-                    this.mouseY = (clientY - rect.top) * scaleY;
-                    this.mouseY = Math.max(40, Math.min(560, this.mouseY));
+                    this.mouseY = Math.max(50, Math.min(GAME_H - 50, relY));
                 };
 
                 window.addEventListener('mousemove', onMove);
@@ -244,7 +256,6 @@
                 document.getElementById('overScreen').classList.add('hidden');
                 document.getElementById('lobbyMain').classList.remove('hidden');
                 document.getElementById('lobbyWait').classList.add('hidden');
-                this.wrapper.classList.add('menu-active');
             }
 
             start(mode) {
@@ -255,13 +266,11 @@
                 this.updateScore();
                 
                 document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-                this.wrapper.classList.remove('menu-active');
                 
-                this.resetBall(); // Ensure ball has velocity
+                this.resetBall(); 
                 this.objs.ball.visible = true;
             }
 
-            // --- MULTIPLAYER LOGIC ---
             async hostGame() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.room = code;
@@ -300,7 +309,6 @@
                     this.start('online');
                     this.monitorConnection(roomRef);
 
-                    // Guest listens for state
                     onValue(roomRef, (snap) => {
                         const d = snap.val();
                         if(d && d.state) {
@@ -330,42 +338,36 @@
                 this.room = null;
             }
 
-            // --- GAME LOOP ---
             loop(delta) {
                 if(!this.playing || this.paused) return;
                 
-                // Movement
                 const move = (p, isMe) => {
                     if(isMe) p.y += (this.mouseY - p.y) * 0.2 * delta; 
                     else if (this.mode === 'ai') {
-                        // Simple AI
                         const dy = this.objs.ball.y - p.y;
-                        if(Math.abs(dy)>10) p.y += (dy>0?5:-5) * delta;
+                        if(Math.abs(dy)>10) p.y += (dy>0?6:-6) * delta;
                     }
-                    p.y = Math.max(40, Math.min(560, p.y));
+                    p.y = Math.max(50, Math.min(GAME_H - 50, p.y));
                 };
 
                 if(this.mode === 'ai') {
-                    move(this.objs.R, true); // You are Right
-                    move(this.objs.L, false); // AI is Left
+                    move(this.objs.R, true); 
+                    move(this.objs.L, false); 
                     this.physics(delta);
                 } 
                 else if (this.mode === 'online') {
                     if(this.role === 'host') {
-                        move(this.objs.L, true); // Host is Left
+                        move(this.objs.L, true); 
                         this.physics(delta);
-                        // Sync State
                         update(ref(db, 'rooms/'+this.room+'/state'), {
                             bx: this.objs.ball.x, by: this.objs.ball.y,
                             ly: this.objs.L.y, score: this.score
                         });
-                        // Read Guest
                         get(child(ref(db, 'rooms/'+this.room), 'guestY')).then((s)=>{
                             if(s.exists()) this.objs.R.y = s.val();
                         });
                     } else {
-                        // Guest Logic
-                        move(this.objs.R, true); // Guest is Right
+                        move(this.objs.R, true); 
                         set(ref(db, 'rooms/'+this.room+'/guestY'), this.objs.R.y);
                     }
                 }
@@ -377,36 +379,36 @@
                 b.y += b.vy * delta;
 
                 // Wall Bounce
-                if(b.y < 10 || b.y > 590) b.vy *= -1;
+                if(b.y < 10 || b.y > GAME_H - 10) b.vy *= -1;
 
                 // Paddle Hit Check
                 const hit = (p) => {
-                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-50 && b.y < p.y+50;
+                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-60 && b.y < p.y+60;
                 };
 
                 if(hit(this.objs.L)) { 
                     b.vx = Math.abs(b.vx)*1.05; 
                     b.vy = (b.y - this.objs.L.y)*0.15; 
-                    b.x = this.objs.L.x + 20; // Unstuck
+                    b.x = this.objs.L.x + 20; 
                 }
                 if(hit(this.objs.R)) { 
                     b.vx = -Math.abs(b.vx)*1.05; 
                     b.vy = (b.y - this.objs.R.y)*0.15; 
-                    b.x = this.objs.R.x - 20; // Unstuck
+                    b.x = this.objs.R.x - 20; 
                 }
 
                 // Score
                 if(b.x < -20) { this.score.R++; this.resetBall(1); }
-                if(b.x > 820) { this.score.L++; this.resetBall(-1); }
+                if(b.x > GAME_W + 20) { this.score.L++; this.resetBall(-1); }
                 
                 this.updateScore();
                 if(this.score.L >= 10 || this.score.R >= 10) this.gameOver();
             }
 
             resetBall(dir) {
-                this.objs.ball.x = 400; this.objs.ball.y = 300;
-                // Force Minimum Velocity
-                this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 6;
+                this.objs.ball.x = GAME_W / 2; 
+                this.objs.ball.y = GAME_H / 2;
+                this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 7;
                 this.objs.ball.vy = (Math.random()*6)-3;
             }
 
