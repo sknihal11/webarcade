@@ -3,123 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Instant Response</title>
+    <title>Neon Pong - Ultimate</title>
     <style>
-        /* --- 1. RESET & LAYOUT --- */
+        /* --- RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: #000;
-            position: fixed; inset: 0; /* Locks to screen edges */
-            display: flex; justify-content: center; align-items: center;
             overflow: hidden;
-            font-family: sans-serif;
+            width: 100vw; height: 100vh;
+            font-family: "Courier New", Courier, monospace; /* Retro Font */
+            display: flex; justify-content: center; align-items: center;
         }
 
-        /* --- 2. THE PERFECT CONTAINER --- */
-        /* This box will grow as big as possible but NEVER cut off */
-        #game-box {
-            position: relative;
+        /* --- CANVAS CONTAINER --- */
+        /* We let JS handle the size, this just positions it */
+        canvas {
+            display: block;
+            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2); /* Big Glow */
             background: #050505;
-            border: 2px solid #333;
-            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
-            
-            /* FORCE 4:3 RATIO */
-            aspect-ratio: 4 / 3;
-
-            /* LOGIC: "Be 95% of the screen width, UNLESS that makes you too tall" */
-            width: min(95vw, 126.66vh); 
-            height: min(95vh, 71.25vw); 
         }
 
-        canvas { display: block; width: 100%; height: 100%; }
-
-        /* TOUCH ZONES */
-        .touch-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: crosshair; }
+        /* --- TOUCH CONTROLS --- */
+        /* Invisible layers over the left/right sides */
+        .touch-zone { position: absolute; top:0; bottom:0; width: 50%; z-index: 10; }
         #leftZone { left: 0; }
         #rightZone { right: 0; }
 
-        /* UI */
-        .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
+        /* --- UI OVERLAYS --- */
+        .ui-layer { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; z-index: 20;
+            display: flex; flex-direction: column; align-items: center;
+        }
         .interactive { pointer-events: auto; }
-        
+
+        /* SCORE BOARD */
         .hud { 
-            position: absolute; top: 4%; width: 100%; 
-            display: flex; justify-content: center; gap: 15%;
+            width: 100%; padding-top: 20px;
+            display: flex; justify-content: center; gap: 100px;
         }
         .score { 
-            color: white; font-size: clamp(20px, 8vw, 50px); font-weight: 900; opacity: 0.8; 
-            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
+            font-size: 60px; font-weight: bold; opacity: 0.8;
+            text-shadow: 0 0 10px currentColor;
         }
 
-        /* SCREENS */
+        /* MENUS */
         .screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.92);
+            position: absolute; inset: 0; 
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(4px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.2s;
+            transition: opacity 0.3s;
         }
         .hidden { opacity: 0; pointer-events: none; }
-        
-        h1 { color: #fff; font-size: clamp(30px, 8vw, 60px); margin-bottom: 20px; letter-spacing: 5px; }
-        
-        button {
-            background: #111; border: 1px solid #444; color: #eee;
-            padding: clamp(10px, 3vw, 15px) clamp(20px, 5vw, 30px); margin: 10px;
-            font-size: clamp(12px, 3vw, 18px); font-weight: bold;
-            text-transform: uppercase; cursor: pointer; min-width: 40%;
-        }
-        button:active { background: #333; transform: scale(0.95); }
-        .btn-blue { border-color: #00f3ff; color: #00f3ff; }
-        .btn-green { border-color: #0f0; color: #0f0; }
 
-        .input-code {
-            background: #000; border: 2px solid #333; color: #fff;
-            padding: 10px; font-size: 24px; text-align: center; letter-spacing: 5px;
-            width: 60%; margin-bottom: 20px; outline: none;
+        h1 {
+            color: #fff; font-size: 50px; margin-bottom: 30px; letter-spacing: 5px;
+            text-shadow: 0 0 20px #00f3ff;
+            text-transform: uppercase;
+        }
+
+        /* NEON BUTTONS */
+        button {
+            background: rgba(0,0,0,0.6); 
+            border: 2px solid #fff; color: #fff;
+            padding: 15px 40px; margin: 10px;
+            font-size: 18px; font-weight: bold; letter-spacing: 2px;
+            text-transform: uppercase; cursor: pointer;
+            box-shadow: 0 0 10px rgba(255,255,255,0.1);
+            transition: all 0.2s;
+            min-width: 250px;
+        }
+        button:active { transform: scale(0.95); background: #222; }
+        
+        .btn-cyan { border-color: #00f3ff; color: #00f3ff; text-shadow: 0 0 5px #00f3ff; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
+        .btn-pink { border-color: #ff0055; color: #ff0055; text-shadow: 0 0 5px #ff0055; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
+        
+        /* INPUT FIELDS */
+        input {
+            background: transparent; border: none; border-bottom: 2px solid #00f3ff;
+            color: #fff; font-size: 30px; text-align: center; letter-spacing: 5px;
+            width: 200px; margin: 20px; outline: none; padding: 10px;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-box">
-        <div id="leftZone" class="touch-zone interactive"></div>
-        <div id="rightZone" class="touch-zone interactive"></div>
+    <div id="leftZone" class="touch-zone interactive"></div>
+    <div id="rightZone" class="touch-zone interactive"></div>
 
-        <div class="ui-layer">
-            <div class="hud">
-                <div class="score" style="color:#ff0055" id="scoreL">0</div>
-                <div class="score" style="color:#00f3ff" id="scoreR">0</div>
-            </div>
+    <div class="ui-layer">
+        <div class="hud">
+            <div class="score" style="color:#ff0055" id="scoreL">0</div>
+            <div class="score" style="color:#00f3ff" id="scoreR">0</div>
+        </div>
 
-            <div id="menuScreen" class="screen interactive">
-                <h1>PONG</h1>
-                <button class="btn-blue" id="btnAI">Single Player</button>
-                <button class="btn-green" id="btnOnline">Multiplayer</button>
-            </div>
+        <div id="menuScreen" class="screen interactive">
+            <h1>NEON PONG</h1>
+            <button class="btn-cyan" id="btnAI">SINGLE PLAYER</button>
+            <button class="btn-pink" id="btnOnline">MULTIPLAYER</button>
+        </div>
 
-            <div id="lobbyScreen" class="screen hidden interactive">
-                <h1 style="font-size:30px">LOBBY</h1>
-                <div id="lobbyMain" style="text-align:center; width:100%">
-                    <button id="btnHost" class="btn-green">Create</button>
-                    <div style="margin:10px; color:#555">OR</div>
-                    <input type="number" id="codeIn" class="input-code" placeholder="1234">
-                    <br>
-                    <button id="btnJoin" class="btn-blue">Join</button>
-                    <br><br>
-                    <button id="btnBack" style="border-color:#555; width:auto; padding:8px 20px">Back</button>
-                </div>
-                
-                <div id="lobbyWait" class="hidden" style="text-align:center">
-                    <p style="color:#888;">CODE:</p>
-                    <div style="color:#0f0; font-size:40px; font-family:monospace; margin:10px" id="codeDisp">----</div>
-                    <p>Waiting for player...</p>
-                </div>
+        <div id="lobbyScreen" class="screen hidden interactive">
+            <h1>LOBBY</h1>
+            <div id="lobbyMain" style="text-align:center">
+                <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
+                <div style="color:#666; margin:10px">--- OR JOIN ---</div>
+                <input type="number" id="codeIn" placeholder="CODE">
+                <br>
+                <button id="btnJoin" class="btn-pink">JOIN GAME</button>
+                <br><br>
+                <button id="btnBack" style="font-size:12px; min-width:100px; border-color:#555; color:#aaa">BACK</button>
             </div>
+            
+            <div id="lobbyWait" class="hidden" style="text-align:center">
+                <p style="color:#aaa">YOUR ROOM CODE:</p>
+                <h2 style="color:#0f0; font-size:60px; margin:10px; text-shadow: 0 0 20px #0f0" id="codeDisp">----</h2>
+                <p style="color:#fff; margin-top:20px">Waiting for opponent...</p>
+            </div>
+        </div>
 
-            <div id="overScreen" class="screen hidden interactive">
-                <h1 id="winMsg">WINNER</h1>
-                <button onclick="window.location.reload()">MENU</button>
-            </div>
+        <div id="overScreen" class="screen hidden interactive">
+            <h1 id="winMsg">WINNER</h1>
+            <button class="btn-cyan" onclick="window.location.reload()">MAIN MENU</button>
         </div>
     </div>
 
@@ -142,54 +149,86 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // LOGICAL SIZE (The internal game resolution)
-        const W = 800;
-        const H = 600;
-        
+        // --- CONSTANTS ---
+        const W = 800; // Game Logic Width
+        const H = 600; // Game Logic Height
+
         class PongGame {
             constructor() {
+                // Initialize Pixi
                 this.app = new PIXI.Application({
                     width: W, height: H, backgroundColor: 0x050505,
-                    resolution: Math.min(window.devicePixelRatio, 2),
-                    autoDensity: true
+                    resolution: window.devicePixelRatio || 1,
+                    autoDensity: true, antialias: true
                 });
                 
-                // Add canvas to the aspect-locked box
-                this.box = document.getElementById('game-box');
-                this.box.appendChild(this.app.view);
-
-                // --- STATE ---
+                document.body.appendChild(this.app.view);
+                
+                // State
                 this.state = {
                     playing: false, mode: '', role: '', room: null,
                     score: {L:0, R:0},
-                    pL: H/2, pR: H/2, // Paddle Positions
-                    bx: W/2, by: H/2, bvx: 0, bvy: 0 // Ball Physics
+                    pL: H/2, pR: H/2,
+                    bx: W/2, by: H/2, bvx: 0, bvy: 0
                 };
                 
-                this.myInputY = H/2; // The raw input value
-                this.lastNetUpdate = 0;
+                this.inputY = H/2;
+                this.scaleFactor = 1;
+                this.canvasBounds = {top:0, left:0};
 
                 this.initGFX();
+                this.initUI();
                 this.initInput();
                 
-                // MAIN LOOP
+                // Force perfect sizing immediately
+                this.resize();
+                window.addEventListener('resize', () => this.resize());
+                
+                // Game Loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
+            // --- THE FIX: MANUAL RESIZING ---
+            resize() {
+                const screenW = window.innerWidth;
+                const screenH = window.innerHeight;
+                
+                // Calculate Scale to fit within screen (Letterboxing)
+                const scale = Math.min(screenW / W, screenH / H);
+                
+                const newW = W * scale;
+                const newH = H * scale;
+
+                // Apply size to Canvas Style (Visual only)
+                this.app.view.style.width = `${newW}px`;
+                this.app.view.style.height = `${newH}px`;
+                
+                // Center the canvas manually if needed (Flexbox does most of this, but this is safe)
+                this.scaleFactor = scale;
+            }
+
             initGFX() {
-                // Bloom for neon look
-                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
+                // 1. Bloom Filter (The Glow)
+                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
 
-                // Middle Line
-                const line = new PIXI.Graphics();
-                line.beginFill(0x222222);
-                for(let y=0; y<H; y+=40) line.drawRect(W/2-2, y, 4, 20);
-                this.app.stage.addChild(line);
+                // 2. Dashed Line (The "Net")
+                const net = new PIXI.Graphics();
+                net.beginFill(0x333333);
+                for(let y=10; y<H; y+=40) net.drawRect(W/2-2, y, 4, 20);
+                this.app.stage.addChild(net);
 
-                // Helper to make paddles
+                // 3. Paddles
                 const makePad = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); g.drawRect(-12,-50,24,100); g.endFill();
+                    g.beginFill(c); 
+                    g.drawRect(-10,-60,20,120); // Taller paddles
+                    g.endFill();
+                    
+                    // Inner white core for "Hot" look
+                    g.beginFill(0xffffff, 0.5);
+                    g.drawRect(-4, -50, 8, 100);
+                    g.endFill();
+
                     g.x = x; g.y = H/2;
                     this.app.stage.addChild(g);
                     return g;
@@ -197,45 +236,132 @@
                 this.gfxL = makePad(0xff0055, 40);
                 this.gfxR = makePad(0x00f3ff, W-40);
 
-                // Ball
+                // 4. Ball
                 this.ball = new PIXI.Graphics();
-                this.ball.beginFill(0xffffff); this.ball.drawRect(-10,-10,20,20);
+                this.ball.beginFill(0xffffff); 
+                this.ball.drawRect(-12,-12,24,24);
                 this.app.stage.addChild(this.ball);
             }
 
             initInput() {
-                // We listen to the CONTAINER, so touch/mouse coordinates are relative to it
-                const handleInput = (e, clientY) => {
+                // Handle Input logic
+                const onInput = (clientY) => {
                     if(!this.state.playing) return;
-                    e.preventDefault(); // Stop scrolling
-
-                    // 1. Get the exact size of the game box on screen
-                    const rect = this.box.getBoundingClientRect();
                     
-                    // 2. Calculate scaling factor (Game Height / Screen Height)
-                    const scaleY = H / rect.height;
+                    // Get Bounds of the resized canvas
+                    const rect = this.app.view.getBoundingClientRect();
 
-                    // 3. Convert Screen Y to Game Y
-                    const relativeY = (clientY - rect.top) * scaleY;
+                    // Math: (TouchPos - CanvasTop) / Scale
+                    // This maps the touch to the 800x600 internal logic
+                    let relativeY = (clientY - rect.top) / this.scaleFactor;
                     
-                    // 4. Clamp to screen bounds
-                    this.myInputY = Math.max(50, Math.min(H-50, relativeY));
+                    // Clamp to screen
+                    this.inputY = Math.max(60, Math.min(H-60, relativeY));
                 };
 
-                // Mouse (PC)
-                this.box.addEventListener('mousemove', (e) => handleInput(e, e.clientY));
-                
-                // Touch (Mobile)
-                this.box.addEventListener('touchmove', (e) => handleInput(e, e.touches[0].clientY), {passive:false});
-                this.box.addEventListener('touchstart', (e) => handleInput(e, e.touches[0].clientY), {passive:false});
+                // Mouse
+                window.addEventListener('mousemove', (e) => onInput(e.clientY));
 
-                // UI Buttons
+                // Touch (Prevent scrolling + Handle Input)
+                const touchHandler = (e) => {
+                    e.preventDefault(); // CRITICAL: Stops screen moving
+                    onInput(e.touches[0].clientY);
+                };
+                
+                // Add listeners to the invisible touch zones for maximum responsiveness
+                const zones = document.querySelectorAll('.touch-zone');
+                zones.forEach(z => {
+                    z.addEventListener('touchmove', touchHandler, {passive:false});
+                    z.addEventListener('touchstart', touchHandler, {passive:false});
+                });
+            }
+
+            initUI() {
                 const get = id => document.getElementById(id);
                 get('btnAI').onclick = () => this.startAI();
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
                 get('btnBack').onclick = () => { get('lobbyScreen').classList.add('hidden'); get('menuScreen').classList.remove('hidden'); };
                 get('btnHost').onclick = () => this.host();
                 get('btnJoin').onclick = () => this.join();
+            }
+
+            // --- GAME LOOP ---
+            loop(delta) {
+                if(!this.state.playing) return;
+                const s = this.state;
+                const lerp = (a, b, n) => (1 - n) * a + n * b;
+
+                // 1. PADDLES
+                if(s.mode === 'ai') {
+                    s.pL = this.inputY; // Instant
+                    // AI
+                    let target = s.bx > W/2 ? s.by : H/2;
+                    s.pR = lerp(s.pR, target, 0.08);
+                } 
+                else if (s.mode === 'online') {
+                    // INSTANT RESPONSE for Local Player
+                    if(s.role === 'host') s.pL = this.inputY;
+                    else s.pR = this.inputY;
+                }
+
+                // 2. BALL
+                s.bx += s.bvx * delta;
+                s.by += s.bvy * delta;
+
+                // Walls
+                if(s.by < 10 || s.by > H - 10) { s.bvy *= -1; s.by = Math.max(10, Math.min(H-10, s.by)); }
+
+                // Hit Logic (Host Authoritative)
+                if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
+                    this.checkHit(s.pL, 40, 1);
+                    this.checkHit(s.pR, W-40, -1);
+                    
+                    if(s.bx < -20) { s.score.R++; this.resetBall(1); }
+                    if(s.bx > W+20) { s.score.L++; this.resetBall(-1); }
+                }
+
+                // 3. DRAW
+                this.gfxL.y = s.pL;
+                this.gfxR.y = s.pR;
+                this.ball.x = s.bx;
+                this.ball.y = s.by;
+
+                // 4. NET SYNC (30ms throttle)
+                if(s.mode === 'online') {
+                    const now = Date.now();
+                    if(now - (this.lastNet || 0) > 30) {
+                        this.netSync();
+                        this.lastNet = now;
+                    }
+                }
+            }
+
+            checkHit(py, px, dir) {
+                const s = this.state;
+                // Collision Box
+                if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
+                    s.bvx = Math.abs(s.bvx) * 1.05; // Speed up
+                    if (dir === -1) s.bvx *= -1;
+                    s.bvy = (s.by - py) * 0.15; // Spin
+                }
+            }
+
+            resetBall(dir) {
+                const s = this.state;
+                s.bx = W/2; s.by = H/2;
+                s.bvx = (dir || (Math.random()>.5?1:-1)) * 9;
+                s.bvy = (Math.random()*8)-4;
+                
+                // Update Score UI
+                document.getElementById('scoreL').innerText = s.score.L;
+                document.getElementById('scoreR').innerText = s.score.R;
+                
+                if(s.score.L >= 10 || s.score.R >= 10) {
+                    s.playing = false;
+                    document.getElementById('winMsg').innerText = s.score.L > s.score.R ? "RED WINS" : "BLUE WINS";
+                    document.getElementById('overScreen').classList.remove('hidden');
+                    if(s.room) remove(ref(db, 'rooms/'+s.room));
+                }
             }
 
             startAI() {
@@ -245,100 +371,11 @@
                 document.getElementById('menuScreen').classList.add('hidden');
             }
 
-            loop(delta) {
-                if(!this.state.playing) return;
-                const s = this.state;
-                const lerp = (a, b, n) => (1 - n) * a + n * b;
-
-                // --- 1. PADDLE MOVEMENT (FIXED: INSTANT RESPONSE) ---
-                
-                if(s.mode === 'ai') {
-                    // Local Player = INSTANT (No Lerp)
-                    s.pL = this.myInputY;
-                    
-                    // AI = Slow Lerp
-                    let target = s.bx > W/2 ? s.by : H/2;
-                    s.pR = lerp(s.pR, target, 0.08); 
-                } 
-                else if (s.mode === 'online') {
-                    if(s.role === 'host') {
-                        // I am Host (Left) -> Instant Control
-                        s.pL = this.myInputY; 
-                        // Guest (Right) -> Smooth Interpolation (Net Lag hiding)
-                        // (Guest position is updated by network, we just lerp it here for visuals)
-                    } else {
-                        // I am Guest (Right) -> Instant Control
-                        s.pR = this.myInputY;
-                        // Host (Left) -> Smooth Interpolation
-                    }
-                }
-
-                // --- 2. BALL PHYSICS (Prediction) ---
-                s.bx += s.bvx * delta;
-                s.by += s.bvy * delta;
-
-                // Wall Bounce
-                if(s.by < 10 || s.by > H - 10) { s.bvy *= -1; s.by = Math.max(10, Math.min(H-10, s.by)); }
-
-                // Collision Logic (Host Authoritative)
-                if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
-                    this.checkHit(s.pL, 40, 1);
-                    this.checkHit(s.pR, W-40, -1);
-                    
-                    if(s.bx < -20) { s.score.R++; this.resetBall(1); }
-                    if(s.bx > W+20) { s.score.L++; this.resetBall(-1); }
-                }
-
-                // --- 3. RENDER ---
-                this.gfxL.y = s.pL;
-                this.gfxR.y = s.pR;
-                this.ball.x = s.bx;
-                this.ball.y = s.by;
-
-                // --- 4. NETWORK SYNC (Throttled 30ms) ---
-                if(s.mode === 'online') {
-                    const now = Date.now();
-                    if(now - this.lastNetUpdate > 30) {
-                        this.netSync();
-                        this.lastNetUpdate = now;
-                    }
-                }
-            }
-
-            checkHit(py, px, dir) {
-                const s = this.state;
-                if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 60) {
-                    s.bvx = Math.abs(s.bvx) * 1.05; // Speed up
-                    if (dir === -1) s.bvx *= -1;
-                    s.bvy = (s.by - py) * 0.15; // Angle spin
-                }
-            }
-
-            resetBall(dir) {
-                const s = this.state;
-                s.bx = W/2; s.by = H/2;
-                s.bvx = (dir || (Math.random()>.5?1:-1)) * 9; 
-                s.bvy = (Math.random()*8)-4;
-                this.updateUI();
-            }
-
-            updateUI() {
-                document.getElementById('scoreL').innerText = this.state.score.L;
-                document.getElementById('scoreR').innerText = this.state.score.R;
-                if(this.state.score.L >= 10 || this.state.score.R >= 10) {
-                    this.state.playing = false;
-                    document.getElementById('winMsg').innerText = this.state.score.L > this.state.score.R ? "RED WINS" : "BLUE WINS";
-                    document.getElementById('overScreen').classList.remove('hidden');
-                    if(this.state.room) remove(ref(db, 'rooms/'+this.state.room));
-                }
-            }
-
-            // --- NETWORKING ---
+            // --- NETWORK ---
             async host() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.state.room = code;
                 this.state.role = 'host';
-                
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
@@ -355,10 +392,10 @@
                         this.resetBall();
                         document.getElementById('lobbyScreen').classList.add('hidden');
                     }
-                    // HOST: Smoothly update Guest Paddle ghost
                     if(d && d.gy) {
-                         const lerp = (a, b, n) => (1 - n) * a + n * b;
-                         this.state.pR = lerp(this.state.pR, d.gy, 0.4); 
+                         // Smooth Guest Ghost
+                         const lerp = (a,b,n) => (1-n)*a+n*b;
+                         this.state.pR = lerp(this.state.pR, d.gy, 0.4);
                     }
                 });
             }
@@ -372,13 +409,11 @@
                     this.state.room = code;
                     this.state.role = 'guest';
                     await update(r, { g: true });
-                    
                     this.state.mode = 'online';
                     this.state.playing = true;
                     document.getElementById('lobbyScreen').classList.add('hidden');
-                    
-                    onValue(r, (s) => this.onServerMsg(s.val()));
-                } else { alert("Room not found"); }
+                    onValue(r, (s) => this.onServer(s.val()));
+                } else alert("Invalid Code");
             }
 
             netSync() {
@@ -391,32 +426,26 @@
                         hy: Math.round(this.state.pL), sc: this.state.score
                     });
                 } else {
-                    // Guest ONLY sends their input position
                     update(r, { gy: Math.round(this.state.pR) });
                 }
             }
 
-            onServerMsg(data) {
-                if(!data || !this.state.playing || this.state.role !== 'guest') return;
+            onServer(d) {
+                if(!d || !this.state.playing || this.state.role !== 'guest') return;
                 const s = this.state;
-                const lerp = (a, b, n) => (1 - n) * a + n * b;
+                const lerp = (a,b,n) => (1-n)*a+n*b;
 
-                // GUEST: Smoothly update Host Paddle ghost
-                if(data.hy) s.pL = lerp(s.pL, data.hy, 0.4);
-                
-                if(data.sc) { s.score = data.sc; this.updateUI(); }
+                if(d.hy) s.pL = lerp(s.pL, d.hy, 0.4);
+                if(d.sc) { s.score = d.sc; document.getElementById('scoreL').innerText=s.score.L; document.getElementById('scoreR').innerText=s.score.R; }
 
-                // Ball Correction (Avoids jitter)
-                if(data.bx !== undefined) {
-                    const dist = Math.abs(s.bx - data.bx) + Math.abs(s.by - data.by);
-                    if(dist < 60) {
-                        // Smooth nudging
-                        s.bx += (data.bx - s.bx) * 0.15; 
-                        s.by += (data.by - s.by) * 0.15;
-                        s.bvx = data.bvx; s.bvy = data.bvy;
+                if(d.bx !== undefined) {
+                    const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
+                    if(dist < 70) {
+                        s.bx += (d.bx - s.bx) * 0.15;
+                        s.by += (d.by - s.by) * 0.15;
+                        s.bvx = d.bvx; s.bvy = d.bvy;
                     } else {
-                        // Hard reset (Lag spike)
-                        s.bx = data.bx; s.by = data.by;
+                        s.bx = d.bx; s.by = d.by;
                     }
                 }
             }
