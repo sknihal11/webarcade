@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>WebArcade | Dashboard</title>
 
 <style>
@@ -24,8 +24,8 @@
   --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.5);
 }
 
-* {
-  box-sizing: border-box;
+* { 
+  box-sizing: border-box; 
   margin: 0;
   padding: 0;
 }
@@ -53,7 +53,7 @@ body {
   position: absolute;
   width: 200%;
   height: 200%;
-  background:
+  background: 
     radial-gradient(circle at 20% 30%, rgba(124, 58, 237, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 80% 70%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 50% 50%, rgba(34, 197, 94, 0.05) 0%, transparent 50%);
@@ -149,12 +149,11 @@ body {
   50% { transform: scale(1.05); }
 }
 
-/* --- PROFILE BUTTON (TOP RIGHT) --- */
 .profile-btn {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0.9rem;
+  padding: 0.5rem 1rem;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 50px;
@@ -162,7 +161,6 @@ body {
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  user-select: none;
 }
 
 .profile-btn::before {
@@ -200,37 +198,30 @@ body {
   z-index: 1;
 }
 
-/* Arrow indicator added (top-right profile) */
-.profile-arrow {
+/* --- ANNOUNCEMENT BANNER --- */
+.announcement {
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.1), rgba(236, 72, 153, 0.1));
+  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 0;
+  overflow: hidden;
   position: relative;
-  z-index: 1;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(167, 139, 250, 0.06);
-  transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
 }
 
-.profile-btn:hover .profile-arrow {
-  border-color: rgba(124, 58, 237, 0.35);
-  background: rgba(124, 58, 237, 0.12);
+.announcement-content {
+  display: flex;
+  animation: marquee 25s linear infinite;
+  white-space: nowrap;
 }
 
-.profile-arrow::before {
-  content: '›';
-  font-size: 1.35rem;
-  line-height: 1;
-  transform: rotate(90deg); /* looks like a chevron-down */
+.announcement-content span {
+  font-size: 0.875rem;
   color: var(--accent-secondary);
-  opacity: 0.9;
+  padding-right: 100vw;
 }
 
-/* Rotate arrow when drawer open */
-body.drawer-open .profile-arrow {
-  transform: rotate(180deg);
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* --- MAIN CONTAINER --- */
@@ -240,6 +231,87 @@ body.drawer-open .profile-arrow {
   padding: 2rem 1.5rem;
   position: relative;
   z-index: 1;
+}
+
+/* --- USER PROFILE CARD --- */
+.user-profile {
+  background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  padding: 2rem;
+  margin-bottom: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+  from { 
+    opacity: 0; 
+    transform: translateY(30px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+.user-profile::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.2) 0%, transparent 70%);
+  filter: blur(60px);
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(-30px, -30px); }
+}
+
+.user-avatar-large {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 4px solid var(--accent-primary);
+  box-shadow: 0 0 30px var(--accent-glow);
+  position: relative;
+  z-index: 1;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.user-avatar-large:hover {
+  transform: scale(1.05) rotate(5deg);
+}
+
+.user-info {
+  flex: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.user-name {
+  font-size: 2rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+  background: linear-gradient(135deg, var(--text-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.user-email {
+  color: var(--text-secondary);
+  font-size: 1rem;
 }
 
 /* --- SECTION HEADER --- */
@@ -268,11 +340,6 @@ body.drawer-open .profile-arrow {
   font-size: 1.75rem;
   font-weight: 700;
   letter-spacing: -0.5px;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 /* --- GAMES GRID --- */
@@ -711,9 +778,13 @@ body.drawer-open .profile-arrow {
 
 /* --- RESPONSIVE DESIGN --- */
 @media (max-width: 768px) {
-  .header-content { padding: 1rem; }
+  .header-content {
+    padding: 1rem;
+  }
 
-  .logo { font-size: 1.25rem; }
+  .logo {
+    font-size: 1.25rem;
+  }
 
   .logo-icon {
     width: 32px;
@@ -721,11 +792,32 @@ body.drawer-open .profile-arrow {
     font-size: 1.25rem;
   }
 
-  .profile-name { display: none; }
+  .profile-name {
+    display: none;
+  }
 
-  .container { padding: 1.5rem 1rem; }
+  .container {
+    padding: 1.5rem 1rem;
+  }
 
-  .section-title { font-size: 1.5rem; }
+  .user-profile {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .user-avatar-large {
+    width: 80px;
+    height: 80px;
+  }
+
+  .user-name {
+    font-size: 1.5rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
 
   .games-grid {
     grid-template-columns: 1fr;
@@ -739,10 +831,21 @@ body.drawer-open .profile-arrow {
     gap: 0.75rem;
   }
 
-  .rank { font-size: 1.25rem; }
-  .player-name { font-size: 1rem; }
-  .player-rating { font-size: 1.25rem; }
-  .drawer { max-width: 100%; }
+  .rank {
+    font-size: 1.25rem;
+  }
+
+  .player-name {
+    font-size: 1rem;
+  }
+
+  .player-rating {
+    font-size: 1.25rem;
+  }
+
+  .drawer {
+    max-width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -753,10 +856,21 @@ body.drawer-open .profile-arrow {
     gap: 0.5rem;
   }
 
-  .rank { font-size: 1rem; }
-  .player-name { font-size: 0.875rem; }
-  .player-details { font-size: 0.75rem; }
-  .player-rating { font-size: 1rem; }
+  .rank {
+    font-size: 1rem;
+  }
+
+  .player-name {
+    font-size: 0.875rem;
+  }
+
+  .player-details {
+    font-size: 0.75rem;
+  }
+
+  .player-rating {
+    font-size: 1rem;
+  }
 }
 
 /* --- LOADING STATES --- */
@@ -778,14 +892,27 @@ body.drawer-open .profile-arrow {
 }
 
 /* --- SMOOTH SCROLLBAR --- */
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: var(--bg-primary); }
-::-webkit-scrollbar-thumb { background: var(--accent-primary); border-radius: 5px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent-secondary); }
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-primary);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-secondary);
+}
 </style>
 </head>
 
 <body>
+
 <!-- Animated Background -->
 <div class="animated-bg">
   <div class="particles" id="particles"></div>
@@ -798,22 +925,32 @@ body.drawer-open .profile-arrow {
       <div class="logo-icon">🎮</div>
       <span>WebArcade</span>
     </div>
-
-    <!-- Top-right Profile Section (with arrow indicator) -->
-    <div class="profile-btn" onclick="openDrawer()" aria-label="Open profile settings">
-      <img id="avatarTop" class="profile-avatar" src="" alt="Avatar" />
+    <div class="profile-btn" onclick="openDrawer()">
+      <img id="avatarTop" class="profile-avatar" src="" alt="Avatar">
       <span id="usernameTop" class="profile-name">Loading...</span>
-      <span class="profile-arrow" aria-hidden="true"></span>
     </div>
   </div>
 </header>
 
-<!-- ✅ Announcement/Updates section REMOVED as requested -->
+<!-- Announcement Banner -->
+<div class="announcement">
+  <div class="announcement-content">
+    <span>🚧 Website is still under development — developed by sknihal11 🚧</span>
+    <span>🚧 Website is still under development — developed by sknihal11 🚧</span>
+  </div>
+</div>
 
 <!-- Main Container -->
 <div class="container">
 
-  <!-- ✅ Profile details card REMOVED as requested -->
+  <!-- User Profile Card -->
+  <div class="user-profile">
+    <img id="avatar" class="user-avatar-large" src="" alt="User Avatar">
+    <div class="user-info">
+      <div id="displayName" class="user-name">Loading Player...</div>
+      <div id="email" class="user-email">...</div>
+    </div>
+  </div>
 
   <!-- Games Section -->
   <div class="section-header">
@@ -823,38 +960,46 @@ body.drawer-open .profile-arrow {
 
   <div class="games-grid">
     <div class="game-card">
-      <img src="" class="game-thumbnail" alt="2048" />
+      <img src="" class="game-thumbnail" alt="2048">
       <div class="game-content">
         <h3 class="game-title">2048</h3>
         <p class="game-score">High Score: <span id="score2048" class="game-score-value">0</span></p>
-        <a href="2048.html" class="play-btn"><span>▶ Play Now</span></a>
+        <a href="2048.html" class="play-btn">
+          <span>▶ Play Now</span>
+        </a>
       </div>
     </div>
 
     <div class="game-card">
-      <img src="" class="game-thumbnail" alt="Flappy Bird" />
+      <img src="" class="game-thumbnail" alt="Flappy Bird">
       <div class="game-content">
         <h3 class="game-title">Flappy Bird</h3>
         <p class="game-score">High Score: <span id="scoreFlappy" class="game-score-value">0</span></p>
-        <a href="flappy.html" class="play-btn"><span>▶ Play Now</span></a>
+        <a href="flappy.html" class="play-btn">
+          <span>▶ Play Now</span>
+        </a>
       </div>
     </div>
 
     <div class="game-card game-special">
-      <img src="" class="game-thumbnail" alt="Ludo" />
+      <img src="" class="game-thumbnail" alt="Ludo">
       <div class="game-content">
         <h3 class="game-title">Ludo</h3>
         <p class="game-score">Mode: <strong style="color: #22c55e;">Multiplayer or with bot</strong></p>
-        <a href="" class="play-btn multiplayer-btn"><span>▶ [UNDER DEVELOPMENT]</span></a>
+        <a href="" class="play-btn multiplayer-btn">
+          <span>▶ [UNDER DEVELOPMENT]</span>
+        </a>
       </div>
     </div>
 
     <div class="game-card game-multiplayer">
-      <img src="" class="game-thumbnail" alt="Uno" />
+      <img src="" class="game-thumbnail" alt="Uno">
       <div class="game-content">
         <h3 class="game-title" style="color: #f472b6;">Uno (Multiplayer)</h3>
         <p class="game-score">Host a game or join your friends lobby</p>
-        <a href="" class="play-btn multiplayer-btn"><span>⚔️ [UNDER DEVELOPMENT]</span></a>
+        <a href="" class="play-btn multiplayer-btn">
+          <span>⚔️ [UNDER DEVELOPMENT]</span>
+        </a>
       </div>
     </div>
   </div>
@@ -892,17 +1037,17 @@ body.drawer-open .profile-arrow {
     <h3 class="drawer-title">Settings</h3>
     <button class="close-btn" onclick="closeDrawer()">×</button>
   </div>
-
+  
   <div class="drawer-content">
     <div class="setting-group">
       <label class="setting-label">Display Name</label>
-      <input id="nameInput" class="setting-input" placeholder="Enter new name" />
+      <input id="nameInput" class="setting-input" placeholder="Enter new name">
       <button class="action-btn" onclick="saveName()"><span>Save Name</span></button>
     </div>
 
     <div class="setting-group">
       <label class="setting-label">Avatar URL</label>
-      <input id="avatarInput" class="setting-input" placeholder="https://..." />
+      <input id="avatarInput" class="setting-input" placeholder="https://...">
       <button class="action-btn" onclick="saveAvatar()"><span>Update Avatar</span></button>
     </div>
 
@@ -922,10 +1067,10 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebas
 import { getAuth, onAuthStateChanged, updateProfile, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-/* Create floating particles */
+// Create floating particles
 function createParticles() {
   const particles = document.getElementById('particles');
-  for (let i = 0; i < 30; i++) {
+  for(let i = 0; i < 30; i++) {
     const particle = document.createElement('div');
     particle.className = 'particle';
     particle.style.left = Math.random() * 100 + '%';
@@ -941,156 +1086,143 @@ const app = initializeApp({
   authDomain: "webarcade-d4c3d.firebaseapp.com",
   projectId: "webarcade-d4c3d"
 });
-
 const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser;
 
-/* Elements */
+// Elements
 const els = {
-  topName: document.getElementById("usernameTop"),
-  topAvatar: document.getElementById("avatarTop"),
-  score2048: document.getElementById("score2048"),
-  scoreFlappy: document.getElementById("scoreFlappy"),
-  leaderboard: document.getElementById("leaderboard"),
-  drawer: document.getElementById("drawer"),
-  overlay: document.getElementById("overlay"),
-  nameInput: document.getElementById("nameInput"),
-  avatarInput: document.getElementById("avatarInput"),
+    name: document.getElementById("displayName"),
+    email: document.getElementById("email"),
+    topName: document.getElementById("usernameTop"),
+    avatar: document.getElementById("avatar"),
+    topAvatar: document.getElementById("avatarTop"),
+    score2048: document.getElementById("score2048"),
+    scoreFlappy: document.getElementById("scoreFlappy"),
+    leaderboard: document.getElementById("leaderboard"),
+    drawer: document.getElementById("drawer"),
+    overlay: document.getElementById("overlay"),
+    nameInput: document.getElementById("nameInput"),
+    avatarInput: document.getElementById("avatarInput")
 };
 
-/* Auth Listener */
+// Auth Listener
 onAuthStateChanged(auth, async (user) => {
-  if (!user) {
-    location.replace("index.html");
-    return;
-  }
+  if (!user) { location.replace("index.html"); return; }
   currentUser = user;
 
+  els.name.textContent = user.displayName || "Player";
   els.topName.textContent = user.displayName || "Player";
+  els.email.textContent = user.email;
   const photo = user.photoURL || "https://i.imgur.com/8Km9tLL.png";
+  els.avatar.src = photo;
   els.topAvatar.src = photo;
 
   try {
-    const snap = await getDoc(doc(db, "users", user.uid));
-    if (snap.exists()) {
-      const data = snap.data();
-      els.score2048.textContent = data.best2048 || 0;
-      els.scoreFlappy.textContent = data.bestFlappy || 0;
-    }
-  } catch (e) {
-    console.error(e);
-  }
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        els.score2048.textContent = data.best2048 || 0;
+        els.scoreFlappy.textContent = data.bestFlappy || 0;
+      }
+  } catch (e) { console.error(e); }
 
   loadLeaderboard();
 });
 
-/* --- HALL OF FAME LOGIC --- */
+// --- HALL OF FAME LOGIC ---
 async function loadLeaderboard() {
   try {
-    const snap = await getDocs(collection(db, "users"));
-    let players = [];
+      const snap = await getDocs(collection(db, "users"));
+      let players = [];
+      
+      snap.forEach(doc => {
+        const d = doc.data();
+        const s2048 = d.best2048 || 0;
+        const sFlappy = d.bestFlappy || 0;
+        
+        // 1 Flappy point = 100 rating points
+        const totalRating = s2048 + (sFlappy * 100);
 
-    snap.forEach((docSnap) => {
-      const d = docSnap.data();
-      const s2048 = d.best2048 || 0;
-      const sFlappy = d.bestFlappy || 0;
+        if (totalRating > 0) {
+            players.push({
+                name: d.username || "Unknown",
+                rating: totalRating,
+                detail: `2048: ${s2048} | Flappy: ${sFlappy}`
+            });
+        }
+      });
 
-      /* 1 Flappy point = 100 rating points */
-      const totalRating = s2048 + (sFlappy * 100);
+      players.sort((a, b) => b.rating - a.rating);
 
-      if (totalRating > 0) {
-        players.push({
-          name: d.username || "Unknown",
-          rating: totalRating,
-          detail: `2048: ${s2048} | Flappy: ${sFlappy}`
-        });
+      els.leaderboard.innerHTML = "";
+      if(players.length === 0) {
+          els.leaderboard.innerHTML = `<div class="leaderboard-row"><div style="grid-column:1/4;text-align:center">No records yet</div></div>`;
+          return;
       }
-    });
 
-    players.sort((a, b) => b.rating - a.rating);
+      players.slice(0, 10).forEach((p, index) => {
+         const div = document.createElement("div");
+         div.className = "leaderboard-row";
+         
+         let rankIcon = `#${index+1}`;
+         let rankClass = 'rank';
+         if(index===0) { rankIcon = "🥇"; rankClass += ' rank-1'; }
+         if(index===1) { rankIcon = "🥈"; rankClass += ' rank-2'; }
+         if(index===2) { rankIcon = "🥉"; rankClass += ' rank-3'; }
 
-    els.leaderboard.innerHTML = "";
-    if (players.length === 0) {
-      els.leaderboard.innerHTML = `<div class="leaderboard-row"><div style="grid-column:1/4;text-align:center">No records yet</div></div>`;
-      return;
-    }
+         div.innerHTML = `
+            <div class="${rankClass}">${rankIcon}</div>
+            <div class="player-info">
+                <div class="player-name">${p.name}</div>
+                <div class="player-details">${p.detail}</div>
+            </div>
+            <div class="player-rating">${p.rating}</div>
+         `;
+         els.leaderboard.appendChild(div);
+      });
 
-    players.slice(0, 10).forEach((p, index) => {
-      const div = document.createElement("div");
-      div.className = "leaderboard-row";
-
-      let rankIcon = `#${index + 1}`;
-      let rankClass = 'rank';
-      if (index === 0) { rankIcon = "🥇"; rankClass += ' rank-1'; }
-      if (index === 1) { rankIcon = "🥈"; rankClass += ' rank-2'; }
-      if (index === 2) { rankIcon = "🥉"; rankClass += ' rank-3'; }
-
-      div.innerHTML = `
-        <div class="${rankClass}">${rankIcon}</div>
-        <div class="player-info">
-          <div class="player-name">${p.name}</div>
-          <div class="player-details">${p.detail}</div>
-        </div>
-        <div class="player-rating">${p.rating}</div>
-      `;
-      els.leaderboard.appendChild(div);
-    });
   } catch (e) {
-    console.error(e);
-    els.leaderboard.innerHTML = `<div class="leaderboard-row"><div style="grid-column:1/4;text-align:center;color:#ef4444">Offline</div></div>`;
+      console.error(e);
+      els.leaderboard.innerHTML = `<div class="leaderboard-row"><div style="grid-column:1/4;text-align:center;color:#ef4444">Offline</div></div>`;
   }
 }
 
-/* Drawer Functions */
+// Drawer Functions
 window.openDrawer = () => {
   els.drawer.classList.add("open");
   els.overlay.classList.add("active");
-  document.body.classList.add("drawer-open");
-
-  els.nameInput.value = currentUser?.displayName || "";
-  els.avatarInput.value = currentUser?.photoURL || "";
+  els.nameInput.value = currentUser.displayName || "";
+  els.avatarInput.value = currentUser.photoURL || "";
 };
-
 window.closeDrawer = () => {
   els.drawer.classList.remove("open");
   els.overlay.classList.remove("active");
-  document.body.classList.remove("drawer-open");
 };
-
 window.saveName = async () => {
   const newName = els.nameInput.value.trim();
-  if (!newName) return alert("Name cannot be empty");
-
+  if(!newName) return alert("Name cannot be empty");
   await updateProfile(currentUser, { displayName: newName });
+  els.name.textContent = newName;
   els.topName.textContent = newName;
   alert("Name updated!");
 };
-
 window.saveAvatar = async () => {
   const newUrl = els.avatarInput.value.trim();
-  if (!newUrl) return alert("URL cannot be empty");
-
+  if(!newUrl) return alert("URL cannot be empty");
   await updateProfile(currentUser, { photoURL: newUrl });
+  els.avatar.src = newUrl;
   els.topAvatar.src = newUrl;
   alert("Avatar updated!");
 };
-
-window.logoutUser = async () => {
-  await signOut(auth);
-  location.replace("index.html");
-};
-
+window.logoutUser = async () => { await signOut(auth); location.replace("index.html"); };
 window.deleteAccount = async () => {
   if (confirm("Are you sure? This cannot be undone.")) {
-    try {
-      await deleteUser(currentUser);
-      location.replace("index.html");
-    } catch (e) {
-      alert("Error: " + e.message);
-    }
+    try { await deleteUser(currentUser); location.replace("index.html"); } 
+    catch(e) { alert("Error: " + e.message); }
   }
 };
 </script>
+
 </body>
 </html>
