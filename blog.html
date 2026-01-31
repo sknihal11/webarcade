@@ -64,19 +64,6 @@ header h2 {
 
 .header-right { display: flex; align-items: center; gap: 15px; }
 
-.admin-btn {
-  display: none; 
-  background: var(--accent);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  font-size: 13px;
-  transition: 0.2s;
-}
-
 .profile-btn {
   display: flex; align-items: center; gap: 10px; cursor: pointer;
   padding: 6px 14px; border-radius: 99px; transition: 0.2s;
@@ -88,7 +75,7 @@ header h2 {
 }
 .chevron { font-size: 10px; color: var(--text-muted); }
 
-/* --- FLOWING TEXT ANNOUNCEMENT (RESTORED) --- */
+/* --- FLOWING TEXT ANNOUNCEMENT --- */
 .announcement {
   background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid var(--border);
   overflow: hidden; display: flex; align-items: center; padding: 8px 0;
@@ -204,7 +191,6 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
 <header>
   <h2>WebArcade</h2>
   <div class="header-right">
-    <button id="adminUpdateBtn" class="admin-btn" onclick="postAnnouncement()">📢 Post Update</button>
     <div class="profile-btn" onclick="openDrawer()">
       <img id="avatarTop" src="https://i.imgur.com/8Km9tLL.png">
       <span id="usernameTop">Loading...</span>
@@ -308,7 +294,7 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, updateProfile, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -329,7 +315,6 @@ const els = {
     overlay: document.getElementById("overlay"),
     nameInput: document.getElementById("nameInput"),
     avatarInput: document.getElementById("avatarInput"),
-    adminBtn: document.getElementById("adminUpdateBtn"),
     announceBody: document.getElementById("announceBody"),
     scrollingText: document.getElementById("scrollingText")
 };
@@ -338,32 +323,14 @@ async function syncAnnouncement() {
     const snap = await getDoc(doc(db, "config", "announcement"));
     if (snap.exists()) {
         const data = snap.data();
-        els.announceBody.innerHTML = data.text;
+        els.announceBody.innerHTML = data.text || els.announceBody.innerHTML;
         els.scrollingText.textContent = data.marquee || els.scrollingText.textContent;
     }
 }
 
-window.postAnnouncement = async () => {
-    const newText = prompt("Enter box announcement (HTML/Text):");
-    const newMarquee = prompt("Enter flowing banner text:");
-    if (newText || newMarquee) {
-        const update = {};
-        if(newText) update.text = newText;
-        if(newMarquee) update.marquee = newMarquee;
-        await setDoc(doc(db, "config", "announcement"), update, { merge: true });
-        if(newText) els.announceBody.innerHTML = newText;
-        if(newMarquee) els.scrollingText.textContent = newMarquee;
-        alert("Updates posted!");
-    }
-};
-
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.replace("index.html"); return; }
   currentUser = user;
-
-  if(user.email === "nihalsk2022@gmail.com") {
-      els.adminBtn.style.display = "block";
-  }
 
   els.topName.textContent = user.displayName || "Player";
   const photo = user.photoURL || "https://i.imgur.com/8Km9tLL.png";
