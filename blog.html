@@ -13,7 +13,7 @@
   --accent: #6366f1;
   --accent-glow: rgba(99, 102, 241, 0.5);
   --gold: #fbbf24;
-  --multiplayer: #ec4899; /* Pink for Multiplayer */
+  --multiplayer: #ec4899; 
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --border: rgba(255, 255, 255, 0.1);
@@ -61,31 +61,65 @@ header h2 {
   margin: 0; background: linear-gradient(to right, #fff, #a5b4fc);
   -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1.5rem;
 }
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.admin-btn {
+  background: rgba(99, 102, 241, 0.2);
+  border: 1px solid var(--accent);
+  color: var(--text-main);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: 0.2s;
+  display: none; /* Hidden by default, show via JS if user is admin */
+}
+.admin-btn:hover { background: var(--accent); }
+
 .profile-btn {
-  display: flex; align-items: center; gap: 12px; cursor: pointer;
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
   padding: 6px 12px; border-radius: 99px; transition: background 0.2s;
+  border: 1px solid transparent;
 }
-.profile-btn:hover { background: rgba(255,255,255,0.1); }
+.profile-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--border); }
 .profile-btn img {
-  width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--accent);
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent);
+}
+.chevron-down {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 0.3s;
 }
 
-/* --- SCROLLING TEXT --- */
-.announcement {
-  background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid var(--border);
-  overflow: hidden; display: flex; align-items: center; padding: 8px 0;
+/* --- ANNOUNCEMENT POPUP --- */
+.popup-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+  backdrop-filter: blur(8px); display: none; z-index: 100;
+  align-items: center; justify-content: center;
 }
-.announcement span {
-  font-size: 13px; color: #a5b4fc; white-space: nowrap;
-  animation: scroll 20s linear infinite; padding-left: 100%;
+.popup-card {
+  background: #0f172a; border: 1px solid var(--accent);
+  width: 90%; max-width: 450px; padding: 30px; border-radius: 20px;
+  position: relative; text-align: center;
+  box-shadow: 0 0 30px var(--accent-glow);
 }
-@keyframes scroll { 100% { transform: translateX(-100%); } }
+.popup-card h3 { color: var(--accent); margin-top: 0; }
+.popup-close {
+  position: absolute; top: 15px; right: 15px;
+  background: none; border: none; color: var(--text-muted);
+  font-size: 24px; cursor: pointer;
+}
 
-/* --- MAIN LAYOUT --- */
+/* --- REST OF STYLES --- */
 .wrapper { max-width: 1100px; margin: 30px auto; padding: 0 20px; animation: fadeIn 0.8s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* --- USER CARD --- */
 .user-card {
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: 20px; padding: 24px; display: flex; align-items: center; gap: 20px;
@@ -95,7 +129,6 @@ header h2 {
 .name { font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; }
 .email { color: var(--text-muted); font-size: 0.9rem; }
 
-/* --- GAMES GRID --- */
 .section-title { margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 .section-title span { background: var(--accent); height: 24px; width: 4px; border-radius: 4px; display: block; }
 
@@ -123,46 +156,16 @@ header h2 {
   transition: 0.2s;
 }
 .play-btn:hover { transform: scale(1.05); filter: brightness(1.1); }
+.mp-btn { background: var(--multiplayer); box-shadow: 0 4px 15px rgba(236, 72, 153, 0.5); }
 
-/* Multiplayer Specific Button */
-.mp-btn {
-  background: var(--multiplayer);
-  box-shadow: 0 4px 15px rgba(236, 72, 153, 0.5);
-}
-
-/* --- LEADERBOARD (HALL OF FAME) --- */
-.leaderboard-container {
-  background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);
-  overflow: hidden;
-}
-.lb-header {
-  background: rgba(99, 102, 241, 0.1); padding: 15px 20px;
-  display: grid; grid-template-columns: 50px 1fr 100px;
-  font-weight: bold; color: #a5b4fc; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
-}
-.lb-row {
-  display: grid; grid-template-columns: 50px 1fr 100px;
-  padding: 15px 20px; border-bottom: 1px solid var(--border); align-items: center;
-  transition: background 0.2s;
-}
-.lb-row:hover { background: rgba(255,255,255,0.03); }
-.lb-row:last-child { border-bottom: none; }
-
+.leaderboard-container { background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border); overflow: hidden; }
+.lb-header { background: rgba(99, 102, 241, 0.1); padding: 15px 20px; display: grid; grid-template-columns: 50px 1fr 100px; font-weight: bold; color: #a5b4fc; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; }
+.lb-row { display: grid; grid-template-columns: 50px 1fr 100px; padding: 15px 20px; border-bottom: 1px solid var(--border); align-items: center; }
 .rank { font-weight: 800; color: var(--text-muted); }
-.lb-user { display: flex; flex-direction: column; }
 .lb-username { font-weight: bold; font-size: 15px; color: var(--text-main); }
-.lb-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .lb-score { font-weight: 800; color: var(--gold); text-align: right; font-size: 18px; }
 
-.lb-row:nth-child(2) .rank { color: #fbbf24; text-shadow: 0 0 10px rgba(251,191,36,0.4); } /* Gold */
-.lb-row:nth-child(3) .rank { color: #94a3b8; } /* Silver */
-.lb-row:nth-child(4) .rank { color: #b45309; } /* Bronze */
-
-/* --- DRAWER --- */
-.overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px);
-  display: none; z-index: 40;
-}
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); display: none; z-index: 40; }
 .overlay.active { display: block; }
 .drawer {
   position: fixed; top: 0; right: -100%; width: 100%; max-width: 350px;
@@ -173,18 +176,9 @@ header h2 {
 .drawer.open { right: 0; }
 .setting { margin-top: 24px; }
 .setting label { font-size: 13px; color: var(--text-muted); display: block; margin-bottom: 8px; }
-.setting input {
-  width: 100%; padding: 12px; background: rgba(0,0,0,0.3);
-  border: 1px solid var(--border); color: #fff; border-radius: 10px; outline: none;
-}
-.action-btn {
-  width: 100%; padding: 12px; margin-top: 10px; background: var(--accent);
-  border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer;
-}
-.close-drawer {
-  background: none; border: none; color: var(--text-muted); font-size: 24px;
-  cursor: pointer; float: right;
-}
+.setting input { width: 100%; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: #fff; border-radius: 10px; outline: none; }
+.action-btn { width: 100%; padding: 12px; margin-top: 10px; background: var(--accent); border: none; border-radius: 10px; color: #fff; font-weight: 600; cursor: pointer; }
+.close-drawer { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; float: right; }
 footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-muted); font-size: 14px; }
 </style>
 </head>
@@ -193,20 +187,29 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
 
 <div class="retro-bg"></div>
 
+<div class="popup-overlay" id="announcementPopup">
+  <div class="popup-card">
+    <button class="popup-close" onclick="closePopup()">×</button>
+    <h3 id="popupTitle">New Update!</h3>
+    <p id="popupContent" style="color: var(--text-muted); line-height: 1.6;">Website is still under development — developed by sknihal11</p>
+    <button class="action-btn" onclick="closePopup()">Got it!</button>
+  </div>
+</div>
+
 <header>
   <h2>WebArcade</h2>
-  <div class="profile-btn" onclick="openDrawer()">
-    <img id="avatarTop" src="https://i.imgur.com/8Km9tLL.png">
-    <span id="usernameTop">Loading...</span>
+  <div class="header-controls">
+    <button id="adminPostBtn" class="admin-btn" onclick="promptAdminPost()">📢 Post Update</button>
+    
+    <div class="profile-btn" onclick="openDrawer()">
+      <img id="avatarTop" src="https://i.imgur.com/8Km9tLL.png">
+      <span id="usernameTop">Loading...</span>
+      <span class="chevron-down">▼</span>
+    </div>
   </div>
 </header>
 
-<div class="announcement">
-  <span>🚧 Website is still under development — developed by sknihal11 🚧</span>
-</div>
-
 <div class="wrapper">
-
   <div class="user-card">
     <img id="avatar" class="avatar-lg" src="https://i.imgur.com/8Km9tLL.png">
     <div>
@@ -236,16 +239,13 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
     </div>
     
     <div class="game-card" style="border-color: rgba(34, 197, 94, 0.35);">
-  <img src="" class="game-thumb">
+      <img src="" class="game-thumb">
       <div>
-    <h3>Ludo</h3>
-    <p style="color: var(--text-muted); font-size: 14px;">
-      Mode: <b style="color: #22c55e;">Multiplayer or with bot</b>
-    </p>
-    <a href="" class="play-btn mp-btn">▶ [UNDER DEVELOPMENT]</a>
-  </div>
-</div>
-
+        <h3>Ludo</h3>
+        <p style="color: var(--text-muted); font-size: 14px;">Mode: <b style="color: #22c55e;">Multiplayer or with bot</b></p>
+        <a href="" class="play-btn mp-btn">▶ [UNDER DEVELOPMENT]</a>
+      </div>
+    </div>
 
     <div class="game-card" style="border-color: rgba(236, 72, 153, 0.3);">
       <img src="" class="game-thumb">
@@ -268,7 +268,6 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
       <div class="lb-row"><div style="grid-column:1/4; text-align:center; padding:20px;">Loading champions...</div></div>
     </div>
   </div>
-
 </div>
 
 <footer>© 2026 WebArcade | All Rights Reserved</footer>
@@ -299,7 +298,7 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, updateProfile, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -326,10 +325,39 @@ const els = {
     avatarInput: document.getElementById("avatarInput")
 };
 
-// Auth Listener
+// Popup logic
+window.closePopup = () => {
+    document.getElementById("announcementPopup").style.display = "none";
+};
+
+async function checkAnnouncements() {
+    const snap = await getDoc(doc(db, "meta", "announcement"));
+    if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("popupTitle").textContent = data.title;
+        document.getElementById("popupContent").textContent = data.message;
+        document.getElementById("announcementPopup").style.display = "flex";
+    }
+}
+
+// Admin Post Logic
+window.promptAdminPost = async () => {
+    const title = prompt("Enter announcement title:");
+    const message = prompt("Enter announcement message:");
+    if(title && message) {
+        await setDoc(doc(db, "meta", "announcement"), { title, message, timestamp: Date.now() });
+        alert("Posted!");
+    }
+};
+
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.replace("index.html"); return; }
   currentUser = user;
+
+  // Show Admin button only for your email
+  if(user.email === "nihalsk2022@gmail.com") {
+      document.getElementById("adminPostBtn").style.display = "block";
+  }
 
   els.name.textContent = user.displayName || "Player";
   els.topName.textContent = user.displayName || "Player";
@@ -348,6 +376,7 @@ onAuthStateChanged(auth, async (user) => {
   } catch (e) { console.error(e); }
 
   loadLeaderboard();
+  checkAnnouncements(); // Show popup on login
 });
 
 // --- HALL OF FAME LOGIC ---
@@ -360,8 +389,6 @@ async function loadLeaderboard() {
         const d = doc.data();
         const s2048 = d.best2048 || 0;
         const sFlappy = d.bestFlappy || 0;
-        
-        // 1 Flappy point = 100 rating points
         const totalRating = s2048 + (sFlappy * 100);
 
         if (totalRating > 0) {
@@ -374,17 +401,10 @@ async function loadLeaderboard() {
       });
 
       players.sort((a, b) => b.rating - a.rating);
-
       els.leaderboard.innerHTML = "";
-      if(players.length === 0) {
-          els.leaderboard.innerHTML = `<div class="lb-row"><div style="grid-column:1/4;text-align:center">No records yet</div></div>`;
-          return;
-      }
-
       players.slice(0, 10).forEach((p, index) => {
          const div = document.createElement("div");
          div.className = "lb-row";
-         
          let rankIcon = `#${index+1}`;
          if(index===0) rankIcon = "🥇";
          if(index===1) rankIcon = "🥈";
@@ -400,14 +420,9 @@ async function loadLeaderboard() {
          `;
          els.leaderboard.appendChild(div);
       });
-
-  } catch (e) {
-      console.error(e);
-      els.leaderboard.innerHTML = `<div class="lb-row"><div style="grid-column:1/4;text-align:center;color:var(--danger)">Offline</div></div>`;
-  }
+  } catch (e) { console.error(e); }
 }
 
-// Drawer Functions
 window.openDrawer = () => {
   els.drawer.classList.add("open");
   els.overlay.classList.add("active");
