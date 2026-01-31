@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Arcade Fixed</title>
+    <title>Pong - Mobile Fixed</title>
     <style>
         /* --- STYLES --- */
         :root { --bg-dark: #050505; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
@@ -16,34 +16,53 @@
             overflow: hidden; touch-action: none;
         }
 
-        /* DYNAMIC CONTAINER */
-        /* This container will be resized by JS to fit the screen */
-        #game-container {
+        /* --- THE CRITICAL FIX --- */
+        #game-wrapper {
             position: relative;
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.2);
-            border: 4px solid #222;
-            background: #000;
+            background: #000; 
+            border: 2px solid #333;
+            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+
+            /* 1. Desktop: Default large size */
+            width: 800px;
+            
+            /* 2. Mobile: Force it to fit inside the screen width no matter what */
+            max-width: 92vw; /* 92% of screen width (leaves margins) */
+            
+            /* 3. Lock the shape so it doesn't stretch */
+            aspect-ratio: 4/3; 
+            
+            /* 4. If screen is short (landscape mobile), shrink to fit height too */
+            max-height: 90vh; 
+            
+            /* Center it */
+            margin: auto;
         }
 
-        canvas { display: block; width: 100%; height: 100%; }
+        canvas { 
+            display: block; 
+            width: 100%; 
+            height: 100%; 
+            /* This ensures the canvas matches the wrapper size exactly */
+        }
 
         /* UI LAYOUT */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
         
         .top-bar { 
-            padding: 15px; 
+            padding: 10px; 
             display: flex; justify-content: space-between; align-items: center;
             pointer-events: auto; 
         }
 
         .score { 
-            color: white; font-size: 40px; font-weight: 900; 
+            color: white; font-size: 30px; font-weight: 900; 
             text-shadow: 2px 2px 0 #000; letter-spacing: 2px;
         }
         
         button {
-            background: rgba(0,0,0,0.6); border: 2px solid var(--neon-blue); color: white;
-            padding: 8px 16px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
+            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); color: white;
+            padding: 6px 12px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 12px;
         }
         button:hover { background: var(--neon-blue); color: black; }
         
@@ -58,26 +77,23 @@
         }
         .hidden { display: none !important; }
         
-        h1 { color: var(--neon-blue); font-size: 60px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
+        h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
-        .menu-btn { width: 250px; margin: 10px; font-size: 18px; padding: 15px; }
-        .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 1px solid #555; width: 150px; margin-bottom: 10px; }
-        .room-code { font-size: 30px; color: #0f0; margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
+        .menu-btn { width: 80%; max-width: 250px; margin: 8px; font-size: 16px; padding: 12px; }
+        .input-box { padding: 8px; font-size: 18px; text-align: center; background: #222; color: white; border: 1px solid #555; width: 140px; margin-bottom: 10px; }
+        .room-code { font-size: 24px; color: #0f0; margin: 15px 0; border: 2px dashed #0f0; padding: 8px 20px; }
 
-        /* --- MOBILE SPECIFIC SCALING --- */
-        /* Make UI smaller on small screens so it doesn't cover everything */
+        /* MOBILE TEXT SCALING */
         @media(max-width: 600px) {
-            .score { font-size: 24px; }
-            h1 { font-size: 40px; margin-bottom: 10px; }
-            .menu-btn { width: 180px; padding: 10px; font-size: 14px; margin: 5px; }
-            .top-bar { padding: 8px; }
-            button { padding: 5px 10px; font-size: 11px; }
+            .score { font-size: 20px; }
+            h1 { font-size: 32px; }
+            #game-wrapper { border-width: 2px; }
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
+    <div id="game-wrapper">
         <div class="ui-layer">
             <div class="top-bar">
                 <button class="btn-red" id="topExitBtn">Exit</button>
@@ -90,6 +106,7 @@
                 <button class="menu-btn" id="btnAI">Play vs AI</button>
                 <button class="menu-btn" id="btnOnline">Online Multiplayer</button>
                 <button class="menu-btn btn-red" id="btnExitMenu">EXIT GAME</button>
+                <p style="color:#666; margin-top:20px; font-size:10px; text-transform: uppercase;">Drag Screen to Move Paddle</p>
             </div>
 
             <div id="lobbyScreen" class="screen hidden">
@@ -134,15 +151,16 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // INTERNAL LOGIC RESOLUTION (Fixed 4:3)
+        // INTERNAL LOGIC (Fixed 800x600 for consistency)
         const LOGICAL_W = 800;
         const LOGICAL_H = 600;
 
         class PongGame {
             constructor() {
-                this.container = document.getElementById('game-container');
+                this.wrapper = document.getElementById('game-wrapper');
                 
-                // Pixi Application runs at FIXED resolution internally
+                // Pixi runs at fixed logic size. 
+                // CSS scales it visually.
                 this.app = new PIXI.Application({
                     width: LOGICAL_W, height: LOGICAL_H, 
                     backgroundColor: 0x000000,
@@ -150,7 +168,7 @@
                     autoDensity: true
                 });
                 
-                this.container.appendChild(this.app.view);
+                this.wrapper.appendChild(this.app.view);
                 
                 this.playing = false;
                 this.paused = false;
@@ -163,50 +181,17 @@
                 this.initUI();
                 this.initInput();
                 
-                // Resize handling
-                this.resize();
-                window.addEventListener('resize', () => this.resize());
-
                 this.app.ticker.add((d) => this.loop(d));
-            }
-
-            // --- SCALE LOGIC ---
-            resize() {
-                // Determine available space
-                const winW = window.innerWidth;
-                const winH = window.innerHeight;
-                
-                // Calculate Scale (Contain Ratio)
-                // We limit the Max Width to 800px so big screens see the original size
-                // But on small screens, we shrink to fit.
-                
-                let scale = Math.min(winW / LOGICAL_W, winH / LOGICAL_H);
-                
-                // Cap the scale at 1.0 (never bigger than 800x600)
-                // Remove this line if you want it to blow up huge on 4k screens
-                if (scale > 1) scale = 1; 
-
-                // Apply sizing to the Container CSS
-                const newW = LOGICAL_W * scale;
-                const newH = LOGICAL_H * scale;
-
-                this.container.style.width = `${newW}px`;
-                this.container.style.height = `${newH}px`;
-                
-                // Save scale for Input Math
-                this.currentScale = scale;
             }
 
             initGFX() {
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
-                // Middle Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
                 for(let y=0; y<LOGICAL_H; y+=20) { line.moveTo(LOGICAL_W/2, y); line.lineTo(LOGICAL_W/2, y+10); }
                 this.app.stage.addChild(line);
 
-                // Paddles
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
@@ -218,7 +203,6 @@
                 this.objs.L = makeRect(0xff0055, 30);  
                 this.objs.R = makeRect(0x00f3ff, LOGICAL_W - 30); 
                 
-                // Ball
                 this.objs.ball = new PIXI.Graphics();
                 this.objs.ball.beginFill(0xffff00); 
                 this.objs.ball.drawRect(-10,-10,20,20); 
@@ -247,15 +231,19 @@
 
             initInput() {
                 const onMove = (e) => {
-                    if(!this.currentScale) return;
-
-                    // Get Client coordinates
-                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    // ROBUST INPUT SCALING
+                    // We get the visual size of the canvas
                     const rect = this.app.view.getBoundingClientRect();
                     
-                    // Math: (MouseY on Screen - Top of Canvas) / Scale Factor
-                    // This maps the tiny phone pixels back to the 0-600 Game World
-                    const relY = (clientY - rect.top) / this.currentScale;
+                    // Client Y is the position on your phone screen
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    
+                    // We calculate the scale ratio
+                    // (Internal Game Height / Visual Screen Height)
+                    const scaleY = LOGICAL_H / rect.height;
+                    
+                    // Apply scale to get the "Game Y"
+                    const relY = (clientY - rect.top) * scaleY;
                     
                     this.mouseY = Math.max(40, Math.min(LOGICAL_H - 40, relY));
                 };
@@ -395,10 +383,8 @@
                 b.x += b.vx * delta;
                 b.y += b.vy * delta;
 
-                // Wall Bounce
                 if(b.y < 10 || b.y > LOGICAL_H - 10) b.vy *= -1;
 
-                // Paddle Hit Check
                 const hit = (p) => {
                     return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-50 && b.y < p.y+50;
                 };
@@ -414,7 +400,6 @@
                     b.x = this.objs.R.x - 20; 
                 }
 
-                // Score
                 if(b.x < -20) { this.score.R++; this.resetBall(1); }
                 if(b.x > LOGICAL_W + 20) { this.score.L++; this.resetBall(-1); }
                 
