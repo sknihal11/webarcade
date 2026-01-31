@@ -3,97 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Mobile AutoFit</title>
+    <title>Pong - Arcade Smooth</title>
     <style>
-        /* --- RESET --- */
-        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
+        /* --- RESET & BASICS --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-font-smoothing: antialiased; }
         
         body {
             background-color: #050505;
             height: 100vh; width: 100vw;
-            overflow: hidden; /* Prevent scrolling */
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            overflow: hidden; 
+            display: flex; justify-content: center; align-items: center;
+            font-family: "Segoe UI", sans-serif;
         }
 
-        /* The canvas itself will be resized by JS, but we center it here */
+        /* CANVAS STYLING */
         canvas {
             display: block;
-            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
-            border: 2px solid #333;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
+            border: 2px solid #222;
+            border-radius: 4px;
         }
 
-        /* UI OVERLAYS */
+        /* UI OVERLAY SYSTEM */
         .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
         .interactive { pointer-events: auto; }
         
+        /* TOP BAR */
         .top-bar { 
             position: absolute; top: 0; left: 0; width: 100%;
-            padding: 10px; display: flex; justify-content: space-between; 
+            padding: 15px; display: flex; justify-content: space-between; align-items: center;
         }
 
-        .score { 
-            color: white; font-family: sans-serif; font-weight: 900; font-size: 24px;
-            text-shadow: 2px 2px 0 #000;
+        .score-board { 
+            display: flex; gap: 20px;
+            color: white; font-weight: 900; font-size: 28px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
+        .score-p1 { color: #ff0055; }
+        .score-p2 { color: #00f3ff; }
 
-        button {
-            background: #111; border: 1px solid #00f3ff; color: #fff;
-            padding: 5px 10px; font-weight: bold; font-size: 12px;
+        .btn-mini {
+            background: rgba(0,0,0,0.5); border: 1px solid #444; color: #aaa;
+            padding: 8px 12px; font-weight: bold; font-size: 11px; border-radius: 4px;
+            cursor: pointer; transition: all 0.2s;
         }
-        
-        /* SCREENS */
+        .btn-mini:hover { background: #fff; color: #000; }
+        .btn-mini:active { transform: scale(0.95); }
+
+        /* FULL SCREENS */
         .screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
+            position: absolute; inset: 0; background: rgba(5,5,5,0.94);
+            backdrop-filter: blur(5px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
+            opacity: 1; transition: opacity 0.3s;
         }
-        .hidden { display: none !important; }
+        .hidden { opacity: 0; pointer-events: none; }
         
-        h1 { color: #00f3ff; font-family: sans-serif; font-size: 40px; margin-bottom: 20px; letter-spacing: 4px; }
+        h1 { 
+            color: #fff; font-size: 48px; margin-bottom: 30px; letter-spacing: 8px; font-weight: 800;
+            background: -webkit-linear-gradient(#fff, #999); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
         
+        /* MODERN BUTTONS */
         .menu-btn { 
-            width: 200px; padding: 15px; margin: 10px; 
-            font-size: 16px; background: #222; border: 1px solid #555; color: white;
+            width: 240px; padding: 18px; margin: 8px; 
+            font-size: 14px; letter-spacing: 2px; font-weight: 700;
+            background: #111; border: 1px solid #333; color: white;
+            cursor: pointer; text-transform: uppercase;
+            box-shadow: 0 4px 0 #222; transform: translateY(0);
+            transition: all 0.1s;
         }
-        
-        .input-box { padding: 10px; font-size: 18px; text-align: center; width: 150px; margin-bottom: 10px; }
+        .menu-btn:active { transform: translateY(4px); box-shadow: 0 0 0 #222; }
+        .btn-primary { border-color: #00f3ff; color: #00f3ff; }
+        .btn-host { background: #002200; border-color: #0f0; color: #0f0; }
+        .btn-join { background: #001122; border-color: #00aaff; color: #00aaff; }
+
+        .input-box { 
+            padding: 15px; font-size: 24px; text-align: center; width: 180px; margin: 15px; 
+            background: #000; color: #0f0; border: 2px solid #333; outline: none; letter-spacing: 4px;
+        }
+        .input-box:focus { border-color: #0f0; }
+
+        .status-msg { color: #888; font-size: 12px; margin-top: 10px; text-transform: uppercase; letter-spacing: 1px; }
+
+        /* LOADING ANIMATION */
+        @keyframes pulse { 0% { opacity:0.4 } 50% { opacity:1 } 100% { opacity:0.4 } }
+        .blink { animation: pulse 1.5s infinite; }
     </style>
 </head>
 <body>
 
     <div class="ui-layer">
         <div class="top-bar interactive">
-            <button onclick="window.location.reload()">EXIT</button>
-            <div class="score" id="scoreEl">0 | 0</div>
-            <button id="pauseBtn">PAUSE</button>
+            <button class="btn-mini" onclick="window.location.reload()">EXIT</button>
+            <div class="score-board">
+                <span class="score-p1" id="scoreL">0</span>
+                <span style="color:#444">-</span>
+                <span class="score-p2" id="scoreR">0</span>
+            </div>
+            <button class="btn-mini" id="pauseBtn">PAUSE</button>
         </div>
 
         <div id="menuScreen" class="screen interactive">
             <h1>PONG</h1>
-            <button class="menu-btn" id="btnAI">VS COMPUTER</button>
-            <button class="menu-btn" id="btnOnline">ONLINE MULTIPLAYER</button>
+            <button class="menu-btn btn-primary" id="btnAI">Single Player</button>
+            <button class="menu-btn" id="btnOnline">Multiplayer</button>
         </div>
 
         <div id="lobbyScreen" class="screen hidden interactive">
-            <h1 style="font-size:30px">MULTIPLAYER</h1>
-            <div id="lobbyMain">
-                <button class="menu-btn" id="btnHost">CREATE ROOM</button>
-                <div style="color:#666; margin:5px">- OR -</div>
-                <input type="number" id="codeIn" class="input-box" placeholder="1234">
-                <button class="menu-btn" id="btnJoin" style="background:#004400">JOIN GAME</button>
+            <h1 style="font-size:32px; margin-bottom:10px">LOBBY</h1>
+            
+            <div id="lobbyMain" style="display:flex; flex-direction:column; align-items:center;">
+                <button class="menu-btn btn-host" id="btnHost">Create Room</button>
+                <div style="color:#444; margin:10px; font-size:12px">OR JOIN EXISTING</div>
+                <input type="number" id="codeIn" class="input-box" placeholder="----">
+                <button class="menu-btn btn-join" id="btnJoin">Join Room</button>
             </div>
+
             <div id="lobbyWait" class="hidden" style="text-align: center;">
-                <p style="color:#aaa">CODE:</p>
-                <h2 style="color:#0f0; font-size:40px; margin:10px" id="codeDisp">----</h2>
-                <p style="color:#fff">Waiting...</p>
+                <p style="color:#aaa; font-size:12px; letter-spacing:2px">SHARE CODE:</p>
+                <h2 style="color:#0f0; font-size:50px; margin:10px; font-family:monospace" id="codeDisp">----</h2>
+                <p class="blink" style="color:#fff; margin-top:20px">Waiting for opponent...</p>
+                <p class="status-msg" id="waitStatus">Initializing...</p>
             </div>
-            <button class="menu-btn" id="btnBack" style="margin-top:20px; width:100px; padding:5px">BACK</button>
+            
+            <button class="menu-btn" id="btnBack" style="margin-top:40px; border-color:#555; width:120px; padding:10px">BACK</button>
         </div>
 
         <div id="overScreen" class="screen hidden interactive">
             <h1 id="winMsg">WINNER</h1>
-            <button class="menu-btn" onclick="window.location.reload()">MENU</button>
+            <button class="menu-btn" onclick="window.location.reload()">MAIN MENU</button>
         </div>
     </div>
 
@@ -116,117 +155,78 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CORE SETTINGS ---
-        // The game ALWAYS thinks it is 800x600.
-        // We shrink the VIEW, not the LOGIC.
+        // LOGICAL RESOLUTION (Fixed Physics World)
         const LOGICAL_W = 800;
         const LOGICAL_H = 600;
 
+        // HELPER: Linear Interpolation for smoothness
+        const lerp = (start, end, amt) => (1 - amt) * start + amt * end;
+
         class PongGame {
             constructor() {
-                // Initialize Pixi
                 this.app = new PIXI.Application({
                     width: LOGICAL_W, height: LOGICAL_H, 
-                    backgroundColor: 0x000000,
+                    backgroundColor: 0x050505,
                     resolution: window.devicePixelRatio || 1, 
-                    autoDensity: true
+                    autoDensity: true,
+                    antialias: true
                 });
                 
-                // Add Canvas to Body
                 document.body.appendChild(this.app.view);
                 
-                // Game Variables
+                // State
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
                 this.mouseY = LOGICAL_H / 2;
                 this.score = {L:0, R:0};
                 this.objs = {}; 
+                this.lastUpdate = 0; // For network throttling
 
-                // Setup
+                // Initialize
                 this.initGFX();
                 this.initUI();
-                
-                // --- THE CRITICAL FIX: RESIZE LISTENER ---
                 this.handleResize();
                 window.addEventListener('resize', () => this.handleResize());
-                
-                // Input Listener
                 this.initInput();
 
-                // Game Loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
-            // --- THIS FUNCTION FIXES THE MOBILE VIEW ---
+            // --- AUTO-FIT LOGIC (Keeps your perfect sizing) ---
             handleResize() {
                 const ratio = LOGICAL_W / LOGICAL_H;
-                
-                // Get available screen size
                 let w = window.innerWidth;
                 let h = window.innerHeight;
 
-                // 1. If screen is wider than game (Landscape phone / Desktop)
-                if (w / h >= ratio) {
-                    w = h * ratio; // Fit height, adjust width
-                    h = h;
-                } 
-                // 2. If screen is taller than game (Portrait phone)
-                else {
-                    h = w / ratio; // Fit width, adjust height
-                    w = w;
-                }
+                if (w / h >= ratio) { w = h * ratio; } 
+                else { h = w / ratio; }
 
-                // Force 95% width on mobile to leave a tiny edge (prevents cutting)
-                if(window.innerWidth < 600) {
-                    w = window.innerWidth * 0.95;
-                    h = w / ratio;
-                }
+                if(window.innerWidth < 600) { w = window.innerWidth * 0.96; h = w / ratio; }
 
-                // Apply the calculated size to the canvas CSS style
                 this.app.view.style.width = w + 'px';
                 this.app.view.style.height = h + 'px';
-                
-                // Store the scale ratio for Touch Input math
                 this.scaleFactor = LOGICAL_W / w; 
             }
 
-            initInput() {
-                const onMove = (e) => {
-                    // Get touch/mouse Y position
-                    let clientY;
-                    if(e.touches) clientY = e.touches[0].clientY;
-                    else clientY = e.clientY;
-
-                    // Get the canvas position on screen
-                    const rect = this.app.view.getBoundingClientRect();
-                    
-                    // MATH: (User Touch Y - Canvas Top Y) * (Scaling Factor)
-                    // This converts "Phone Pixels" to "Game Logic Pixels"
-                    let relY = (clientY - rect.top) * this.scaleFactor;
-                    
-                    this.mouseY = relY;
-                };
-
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
-            }
-
             initGFX() {
-                // Bloom Effect
-                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
+                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.6, blur: 2})];
 
-                // Dashed Line
+                // Net
                 const line = new PIXI.Graphics();
-                line.lineStyle(4, 0x333333);
-                for(let y=0; y<LOGICAL_H; y+=20) { line.moveTo(LOGICAL_W/2, y); line.lineTo(LOGICAL_W/2, y+10); }
+                line.beginFill(0x222222);
+                for(let y=0; y<LOGICAL_H; y+=30) { line.drawRect(LOGICAL_W/2 - 2, y, 4, 15); }
                 this.app.stage.addChild(line);
 
-                // Paddles
+                // Helper to draw Glowy Rects
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c); g.drawRect(-10, -50, 20, 100); g.endFill();
                     g.x = x; g.y = LOGICAL_H/2;
+                    // Shadow for depth
+                    const s = new PIXI.Graphics();
+                    s.beginFill(c, 0.3); s.drawRect(-15, -55, 30, 110); s.endFill();
+                    g.addChildAt(s, 0); 
                     this.app.stage.addChild(g);
                     return g;
                 };
@@ -236,7 +236,7 @@
                 
                 // Ball
                 this.objs.ball = new PIXI.Graphics();
-                this.objs.ball.beginFill(0xffff00); 
+                this.objs.ball.beginFill(0xffffff); 
                 this.objs.ball.drawRect(-10,-10,20,20); 
                 this.objs.ball.endFill();
                 this.app.stage.addChild(this.objs.ball);
@@ -254,6 +254,17 @@
 
                 get('btnHost').onclick = () => this.hostGame();
                 get('btnJoin').onclick = () => this.joinGame();
+            }
+
+            initInput() {
+                const onMove = (e) => {
+                    let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    const rect = this.app.view.getBoundingClientRect();
+                    let relY = (clientY - rect.top) * this.scaleFactor;
+                    this.mouseY = relY;
+                };
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
             }
 
             reset() {
@@ -278,21 +289,34 @@
                 this.objs.ball.visible = true;
             }
 
+            // --- OPTIMIZED NETWORKING ---
             async hostGame() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.room = code;
                 this.role = 'host';
+
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
+                document.getElementById('waitStatus').innerText = "Waiting for Player 2...";
+
                 const roomRef = ref(db, 'rooms/' + code);
+                
+                // HOST OWNS THE ROOM. If Host leaves, room dies.
                 await set(roomRef, { host: true, status: 'waiting' });
-                onDisconnect(roomRef).remove();
+                onDisconnect(roomRef).remove(); 
+
                 onValue(roomRef, (snap) => {
                     const data = snap.val();
-                    if(data && data.guest === true && !this.playing) {
+                    if(!data) return; // Room deleted
+                    
+                    if(data.guest === true && !this.playing) {
                         this.start('online');
-                        this.monitorConnection(roomRef);
+                    }
+                    // Sync Guest Paddle (Read Only)
+                    if(data.gY) {
+                         // Interpolate for smoothness
+                         this.objs.R.y = lerp(this.objs.R.y, data.gY, 0.3);
                     }
                 });
             }
@@ -300,71 +324,92 @@
             async joinGame() {
                 const code = document.getElementById('codeIn').value;
                 if(!code) return alert("Enter code");
+
                 const roomRef = ref(db, 'rooms/' + code);
                 const snap = await get(roomRef);
+
                 if(snap.exists() && snap.val().status === 'waiting') {
                     this.room = code;
                     this.role = 'guest';
+                    
+                    // GUEST JUST JOINS. If guest leaves, remove guest flag only.
                     await update(roomRef, { guest: true, status: 'playing' });
-                    onDisconnect(roomRef).remove();
+                    onDisconnect(ref(db, 'rooms/' + code + '/guest')).remove();
+                    onDisconnect(ref(db, 'rooms/' + code + '/status')).set('waiting');
+
                     this.start('online');
-                    this.monitorConnection(roomRef);
+
                     onValue(roomRef, (snap) => {
                         const d = snap.val();
-                        if(d && d.state) {
-                            this.objs.ball.x = d.state.bx;
-                            this.objs.ball.y = d.state.by;
-                            this.objs.L.y = d.state.ly;
-                            this.score = d.state.score;
-                            this.updateScore();
+                        if(!d) { alert("Host Disconnected"); this.reset(); return; }
+
+                        // Sync Game State from Host
+                        if(d.state) {
+                            // SMOOTH INTERPOLATION (The magic fix for lag)
+                            this.objs.ball.x = lerp(this.objs.ball.x, d.state.bx, 0.2); 
+                            this.objs.ball.y = lerp(this.objs.ball.y, d.state.by, 0.2);
+                            this.objs.L.y    = lerp(this.objs.L.y, d.state.ly, 0.2);
+                            
+                            // Only update score if changed (prevents flicker)
+                            if(d.state.sc && (d.state.sc.L !== this.score.L || d.state.sc.R !== this.score.R)) {
+                                this.score = d.state.sc;
+                                this.updateScore();
+                            }
                         }
                     });
-                } else { alert("Room invalid"); }
-            }
-
-            monitorConnection(roomRef) {
-                onValue(roomRef, (snap) => { if(!snap.exists()) { alert("Connection Lost"); this.reset(); } });
+                } else { alert("Room not found or full"); }
             }
 
             cleanup() {
-                if(this.room) remove(ref(db, 'rooms/' + this.room));
+                if(this.room) {
+                    // Clean removal based on role
+                    if(this.role === 'host') remove(ref(db, 'rooms/' + this.room));
+                    else {
+                        update(ref(db, 'rooms/' + this.room), { guest: null, status: 'waiting' });
+                    }
+                }
                 this.room = null;
             }
 
             loop(delta) {
                 if(!this.playing || this.paused) return;
                 
-                const move = (p, isMe) => {
-                    // Limit paddle inside screen
-                    let targetY = Math.max(50, Math.min(LOGICAL_H - 50, isMe ? this.mouseY : p.y));
-                    
-                    if(isMe) p.y += (targetY - p.y) * 0.2 * delta; 
-                    else if (this.mode === 'ai') {
-                        const dy = this.objs.ball.y - p.y;
-                        if(Math.abs(dy)>10) p.y += (dy>0?6:-6) * delta;
-                        p.y = Math.max(50, Math.min(LOGICAL_H - 50, p.y));
-                    }
-                };
+                const now = Date.now();
+                const myY = Math.max(50, Math.min(LOGICAL_H - 50, this.mouseY));
 
                 if(this.mode === 'ai') {
-                    move(this.objs.R, true); 
-                    move(this.objs.L, false); 
+                    // Local Logic
+                    this.objs.L.y += (myY - this.objs.L.y) * 0.2 * delta;
+                    const dy = this.objs.ball.y - this.objs.R.y;
+                    if(Math.abs(dy)>10) this.objs.R.y += (dy>0?6:-6) * delta;
+                    this.objs.R.y = Math.max(50, Math.min(LOGICAL_H - 50, this.objs.R.y));
                     this.physics(delta);
                 } 
                 else if (this.mode === 'online') {
                     if(this.role === 'host') {
-                        move(this.objs.L, true); 
+                        // HOST: Calculates Physics & Sends State
+                        this.objs.L.y = myY;
                         this.physics(delta);
-                        update(ref(db, 'rooms/'+this.room+'/state'), {
-                            bx: this.objs.ball.x, by: this.objs.ball.y,
-                            ly: this.objs.L.y, score: this.score
-                        });
-                        get(child(ref(db, 'rooms/'+this.room), 'guestY')).then((s)=>{
-                            if(s.exists()) this.objs.R.y = s.val();
-                        });
+
+                        // Throttle Updates (Send 15 times/sec, not 60)
+                        if(now - this.lastUpdate > 50) {
+                            update(ref(db, 'rooms/'+this.room+'/state'), {
+                                bx: Math.round(this.objs.ball.x), 
+                                by: Math.round(this.objs.ball.y),
+                                ly: Math.round(this.objs.L.y), 
+                                sc: this.score
+                            });
+                            this.lastUpdate = now;
+                        }
                     } else {
-                        move(this.objs.R, true); 
-                        set(ref(db, 'rooms/'+this.room+'/guestY'), this.objs.R.y);
+                        // GUEST: Just sends input
+                        // (Visuals are handled by onValue + Interpolation above)
+                        if(now - this.lastUpdate > 50) {
+                            update(ref(db, 'rooms/'+this.room), { gY: Math.round(myY) });
+                            this.lastUpdate = now;
+                        }
+                        // Move my own paddle visually instantly for responsiveness
+                        this.objs.R.y = myY;
                     }
                 }
             }
@@ -376,34 +421,32 @@
 
                 if(b.y < 10 || b.y > LOGICAL_H - 10) b.vy *= -1;
 
-                const hit = (p) => { return b.x > p.x-20 && b.x < p.x+20 && b.y > p.y-60 && b.y < p.y+60; };
+                const hit = (p) => { return b.x > p.x-22 && b.x < p.x+22 && b.y > p.y-60 && b.y < p.y+60; };
 
                 if(hit(this.objs.L)) { 
-                    b.vx = Math.abs(b.vx)*1.05; 
-                    b.vy = (b.y - this.objs.L.y)*0.15; 
-                    b.x = this.objs.L.x + 25; 
+                    b.vx = Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.L.y)*0.15; b.x = this.objs.L.x + 25; 
                 }
                 if(hit(this.objs.R)) { 
-                    b.vx = -Math.abs(b.vx)*1.05; 
-                    b.vy = (b.y - this.objs.R.y)*0.15; 
-                    b.x = this.objs.R.x - 25; 
+                    b.vx = -Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.R.y)*0.15; b.x = this.objs.R.x - 25; 
                 }
 
                 if(b.x < -20) { this.score.R++; this.resetBall(1); }
                 if(b.x > LOGICAL_W + 20) { this.score.L++; this.resetBall(-1); }
-                this.updateScore();
+                
                 if(this.score.L >= 10 || this.score.R >= 10) this.gameOver();
             }
 
             resetBall(dir) {
                 this.objs.ball.x = LOGICAL_W / 2; 
                 this.objs.ball.y = LOGICAL_H / 2;
-                this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 7;
+                this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 8;
                 this.objs.ball.vy = (Math.random()*6)-3;
+                this.updateScore();
             }
 
             updateScore() {
-                document.getElementById('scoreEl').innerText = `${this.score.L} | ${this.score.R}`;
+                document.getElementById('scoreL').innerText = this.score.L;
+                document.getElementById('scoreR').innerText = this.score.R;
             }
 
             gameOver() {
