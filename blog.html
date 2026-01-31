@@ -65,7 +65,7 @@ header h2 {
 .header-right { display: flex; align-items: center; gap: 15px; }
 
 .admin-btn {
-  display: none; /* Only shown for admin email in JS */
+  display: none; 
   background: var(--accent);
   color: white;
   border: none;
@@ -76,7 +76,6 @@ header h2 {
   font-size: 13px;
   transition: 0.2s;
 }
-.admin-btn:hover { filter: brightness(1.2); transform: translateY(-1px); }
 
 .profile-btn {
   display: flex; align-items: center; gap: 10px; cursor: pointer;
@@ -87,9 +86,20 @@ header h2 {
 .profile-btn img {
   width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent);
 }
-.chevron { font-size: 10px; color: var(--text-muted); margin-left: 2px; }
+.chevron { font-size: 10px; color: var(--text-muted); }
 
-/* --- OPTIMIZED ANNOUNCEMENT BOX --- */
+/* --- FLOWING TEXT ANNOUNCEMENT (RESTORED) --- */
+.announcement {
+  background: rgba(99, 102, 241, 0.1); border-bottom: 1px solid var(--border);
+  overflow: hidden; display: flex; align-items: center; padding: 8px 0;
+}
+.announcement span {
+  font-size: 13px; color: #a5b4fc; white-space: nowrap;
+  animation: scroll 20s linear infinite; padding-left: 100%;
+}
+@keyframes scroll { 100% { transform: translateX(-100%); } }
+
+/* --- BSE-STYLE OPTIMIZED BOX --- */
 .announcement-box {
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(99, 102, 241, 0.3);
@@ -167,7 +177,6 @@ header h2 {
 .lb-row:hover { background: rgba(255,255,255,0.03); }
 .rank { font-weight: 800; color: var(--text-muted); }
 .lb-username { font-weight: bold; font-size: 15px; color: var(--text-main); }
-.lb-details { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
 .lb-score { font-weight: 800; color: var(--gold); text-align: right; font-size: 18px; }
 
 /* --- DRAWER --- */
@@ -204,12 +213,16 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
   </div>
 </header>
 
+<div class="announcement">
+  <span id="scrollingText">🚧 Website is still under development — developed by sknihal11 🚧</span>
+</div>
+
 <div class="wrapper">
 
   <div class="announcement-box" id="mainAnnounce">
     <div class="new-tag">New</div>
     <div class="announce-content" id="announceBody">
-      <b>Announcement:</b> Website is still under development — developed by <b>sknihal11</b>. Check back often for new games!
+      <b>WebArcade Update:</b> You can now track your ratings in the Hall of Fame. Stay tuned for Ludo and Uno multiplayer!
     </div>
     <button class="close-announce" onclick="document.getElementById('mainAnnounce').style.display='none'">&times;</button>
   </div>
@@ -235,7 +248,8 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
     </div>
     
     <div class="game-card" style="border-color: rgba(34, 197, 94, 0.35);">
-      <img src="https://i.imgur.com/mO2XpM3.png" class="game-thumb"> <div>
+      <img src="https://i.imgur.com/mO2XpM3.png" class="game-thumb"> 
+      <div>
         <h3>Ludo</h3>
         <p style="color: var(--text-muted); font-size: 14px;">Mode: <b style="color: #22c55e;">Multiplayer or with bot</b></p>
         <a href="#" class="play-btn mp-btn">▶ [UNDER DEVELOPMENT]</a>
@@ -243,7 +257,8 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
     </div>
 
     <div class="game-card" style="border-color: rgba(236, 72, 153, 0.3);">
-      <img src="https://i.imgur.com/8Z6K1XF.png" class="game-thumb"> <div>
+      <img src="https://i.imgur.com/8Z6K1XF.png" class="game-thumb">
+      <div>
         <h3 style="color: #f472b6;">Uno(Multiplayer)</h3>
         <p style="color: var(--text-muted); font-size: 14px;">Host a game or join your friends lobby</p>
         <a href="#" class="play-btn mp-btn">⚔️ [UNDER DEVELOPMENT]</a>
@@ -315,23 +330,30 @@ const els = {
     nameInput: document.getElementById("nameInput"),
     avatarInput: document.getElementById("avatarInput"),
     adminBtn: document.getElementById("adminUpdateBtn"),
-    announceBody: document.getElementById("announceBody")
+    announceBody: document.getElementById("announceBody"),
+    scrollingText: document.getElementById("scrollingText")
 };
 
-// --- ANNOUNCEMENT PERSISTENCE ---
 async function syncAnnouncement() {
     const snap = await getDoc(doc(db, "config", "announcement"));
     if (snap.exists()) {
-        els.announceBody.innerHTML = snap.data().text;
+        const data = snap.data();
+        els.announceBody.innerHTML = data.text;
+        els.scrollingText.textContent = data.marquee || els.scrollingText.textContent;
     }
 }
 
 window.postAnnouncement = async () => {
-    const newText = prompt("Enter new announcement HTML/Text:");
-    if (newText) {
-        await setDoc(doc(db, "config", "announcement"), { text: newText });
-        els.announceBody.innerHTML = newText;
-        alert("Update posted!");
+    const newText = prompt("Enter box announcement (HTML/Text):");
+    const newMarquee = prompt("Enter flowing banner text:");
+    if (newText || newMarquee) {
+        const update = {};
+        if(newText) update.text = newText;
+        if(newMarquee) update.marquee = newMarquee;
+        await setDoc(doc(db, "config", "announcement"), update, { merge: true });
+        if(newText) els.announceBody.innerHTML = newText;
+        if(newMarquee) els.scrollingText.textContent = newMarquee;
+        alert("Updates posted!");
     }
 };
 
@@ -339,7 +361,6 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) { location.replace("index.html"); return; }
   currentUser = user;
 
-  // Show admin button if email matches
   if(user.email === "nihalsk2022@gmail.com") {
       els.adminBtn.style.display = "block";
   }
