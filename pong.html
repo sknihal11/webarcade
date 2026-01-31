@@ -6,7 +6,7 @@
     <title>Pong - Arcade Multiplayer</title>
     <style>
         /* --- STYLES --- */
-        :root { --bg-dark: #111; --neon-blue: #00f3ff; --neon-green: #00ff00; }
+        :root { --bg-dark: #111; --neon-blue: #00f3ff; --neon-green: #00ff00; --neon-pink: #ff0055; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
         
         body {
@@ -19,22 +19,12 @@
         /* CABINET CONTAINER - FIXED SCALING */
         #game-wrapper {
             position: relative;
-            /* 1. Fit width, but max out at 800px */
-            width: 100%;
-            max-width: 800px;
-            /* 2. Maintain 4:3 Aspect Ratio */
-            aspect-ratio: 4/3;
-            /* 3. But ALSO don't exceed screen height */
-            max-height: 100vh;
-            
+            width: 100%; max-width: 800px;
+            aspect-ratio: 4/3; max-height: 100vh;
             background: #000; border: 4px solid #222;
             box-shadow: 0 0 20px var(--neon-blue);
             cursor: none; 
         }
-        
-        /* If screen is taller than wide (Portrait Mobile), we rely on width. 
-           If screen is wider (Landscape Mobile), we rely on height. 
-           The CSS above handles both automatically. */
 
         #game-wrapper.menu-active { cursor: default; }
 
@@ -62,6 +52,11 @@
         h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
         .menu-btn { width: 220px; margin: 10px; font-size: 16px; padding: 15px; }
+        
+        /* Red Exit Button Style */
+        .menu-btn.red { border-color: var(--neon-pink); color: var(--neon-pink); }
+        .menu-btn.red:hover { background: var(--neon-pink); color: white; }
+
         .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 2px solid #555; width: 150px; margin-bottom: 10px; }
         
         .room-code { font-size: 30px; color: var(--neon-green); margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
@@ -72,8 +67,7 @@
     <div id="game-wrapper" class="menu-active">
         <div class="ui-layer">
             <div class="top-bar">
-                <button id="exitBtn">Exit</button>
-                <div class="score" id="scoreEl">0 | 0</div>
+                <button id="exitBtnSmall" style="opacity:0">Exit</button> <div class="score" id="scoreEl">0 | 0</div>
                 <button id="pauseBtn">Pause</button>
             </div>
 
@@ -81,6 +75,8 @@
                 <h1>PONG</h1>
                 <button class="menu-btn" id="btnAI">Play vs AI</button>
                 <button class="menu-btn" id="btnOnline">Online Multiplayer</button>
+                <button class="menu-btn red" id="btnExitMenu">EXIT GAME</button>
+                
                 <p style="color:#666; margin-top:20px; font-size:12px; text-align:center">DRAG SCREEN TO MOVE</p>
             </div>
 
@@ -133,17 +129,14 @@
             constructor() {
                 this.wrapper = document.getElementById('game-wrapper');
                 
-                // Optimized Pixi Setup
                 this.app = new PIXI.Application({
                     width: 800, height: 600, backgroundColor: 0x000000,
                     resolution: window.devicePixelRatio || 1, 
                     autoDensity: true
                 });
                 
-                // Append canvas
                 this.wrapper.appendChild(this.app.view);
                 
-                // Variables
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
@@ -163,13 +156,11 @@
             initGFX() {
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
-                // Court Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
                 for(let y=0; y<600; y+=20) { line.moveTo(400,y); line.lineTo(400,y+10); }
                 this.app.stage.addChild(line);
 
-                // Objects
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
@@ -195,8 +186,11 @@
                 get('btnAI').onclick = () => this.start('ai');
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
                 
+                // --- NEW EXIT BUTTON LOGIC ---
+                get('btnExitMenu').onclick = () => window.location.href = 'blog.html';
+                // -----------------------------
+
                 get('btnBack').onclick = () => this.reset();
-                get('exitBtn').onclick = () => { this.cleanup(); window.location.href = 'blog.html'; };
                 get('btnRestart').onclick = () => this.reset();
                 get('pauseBtn').onclick = () => { if(this.playing) this.paused = !this.paused; };
 
@@ -208,7 +202,6 @@
                 const onMove = (e) => {
                     const rect = this.app.view.getBoundingClientRect();
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    // Logic to Scale mapping
                     const scale = 600 / rect.height;
                     this.mouseY = (clientY - rect.top) * scale;
                     this.mouseY = Math.max(40, Math.min(560, this.mouseY));
@@ -247,7 +240,6 @@
                 this.objs.ball.visible = true;
             }
 
-            // --- ONLINE LOGIC ---
             async hostGame() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.room = code;
@@ -261,12 +253,10 @@
                 await set(roomRef, { host: true, status: 'waiting' });
                 onDisconnect(roomRef).remove();
 
-                // Listen for guest
                 onValue(roomRef, (snap) => {
                     const data = snap.val();
                     if(data && data.guest === true) {
                         this.start('online');
-                        // Listen for disconnects
                         this.monitorConnection(roomRef);
                     }
                 });
@@ -286,7 +276,6 @@
                     this.start('online');
                     this.monitorConnection(roomRef);
 
-                    // Sync loop
                     onValue(roomRef, (snap) => {
                         const d = snap.val();
                         if(d && d.state) {
@@ -304,7 +293,6 @@
 
             monitorConnection(roomRef) {
                 onValue(roomRef, (snap) => {
-                    // If room data disappears (host left) OR guest flag disappears (guest left)
                     if(!snap.exists()) {
                         alert("Connection Lost!");
                         this.reset();
@@ -317,12 +305,10 @@
                 this.room = null;
             }
 
-            // --- MAIN LOOP ---
             loop(delta) {
                 if(!this.playing || this.paused) return;
                 const spd = 7 * delta;
                 
-                // Helper
                 const move = (p, isMe) => {
                     if(isMe) p.y += (this.mouseY - p.y) * 0.3 * delta;
                     else if (this.mode === 'ai') {
@@ -334,7 +320,6 @@
                     p.y = Math.max(40, Math.min(560, p.y));
                 };
 
-                // Logic
                 if(this.mode === 'ai') {
                     move(this.objs.R, true); 
                     move(this.objs.L, false);
@@ -348,12 +333,10 @@
                             bx: this.objs.ball.x, by: this.objs.ball.y,
                             ly: this.objs.L.y, score: this.score
                         });
-                        // Poll for guest Y
                         get(child(ref(db, 'rooms/'+this.room), 'guestY')).then((s)=>{
                             if(s.exists()) this.objs.R.y = s.val();
                         });
                     } else {
-                        // Guest
                         move(this.objs.R, true);
                         set(ref(db, 'rooms/'+this.room+'/guestY'), this.objs.R.y);
                     }
