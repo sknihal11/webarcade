@@ -3,24 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Arcade Multiplayer</title>
+    <title>Pong - Arcade</title>
     <style>
         /* --- STYLES --- */
-        :root { --bg-dark: #111; --neon-blue: #00f3ff; --neon-green: #00ff00; --neon-pink: #ff0055; }
+        :root { --bg-dark: #111; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
         
         body {
             background-color: var(--bg-dark);
             height: 100vh; width: 100vw;
             display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none;
+            overflow: hidden; touch-action: none; /* Prevents scroll on mobile */
         }
 
-        /* CABINET CONTAINER - FIXED SCALING */
+        /* CABINET CONTAINER - RESPONSIVE FIX */
         #game-wrapper {
             position: relative;
+            /* This ensures it fits on mobile screens */
             width: 100%; max-width: 800px;
-            aspect-ratio: 4/3; max-height: 100vh;
+            aspect-ratio: 4/3; 
             background: #000; border: 4px solid #222;
             box-shadow: 0 0 20px var(--neon-blue);
             cursor: none; 
@@ -28,22 +29,36 @@
 
         #game-wrapper.menu-active { cursor: default; }
 
-        canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+        canvas { width: 100%; height: 100%; display: block; }
 
-        /* UI */
+        /* UI LAYOUT */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
-        .top-bar { padding: 15px; display: flex; justify-content: space-between; pointer-events: auto; }
-        .score { color: white; font-size: 40px; font-weight: 900; position: absolute; left: 50%; transform: translateX(-50%); top: 10px; text-shadow: 2px 2px 0 #000; }
         
+        .top-bar { 
+            padding: 15px; 
+            display: flex; justify-content: space-between; align-items: center;
+            pointer-events: auto; 
+        }
+
+        .score { 
+            color: white; font-size: 30px; font-weight: 900; 
+            text-shadow: 2px 2px 0 #000; letter-spacing: 2px;
+        }
+        
+        /* BUTTON STYLES */
         button {
             background: rgba(0,0,0,0.6); border: 2px solid var(--neon-blue); color: white;
             padding: 8px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
         }
         button:hover { background: var(--neon-blue); color: black; }
         
+        /* Red Exit Button */
+        .btn-red { border-color: var(--neon-pink); color: var(--neon-pink); }
+        .btn-red:hover { background: var(--neon-pink); color: white; }
+
         /* MENUS */
         .screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.95);
+            position: absolute; inset: 0; background: rgba(0,0,0,0.92);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             pointer-events: auto;
         }
@@ -51,15 +66,17 @@
         
         h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
-        .menu-btn { width: 220px; margin: 10px; font-size: 16px; padding: 15px; }
+        .menu-btn { width: 200px; margin: 10px; font-size: 16px; padding: 15px; }
         
-        /* Red Exit Button Style */
-        .menu-btn.red { border-color: var(--neon-pink); color: var(--neon-pink); }
-        .menu-btn.red:hover { background: var(--neon-pink); color: white; }
-
         .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 2px solid #555; width: 150px; margin-bottom: 10px; }
-        
-        .room-code { font-size: 30px; color: var(--neon-green); margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
+        .room-code { font-size: 30px; color: #0f0; margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
+
+        /* MOBILE ADJUSTMENTS */
+        @media(max-width: 600px) {
+            .score { font-size: 20px; }
+            h1 { font-size: 30px; }
+            button { padding: 5px 10px; font-size: 12px; }
+        }
     </style>
 </head>
 <body>
@@ -67,7 +84,8 @@
     <div id="game-wrapper" class="menu-active">
         <div class="ui-layer">
             <div class="top-bar">
-                <button id="exitBtnSmall" style="opacity:0">Exit</button> <div class="score" id="scoreEl">0 | 0</div>
+                <button class="btn-red" id="topExitBtn">Exit</button>
+                <div class="score" id="scoreEl">0 | 0</div>
                 <button id="pauseBtn">Pause</button>
             </div>
 
@@ -75,33 +93,28 @@
                 <h1>PONG</h1>
                 <button class="menu-btn" id="btnAI">Play vs AI</button>
                 <button class="menu-btn" id="btnOnline">Online Multiplayer</button>
-                <button class="menu-btn red" id="btnExitMenu">EXIT GAME</button>
-                
-                <p style="color:#666; margin-top:20px; font-size:12px; text-align:center">DRAG SCREEN TO MOVE</p>
+                <button class="menu-btn btn-red" id="btnExitMenu">EXIT GAME</button>
             </div>
 
             <div id="lobbyScreen" class="screen hidden">
                 <h1>ONLINE</h1>
                 <div id="lobbyMain">
                     <button class="menu-btn" id="btnHost">Create Room</button>
-                    <div style="margin:15px; color:#555; text-align:center">- OR -</div>
-                    <div style="text-align:center">
-                        <input type="number" id="codeIn" class="input-box" placeholder="1234">
-                        <br>
-                        <button class="menu-btn" id="btnJoin" style="width: auto;">Join Room</button>
-                    </div>
+                    <div style="margin:10px; color:#555">- OR -</div>
+                    <input type="number" id="codeIn" class="input-box" placeholder="Code">
+                    <button class="menu-btn" id="btnJoin" style="width: auto;">Join</button>
                 </div>
                 <div id="lobbyWait" class="hidden" style="text-align: center;">
-                    <p style="color:#aaa">SHARE THIS CODE:</p>
+                    <p style="color:#aaa">ROOM CODE:</p>
                     <div class="room-code" id="codeDisp">----</div>
-                    <p id="waitStatus" style="color:#fff; animation: blink 1s infinite">Waiting for player...</p>
+                    <p style="color:#fff; animation: blink 1s infinite">Waiting for player...</p>
                 </div>
-                <button class="menu-btn" id="btnBack" style="margin-top:30px; border-color: #ff0055">Back</button>
+                <button class="menu-btn btn-red" id="btnBack" style="margin-top:20px">Back</button>
             </div>
 
             <div id="overScreen" class="screen hidden">
                 <h1 id="winMsg">WINNER</h1>
-                <button class="menu-btn" id="btnRestart">Main Menu</button>
+                <button class="menu-btn" id="btnRestart">Menu</button>
             </div>
         </div>
     </div>
@@ -129,6 +142,7 @@
             constructor() {
                 this.wrapper = document.getElementById('game-wrapper');
                 
+                // Fixed internal resolution 800x600, CSS handles scaling
                 this.app = new PIXI.Application({
                     width: 800, height: 600, backgroundColor: 0x000000,
                     resolution: window.devicePixelRatio || 1, 
@@ -140,8 +154,6 @@
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
-                this.room = null;
-                this.role = null; 
                 this.mouseY = 300;
                 this.score = {L:0, R:0};
                 this.objs = {}; 
@@ -150,17 +162,21 @@
                 this.initUI();
                 this.initInput();
 
+                // Start loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
             initGFX() {
+                // Glow effect
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
+                // Middle Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
                 for(let y=0; y<600; y+=20) { line.moveTo(400,y); line.lineTo(400,y+10); }
                 this.app.stage.addChild(line);
 
+                // Paddles
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
@@ -169,13 +185,16 @@
                     return g;
                 };
                 
-                this.objs.L = makeRect(0xff0044, 30);  
+                this.objs.L = makeRect(0xff0055, 30);  
                 this.objs.R = makeRect(0x00f3ff, 770); 
                 
+                // Ball
                 this.objs.ball = new PIXI.Graphics();
                 this.objs.ball.beginFill(0xffff00); 
                 this.objs.ball.drawRect(-10,-10,20,20); 
                 this.objs.ball.endFill();
+                this.objs.ball.vx = 0; 
+                this.objs.ball.vy = 0;
                 this.app.stage.addChild(this.objs.ball);
                 this.objs.ball.visible = false;
             }
@@ -183,13 +202,14 @@
             initUI() {
                 const get = (id) => document.getElementById(id);
                 
+                // Navigation
+                const exit = () => window.location.href = 'blog.html';
+                get('topExitBtn').onclick = exit;
+                get('btnExitMenu').onclick = exit;
+
                 get('btnAI').onclick = () => this.start('ai');
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
                 
-                // --- NEW EXIT BUTTON LOGIC ---
-                get('btnExitMenu').onclick = () => window.location.href = 'blog.html';
-                // -----------------------------
-
                 get('btnBack').onclick = () => this.reset();
                 get('btnRestart').onclick = () => this.reset();
                 get('pauseBtn').onclick = () => { if(this.playing) this.paused = !this.paused; };
@@ -200,18 +220,19 @@
 
             initInput() {
                 const onMove = (e) => {
+                    // Mobile & Desktop Responsive Coordinate Fix
                     const rect = this.app.view.getBoundingClientRect();
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    const scale = 600 / rect.height;
-                    this.mouseY = (clientY - rect.top) * scale;
+                    
+                    // Scale touch input to game coordinate (0-600)
+                    const scaleY = 600 / rect.height; 
+                    
+                    this.mouseY = (clientY - rect.top) * scaleY;
                     this.mouseY = Math.max(40, Math.min(560, this.mouseY));
                 };
+
                 window.addEventListener('mousemove', onMove);
                 window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
-                
-                this.keys = {};
-                window.addEventListener('keydown', e => this.keys[e.key] = true);
-                window.addEventListener('keyup', e => this.keys[e.key] = false);
             }
 
             reset() {
@@ -236,10 +257,11 @@
                 document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
                 this.wrapper.classList.remove('menu-active');
                 
-                this.resetBall();
+                this.resetBall(); // Ensure ball has velocity
                 this.objs.ball.visible = true;
             }
 
+            // --- MULTIPLAYER LOGIC ---
             async hostGame() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.room = code;
@@ -255,7 +277,7 @@
 
                 onValue(roomRef, (snap) => {
                     const data = snap.val();
-                    if(data && data.guest === true) {
+                    if(data && data.guest === true && !this.playing) {
                         this.start('online');
                         this.monitorConnection(roomRef);
                     }
@@ -264,6 +286,8 @@
 
             async joinGame() {
                 const code = document.getElementById('codeIn').value;
+                if(!code) return alert("Enter code");
+                
                 const roomRef = ref(db, 'rooms/' + code);
                 const snap = await get(roomRef);
 
@@ -276,6 +300,7 @@
                     this.start('online');
                     this.monitorConnection(roomRef);
 
+                    // Guest listens for state
                     onValue(roomRef, (snap) => {
                         const d = snap.val();
                         if(d && d.state) {
@@ -287,14 +312,14 @@
                         }
                     });
                 } else {
-                    alert("Room invalid or full");
+                    alert("Room invalid");
                 }
             }
 
             monitorConnection(roomRef) {
                 onValue(roomRef, (snap) => {
                     if(!snap.exists()) {
-                        alert("Connection Lost!");
+                        alert("Connection Lost");
                         this.reset();
                     }
                 });
@@ -305,39 +330,42 @@
                 this.room = null;
             }
 
+            // --- GAME LOOP ---
             loop(delta) {
                 if(!this.playing || this.paused) return;
-                const spd = 7 * delta;
                 
+                // Movement
                 const move = (p, isMe) => {
-                    if(isMe) p.y += (this.mouseY - p.y) * 0.3 * delta;
+                    if(isMe) p.y += (this.mouseY - p.y) * 0.2 * delta; 
                     else if (this.mode === 'ai') {
+                        // Simple AI
                         const dy = this.objs.ball.y - p.y;
                         if(Math.abs(dy)>10) p.y += (dy>0?5:-5) * delta;
                     }
-                    if(this.keys['w'] || this.keys['ArrowUp']) p.y -= spd;
-                    if(this.keys['s'] || this.keys['ArrowDown']) p.y += spd;
                     p.y = Math.max(40, Math.min(560, p.y));
                 };
 
                 if(this.mode === 'ai') {
-                    move(this.objs.R, true); 
-                    move(this.objs.L, false);
+                    move(this.objs.R, true); // You are Right
+                    move(this.objs.L, false); // AI is Left
                     this.physics(delta);
                 } 
                 else if (this.mode === 'online') {
                     if(this.role === 'host') {
-                        move(this.objs.L, true);
+                        move(this.objs.L, true); // Host is Left
                         this.physics(delta);
+                        // Sync State
                         update(ref(db, 'rooms/'+this.room+'/state'), {
                             bx: this.objs.ball.x, by: this.objs.ball.y,
                             ly: this.objs.L.y, score: this.score
                         });
+                        // Read Guest
                         get(child(ref(db, 'rooms/'+this.room), 'guestY')).then((s)=>{
                             if(s.exists()) this.objs.R.y = s.val();
                         });
                     } else {
-                        move(this.objs.R, true);
+                        // Guest Logic
+                        move(this.objs.R, true); // Guest is Right
                         set(ref(db, 'rooms/'+this.room+'/guestY'), this.objs.R.y);
                     }
                 }
@@ -348,17 +376,28 @@
                 b.x += b.vx * delta;
                 b.y += b.vy * delta;
 
+                // Wall Bounce
                 if(b.y < 10 || b.y > 590) b.vy *= -1;
 
+                // Paddle Hit Check
                 const hit = (p) => {
-                    return b.x > p.x-10 && b.x < p.x+20 && b.y > p.y-40 && b.y < p.y+40;
+                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-50 && b.y < p.y+50;
                 };
 
-                if(hit(this.objs.L)) { b.vx = Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.L.y)*0.1; }
-                if(hit(this.objs.R)) { b.vx = -Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.R.y)*0.1; }
+                if(hit(this.objs.L)) { 
+                    b.vx = Math.abs(b.vx)*1.05; 
+                    b.vy = (b.y - this.objs.L.y)*0.15; 
+                    b.x = this.objs.L.x + 20; // Unstuck
+                }
+                if(hit(this.objs.R)) { 
+                    b.vx = -Math.abs(b.vx)*1.05; 
+                    b.vy = (b.y - this.objs.R.y)*0.15; 
+                    b.x = this.objs.R.x - 20; // Unstuck
+                }
 
-                if(b.x < 0) { this.score.R++; this.resetBall(1); }
-                if(b.x > 800) { this.score.L++; this.resetBall(-1); }
+                // Score
+                if(b.x < -20) { this.score.R++; this.resetBall(1); }
+                if(b.x > 820) { this.score.L++; this.resetBall(-1); }
                 
                 this.updateScore();
                 if(this.score.L >= 10 || this.score.R >= 10) this.gameOver();
@@ -366,6 +405,7 @@
 
             resetBall(dir) {
                 this.objs.ball.x = 400; this.objs.ball.y = 300;
+                // Force Minimum Velocity
                 this.objs.ball.vx = (dir || (Math.random()>.5?1:-1)) * 6;
                 this.objs.ball.vy = (Math.random()*6)-3;
             }
@@ -377,7 +417,7 @@
             gameOver() {
                 this.playing = false;
                 this.cleanup();
-                document.getElementById('winMsg').innerText = this.score.L > this.score.R ? "LEFT WINS" : "RIGHT WINS";
+                document.getElementById('winMsg').innerText = this.score.L > this.score.R ? "RED WINS" : "BLUE WINS";
                 document.getElementById('overScreen').classList.remove('hidden');
             }
         }
