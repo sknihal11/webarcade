@@ -11,30 +11,43 @@
         
         body {
             background-color: var(--bg-dark);
+            height: 100vh; width: 100vw;
             display: flex; justify-content: center; align-items: center;
-            height: 100vh; overflow: hidden; touch-action: none;
+            overflow: hidden; touch-action: none;
         }
 
-        /* CABINET CONTAINER */
+        /* CABINET CONTAINER - FIXED SCALING */
         #game-wrapper {
-            position: relative; width: 100vw; height: 100vh;
-            max-width: 800px; max-height: 600px; aspect-ratio: 4/3;
+            position: relative;
+            /* 1. Fit width, but max out at 800px */
+            width: 100%;
+            max-width: 800px;
+            /* 2. Maintain 4:3 Aspect Ratio */
+            aspect-ratio: 4/3;
+            /* 3. But ALSO don't exceed screen height */
+            max-height: 100vh;
+            
             background: #000; border: 4px solid #222;
             box-shadow: 0 0 20px var(--neon-blue);
-            cursor: none; /* Hide cursor in game */
+            cursor: none; 
         }
+        
+        /* If screen is taller than wide (Portrait Mobile), we rely on width. 
+           If screen is wider (Landscape Mobile), we rely on height. 
+           The CSS above handles both automatically. */
+
         #game-wrapper.menu-active { cursor: default; }
 
-        canvas { width: 100%; height: 100%; image-rendering: pixelated; }
+        canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
 
         /* UI */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
         .top-bar { padding: 15px; display: flex; justify-content: space-between; pointer-events: auto; }
-        .score { color: white; font-size: 40px; font-weight: 900; position: absolute; left: 50%; transform: translateX(-50%); top: 10px; }
+        .score { color: white; font-size: 40px; font-weight: 900; position: absolute; left: 50%; transform: translateX(-50%); top: 10px; text-shadow: 2px 2px 0 #000; }
         
         button {
             background: rgba(0,0,0,0.6); border: 2px solid var(--neon-blue); color: white;
-            padding: 10px 20px; cursor: pointer; font-weight: bold; text-transform: uppercase;
+            padding: 8px 15px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 14px;
         }
         button:hover { background: var(--neon-blue); color: black; }
         
@@ -46,9 +59,9 @@
         }
         .hidden { display: none !important; }
         
-        h1 { color: var(--neon-blue); font-size: 50px; margin-bottom: 30px; letter-spacing: 5px; }
+        h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
         
-        .menu-btn { width: 250px; margin: 10px; font-size: 18px; }
+        .menu-btn { width: 220px; margin: 10px; font-size: 16px; padding: 15px; }
         .input-box { padding: 10px; font-size: 20px; text-align: center; background: #222; color: white; border: 2px solid #555; width: 150px; margin-bottom: 10px; }
         
         .room-code { font-size: 30px; color: var(--neon-green); margin: 20px 0; border: 2px dashed #0f0; padding: 10px 30px; }
@@ -67,18 +80,20 @@
             <div id="menuScreen" class="screen">
                 <h1>PONG</h1>
                 <button class="menu-btn" id="btnAI">Play vs AI</button>
-                <button class="menu-btn" id="btnLocal">Local 2 Player</button>
                 <button class="menu-btn" id="btnOnline">Online Multiplayer</button>
-                <p style="color:#666; margin-top:20px; font-size:12px">USE MOUSE TO MOVE PADDLE</p>
+                <p style="color:#666; margin-top:20px; font-size:12px; text-align:center">DRAG SCREEN TO MOVE</p>
             </div>
 
             <div id="lobbyScreen" class="screen hidden">
                 <h1>ONLINE</h1>
                 <div id="lobbyMain">
                     <button class="menu-btn" id="btnHost">Create Room</button>
-                    <div style="margin:15px; color:#555">- OR -</div>
-                    <input type="number" id="codeIn" class="input-box" placeholder="1234">
-                    <button class="menu-btn" id="btnJoin">Join Room</button>
+                    <div style="margin:15px; color:#555; text-align:center">- OR -</div>
+                    <div style="text-align:center">
+                        <input type="number" id="codeIn" class="input-box" placeholder="1234">
+                        <br>
+                        <button class="menu-btn" id="btnJoin" style="width: auto;">Join Room</button>
+                    </div>
                 </div>
                 <div id="lobbyWait" class="hidden" style="text-align: center;">
                     <p style="color:#aaa">SHARE THIS CODE:</p>
@@ -99,9 +114,7 @@
     <script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
 
     <script type="module">
-        // --- FIREBASE SETUP ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        // We import the database functions. If you haven't enabled Realtime DB in console, these will fail silently.
         import { getDatabase, ref, set, onValue, update, remove, get, child, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
         const firebaseConfig = {
@@ -116,26 +129,27 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- GAME LOGIC ---
         class PongGame {
             constructor() {
-                // Setup Canvas
                 this.wrapper = document.getElementById('game-wrapper');
+                
+                // Optimized Pixi Setup
                 this.app = new PIXI.Application({
                     width: 800, height: 600, backgroundColor: 0x000000,
-                    resolution: window.devicePixelRatio || 1, autoDensity: true
+                    resolution: window.devicePixelRatio || 1, 
+                    autoDensity: true
                 });
+                
+                // Append canvas
                 this.wrapper.appendChild(this.app.view);
                 
-                // State
+                // Variables
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
                 this.room = null;
                 this.role = null; 
                 this.mouseY = 300;
-
-                // Objects
                 this.score = {L:0, R:0};
                 this.objs = {}; 
 
@@ -143,12 +157,10 @@
                 this.initUI();
                 this.initInput();
 
-                // Start Loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
             initGFX() {
-                // Bloom Effect
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
                 // Court Line
@@ -157,7 +169,7 @@
                 for(let y=0; y<600; y+=20) { line.moveTo(400,y); line.lineTo(400,y+10); }
                 this.app.stage.addChild(line);
 
-                // Paddles & Ball
+                // Objects
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
@@ -166,8 +178,8 @@
                     return g;
                 };
                 
-                this.objs.L = makeRect(0xff0044, 30);  // Red (Left)
-                this.objs.R = makeRect(0x00f3ff, 770); // Blue (Right)
+                this.objs.L = makeRect(0xff0044, 30);  
+                this.objs.R = makeRect(0x00f3ff, 770); 
                 
                 this.objs.ball = new PIXI.Graphics();
                 this.objs.ball.beginFill(0xffff00); 
@@ -181,7 +193,6 @@
                 const get = (id) => document.getElementById(id);
                 
                 get('btnAI').onclick = () => this.start('ai');
-                get('btnLocal').onclick = () => this.start('local');
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
                 
                 get('btnBack').onclick = () => this.reset();
@@ -189,25 +200,22 @@
                 get('btnRestart').onclick = () => this.reset();
                 get('pauseBtn').onclick = () => { if(this.playing) this.paused = !this.paused; };
 
-                // ONLINE HANDLERS
                 get('btnHost').onclick = () => this.hostGame();
                 get('btnJoin').onclick = () => this.joinGame();
             }
 
             initInput() {
-                // MOUSE / TOUCH
                 const onMove = (e) => {
                     const rect = this.app.view.getBoundingClientRect();
                     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+                    // Logic to Scale mapping
                     const scale = 600 / rect.height;
                     this.mouseY = (clientY - rect.top) * scale;
-                    // Clamp
                     this.mouseY = Math.max(40, Math.min(560, this.mouseY));
                 };
                 window.addEventListener('mousemove', onMove);
                 window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
                 
-                // KEYS
                 this.keys = {};
                 window.addEventListener('keydown', e => this.keys[e.key] = true);
                 window.addEventListener('keyup', e => this.keys[e.key] = false);
@@ -245,21 +253,21 @@
                 this.room = code;
                 this.role = 'host';
 
-                // UI
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
 
-                // Firebase
                 const roomRef = ref(db, 'rooms/' + code);
-                // IF THIS LINE FAILS, IT MEANS DB IS NOT ENABLED IN CONSOLE
                 await set(roomRef, { host: true, status: 'waiting' });
                 onDisconnect(roomRef).remove();
 
+                // Listen for guest
                 onValue(roomRef, (snap) => {
                     const data = snap.val();
-                    if(data && data.guest) {
+                    if(data && data.guest === true) {
                         this.start('online');
+                        // Listen for disconnects
+                        this.monitorConnection(roomRef);
                     }
                 });
             }
@@ -276,25 +284,32 @@
                     onDisconnect(roomRef).remove();
                     
                     this.start('online');
-                    
-                    // Listen for updates
+                    this.monitorConnection(roomRef);
+
+                    // Sync loop
                     onValue(roomRef, (snap) => {
-                        if(!snap.exists()) { alert('Disconnected'); this.reset(); }
-                        else {
-                            const d = snap.val();
-                            if(d.state) {
-                                // Guest receives all data
-                                this.objs.ball.x = d.state.bx;
-                                this.objs.ball.y = d.state.by;
-                                this.objs.L.y = d.state.ly;
-                                this.score = d.state.score;
-                                this.updateScore();
-                            }
+                        const d = snap.val();
+                        if(d && d.state) {
+                            this.objs.ball.x = d.state.bx;
+                            this.objs.ball.y = d.state.by;
+                            this.objs.L.y = d.state.ly;
+                            this.score = d.state.score;
+                            this.updateScore();
                         }
                     });
                 } else {
                     alert("Room invalid or full");
                 }
+            }
+
+            monitorConnection(roomRef) {
+                onValue(roomRef, (snap) => {
+                    // If room data disappears (host left) OR guest flag disappears (guest left)
+                    if(!snap.exists()) {
+                        alert("Connection Lost!");
+                        this.reset();
+                    }
+                });
             }
 
             cleanup() {
@@ -307,59 +322,41 @@
                 if(!this.playing || this.paused) return;
                 const spd = 7 * delta;
                 
-                // --- MOVEMENT ---
-                // Helper to update paddle
+                // Helper
                 const move = (p, isMe) => {
-                    if(isMe) {
-                        // Mouse control (smooth)
-                        p.y += (this.mouseY - p.y) * 0.3 * delta;
-                    } else if (this.mode === 'ai') {
-                        // AI
+                    if(isMe) p.y += (this.mouseY - p.y) * 0.3 * delta;
+                    else if (this.mode === 'ai') {
                         const dy = this.objs.ball.y - p.y;
                         if(Math.abs(dy)>10) p.y += (dy>0?5:-5) * delta;
                     }
-                    // Keys fallback
                     if(this.keys['w'] || this.keys['ArrowUp']) p.y -= spd;
                     if(this.keys['s'] || this.keys['ArrowDown']) p.y += spd;
-                    
                     p.y = Math.max(40, Math.min(560, p.y));
                 };
 
-                // Logic Split
+                // Logic
                 if(this.mode === 'ai') {
-                    move(this.objs.R, true); // I am Right
-                    move(this.objs.L, false); // AI is Left
+                    move(this.objs.R, true); 
+                    move(this.objs.L, false);
                     this.physics(delta);
                 } 
-                else if (this.mode === 'local') {
-                    // Local 2P: Keys only usually, but let's say Mouse = P2
-                    if(this.keys['w']) this.objs.L.y -= spd;
-                    if(this.keys['s']) this.objs.L.y += spd;
-                    move(this.objs.R, true); // P2 uses mouse
-                    this.physics(delta);
-                }
                 else if (this.mode === 'online') {
                     if(this.role === 'host') {
-                        move(this.objs.L, true); // Host is Left
+                        move(this.objs.L, true);
                         this.physics(delta);
-                        // Sync
                         update(ref(db, 'rooms/'+this.room+'/state'), {
                             bx: this.objs.ball.x, by: this.objs.ball.y,
                             ly: this.objs.L.y, score: this.score
                         });
+                        // Poll for guest Y
+                        get(child(ref(db, 'rooms/'+this.room), 'guestY')).then((s)=>{
+                            if(s.exists()) this.objs.R.y = s.val();
+                        });
                     } else {
-                        // Guest is Right
+                        // Guest
                         move(this.objs.R, true);
-                        // Send only my position
                         set(ref(db, 'rooms/'+this.room+'/guestY'), this.objs.R.y);
                     }
-                }
-                
-                // Guest reads Host Y
-                if(this.mode === 'online' && this.role === 'host') {
-                    onValue(ref(db, 'rooms/'+this.room+'/guestY'), (s)=> {
-                        if(s.exists()) this.objs.R.y = s.val();
-                    }, {onlyOnce:true}); // Simple poll
                 }
             }
 
@@ -368,10 +365,8 @@
                 b.x += b.vx * delta;
                 b.y += b.vy * delta;
 
-                // Wall
                 if(b.y < 10 || b.y > 590) b.vy *= -1;
 
-                // Paddle Coll
                 const hit = (p) => {
                     return b.x > p.x-10 && b.x < p.x+20 && b.y > p.y-40 && b.y < p.y+40;
                 };
@@ -379,7 +374,6 @@
                 if(hit(this.objs.L)) { b.vx = Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.L.y)*0.1; }
                 if(hit(this.objs.R)) { b.vx = -Math.abs(b.vx)*1.05; b.vy = (b.y - this.objs.R.y)*0.1; }
 
-                // Score
                 if(b.x < 0) { this.score.R++; this.resetBall(1); }
                 if(b.x > 800) { this.score.L++; this.resetBall(-1); }
                 
