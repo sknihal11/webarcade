@@ -3,132 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Mobile Fixed</title>
+    <title>Pong - Mobile AutoFit</title>
     <style>
-        /* --- STYLES --- */
-        :root { --bg-dark: #050505; --neon-blue: #00f3ff; --neon-pink: #ff0055; }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Segoe UI", sans-serif; }
+        /* --- RESET --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; }
         
         body {
-            background-color: var(--bg-dark);
+            background-color: #050505;
             height: 100vh; width: 100vw;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; touch-action: none;
+            overflow: hidden; /* Prevent scrolling */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* --- THE CRITICAL FIX --- */
-        #game-wrapper {
-            position: relative;
-            background: #000; 
+        /* The canvas itself will be resized by JS, but we center it here */
+        canvas {
+            display: block;
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
             border: 2px solid #333;
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
-
-            /* 1. Desktop: Default large size */
-            width: 800px;
-            
-            /* 2. Mobile: Force it to fit inside the screen width no matter what */
-            max-width: 92vw; /* 92% of screen width (leaves margins) */
-            
-            /* 3. Lock the shape so it doesn't stretch */
-            aspect-ratio: 4/3; 
-            
-            /* 4. If screen is short (landscape mobile), shrink to fit height too */
-            max-height: 90vh; 
-            
-            /* Center it */
-            margin: auto;
         }
 
-        canvas { 
-            display: block; 
-            width: 100%; 
-            height: 100%; 
-            /* This ensures the canvas matches the wrapper size exactly */
-        }
-
-        /* UI LAYOUT */
-        .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; }
+        /* UI OVERLAYS */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        .interactive { pointer-events: auto; }
         
         .top-bar { 
-            padding: 10px; 
-            display: flex; justify-content: space-between; align-items: center;
-            pointer-events: auto; 
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 10px; display: flex; justify-content: space-between; 
         }
 
         .score { 
-            color: white; font-size: 30px; font-weight: 900; 
-            text-shadow: 2px 2px 0 #000; letter-spacing: 2px;
+            color: white; font-family: sans-serif; font-weight: 900; font-size: 24px;
+            text-shadow: 2px 2px 0 #000;
         }
-        
-        button {
-            background: rgba(0,0,0,0.6); border: 1px solid var(--neon-blue); color: white;
-            padding: 6px 12px; cursor: pointer; font-weight: bold; text-transform: uppercase; font-size: 12px;
-        }
-        button:hover { background: var(--neon-blue); color: black; }
-        
-        .btn-red { border-color: var(--neon-pink); color: var(--neon-pink); }
-        .btn-red:hover { background: var(--neon-pink); color: white; }
 
-        /* MENUS */
+        button {
+            background: #111; border: 1px solid #00f3ff; color: #fff;
+            padding: 5px 10px; font-weight: bold; font-size: 12px;
+        }
+        
+        /* SCREENS */
         .screen {
-            position: absolute; inset: 0; background: rgba(0,0,0,0.92);
+            position: absolute; inset: 0; background: rgba(0,0,0,0.9);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            pointer-events: auto;
         }
         .hidden { display: none !important; }
         
-        h1 { color: var(--neon-blue); font-size: 40px; margin-bottom: 20px; letter-spacing: 5px; text-align: center; }
+        h1 { color: #00f3ff; font-family: sans-serif; font-size: 40px; margin-bottom: 20px; letter-spacing: 4px; }
         
-        .menu-btn { width: 80%; max-width: 250px; margin: 8px; font-size: 16px; padding: 12px; }
-        .input-box { padding: 8px; font-size: 18px; text-align: center; background: #222; color: white; border: 1px solid #555; width: 140px; margin-bottom: 10px; }
-        .room-code { font-size: 24px; color: #0f0; margin: 15px 0; border: 2px dashed #0f0; padding: 8px 20px; }
-
-        /* MOBILE TEXT SCALING */
-        @media(max-width: 600px) {
-            .score { font-size: 20px; }
-            h1 { font-size: 32px; }
-            #game-wrapper { border-width: 2px; }
+        .menu-btn { 
+            width: 200px; padding: 15px; margin: 10px; 
+            font-size: 16px; background: #222; border: 1px solid #555; color: white;
         }
+        
+        .input-box { padding: 10px; font-size: 18px; text-align: center; width: 150px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
-    <div id="game-wrapper">
-        <div class="ui-layer">
-            <div class="top-bar">
-                <button class="btn-red" id="topExitBtn">Exit</button>
-                <div class="score" id="scoreEl">0 | 0</div>
-                <button id="pauseBtn">Pause</button>
-            </div>
+    <div class="ui-layer">
+        <div class="top-bar interactive">
+            <button onclick="window.location.reload()">EXIT</button>
+            <div class="score" id="scoreEl">0 | 0</div>
+            <button id="pauseBtn">PAUSE</button>
+        </div>
 
-            <div id="menuScreen" class="screen">
-                <h1>PONG</h1>
-                <button class="menu-btn" id="btnAI">Play vs AI</button>
-                <button class="menu-btn" id="btnOnline">Online Multiplayer</button>
-                <button class="menu-btn btn-red" id="btnExitMenu">EXIT GAME</button>
-                <p style="color:#666; margin-top:20px; font-size:10px; text-transform: uppercase;">Drag Screen to Move Paddle</p>
-            </div>
+        <div id="menuScreen" class="screen interactive">
+            <h1>PONG</h1>
+            <button class="menu-btn" id="btnAI">VS COMPUTER</button>
+            <button class="menu-btn" id="btnOnline">ONLINE MULTIPLAYER</button>
+        </div>
 
-            <div id="lobbyScreen" class="screen hidden">
-                <h1>ONLINE</h1>
-                <div id="lobbyMain">
-                    <button class="menu-btn" id="btnHost">Create Room</button>
-                    <div style="margin:10px; color:#555">- OR -</div>
-                    <input type="number" id="codeIn" class="input-box" placeholder="Code">
-                    <button class="menu-btn" id="btnJoin" style="width: auto;">Join</button>
-                </div>
-                <div id="lobbyWait" class="hidden" style="text-align: center;">
-                    <p style="color:#aaa">ROOM CODE:</p>
-                    <div class="room-code" id="codeDisp">----</div>
-                    <p style="color:#fff; animation: blink 1s infinite">Waiting for player...</p>
-                </div>
-                <button class="menu-btn btn-red" id="btnBack" style="margin-top:20px">Back</button>
+        <div id="lobbyScreen" class="screen hidden interactive">
+            <h1 style="font-size:30px">MULTIPLAYER</h1>
+            <div id="lobbyMain">
+                <button class="menu-btn" id="btnHost">CREATE ROOM</button>
+                <div style="color:#666; margin:5px">- OR -</div>
+                <input type="number" id="codeIn" class="input-box" placeholder="1234">
+                <button class="menu-btn" id="btnJoin" style="background:#004400">JOIN GAME</button>
             </div>
+            <div id="lobbyWait" class="hidden" style="text-align: center;">
+                <p style="color:#aaa">CODE:</p>
+                <h2 style="color:#0f0; font-size:40px; margin:10px" id="codeDisp">----</h2>
+                <p style="color:#fff">Waiting...</p>
+            </div>
+            <button class="menu-btn" id="btnBack" style="margin-top:20px; width:100px; padding:5px">BACK</button>
+        </div>
 
-            <div id="overScreen" class="screen hidden">
-                <h1 id="winMsg">WINNER</h1>
-                <button class="menu-btn" id="btnRestart">Menu</button>
-            </div>
+        <div id="overScreen" class="screen hidden interactive">
+            <h1 id="winMsg">WINNER</h1>
+            <button class="menu-btn" onclick="window.location.reload()">MENU</button>
         </div>
     </div>
 
@@ -151,16 +116,15 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // INTERNAL LOGIC (Fixed 800x600 for consistency)
+        // --- CORE SETTINGS ---
+        // The game ALWAYS thinks it is 800x600.
+        // We shrink the VIEW, not the LOGIC.
         const LOGICAL_W = 800;
         const LOGICAL_H = 600;
 
         class PongGame {
             constructor() {
-                this.wrapper = document.getElementById('game-wrapper');
-                
-                // Pixi runs at fixed logic size. 
-                // CSS scales it visually.
+                // Initialize Pixi
                 this.app = new PIXI.Application({
                     width: LOGICAL_W, height: LOGICAL_H, 
                     backgroundColor: 0x000000,
@@ -168,8 +132,10 @@
                     autoDensity: true
                 });
                 
-                this.wrapper.appendChild(this.app.view);
+                // Add Canvas to Body
+                document.body.appendChild(this.app.view);
                 
+                // Game Variables
                 this.playing = false;
                 this.paused = false;
                 this.mode = ''; 
@@ -177,32 +143,98 @@
                 this.score = {L:0, R:0};
                 this.objs = {}; 
 
+                // Setup
                 this.initGFX();
                 this.initUI();
-                this.initInput();
                 
+                // --- THE CRITICAL FIX: RESIZE LISTENER ---
+                this.handleResize();
+                window.addEventListener('resize', () => this.handleResize());
+                
+                // Input Listener
+                this.initInput();
+
+                // Game Loop
                 this.app.ticker.add((d) => this.loop(d));
             }
 
+            // --- THIS FUNCTION FIXES THE MOBILE VIEW ---
+            handleResize() {
+                const ratio = LOGICAL_W / LOGICAL_H;
+                
+                // Get available screen size
+                let w = window.innerWidth;
+                let h = window.innerHeight;
+
+                // 1. If screen is wider than game (Landscape phone / Desktop)
+                if (w / h >= ratio) {
+                    w = h * ratio; // Fit height, adjust width
+                    h = h;
+                } 
+                // 2. If screen is taller than game (Portrait phone)
+                else {
+                    h = w / ratio; // Fit width, adjust height
+                    w = w;
+                }
+
+                // Force 95% width on mobile to leave a tiny edge (prevents cutting)
+                if(window.innerWidth < 600) {
+                    w = window.innerWidth * 0.95;
+                    h = w / ratio;
+                }
+
+                // Apply the calculated size to the canvas CSS style
+                this.app.view.style.width = w + 'px';
+                this.app.view.style.height = h + 'px';
+                
+                // Store the scale ratio for Touch Input math
+                this.scaleFactor = LOGICAL_W / w; 
+            }
+
+            initInput() {
+                const onMove = (e) => {
+                    // Get touch/mouse Y position
+                    let clientY;
+                    if(e.touches) clientY = e.touches[0].clientY;
+                    else clientY = e.clientY;
+
+                    // Get the canvas position on screen
+                    const rect = this.app.view.getBoundingClientRect();
+                    
+                    // MATH: (User Touch Y - Canvas Top Y) * (Scaling Factor)
+                    // This converts "Phone Pixels" to "Game Logic Pixels"
+                    let relY = (clientY - rect.top) * this.scaleFactor;
+                    
+                    this.mouseY = relY;
+                };
+
+                window.addEventListener('mousemove', onMove);
+                window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
+            }
+
             initGFX() {
+                // Bloom Effect
                 this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
+                // Dashed Line
                 const line = new PIXI.Graphics();
                 line.lineStyle(4, 0x333333);
                 for(let y=0; y<LOGICAL_H; y+=20) { line.moveTo(LOGICAL_W/2, y); line.lineTo(LOGICAL_W/2, y+10); }
                 this.app.stage.addChild(line);
 
+                // Paddles
                 const makeRect = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); g.drawRect(-8, -40, 16, 80); g.endFill();
+                    g.beginFill(c); g.drawRect(-10, -50, 20, 100); g.endFill();
                     g.x = x; g.y = LOGICAL_H/2;
                     this.app.stage.addChild(g);
                     return g;
                 };
                 
-                this.objs.L = makeRect(0xff0055, 30);  
-                this.objs.R = makeRect(0x00f3ff, LOGICAL_W - 30); 
+                this.objs.L = makeRect(0xff0055, 40);  
+                this.objs.R = makeRect(0x00f3ff, LOGICAL_W - 40); 
                 
+                // Ball
                 this.objs.ball = new PIXI.Graphics();
                 this.objs.ball.beginFill(0xffff00); 
                 this.objs.ball.drawRect(-10,-10,20,20); 
@@ -213,43 +245,15 @@
 
             initUI() {
                 const get = (id) => document.getElementById(id);
-                const exit = () => window.location.href = 'blog.html';
                 
-                get('topExitBtn').onclick = exit;
-                get('btnExitMenu').onclick = exit;
-
                 get('btnAI').onclick = () => this.start('ai');
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
                 
                 get('btnBack').onclick = () => this.reset();
-                get('btnRestart').onclick = () => this.reset();
                 get('pauseBtn').onclick = () => { if(this.playing) this.paused = !this.paused; };
 
                 get('btnHost').onclick = () => this.hostGame();
                 get('btnJoin').onclick = () => this.joinGame();
-            }
-
-            initInput() {
-                const onMove = (e) => {
-                    // ROBUST INPUT SCALING
-                    // We get the visual size of the canvas
-                    const rect = this.app.view.getBoundingClientRect();
-                    
-                    // Client Y is the position on your phone screen
-                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                    
-                    // We calculate the scale ratio
-                    // (Internal Game Height / Visual Screen Height)
-                    const scaleY = LOGICAL_H / rect.height;
-                    
-                    // Apply scale to get the "Game Y"
-                    const relY = (clientY - rect.top) * scaleY;
-                    
-                    this.mouseY = Math.max(40, Math.min(LOGICAL_H - 40, relY));
-                };
-
-                window.addEventListener('mousemove', onMove);
-                window.addEventListener('touchmove', (e) => { e.preventDefault(); onMove(e); }, {passive:false});
             }
 
             reset() {
@@ -269,9 +273,7 @@
                 this.paused = false;
                 this.score = {L:0, R:0};
                 this.updateScore();
-                
                 document.querySelectorAll('.screen').forEach(el => el.classList.add('hidden'));
-                
                 this.resetBall(); 
                 this.objs.ball.visible = true;
             }
@@ -280,15 +282,12 @@
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.room = code;
                 this.role = 'host';
-
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
-
                 const roomRef = ref(db, 'rooms/' + code);
                 await set(roomRef, { host: true, status: 'waiting' });
                 onDisconnect(roomRef).remove();
-
                 onValue(roomRef, (snap) => {
                     const data = snap.val();
                     if(data && data.guest === true && !this.playing) {
@@ -301,19 +300,15 @@
             async joinGame() {
                 const code = document.getElementById('codeIn').value;
                 if(!code) return alert("Enter code");
-                
                 const roomRef = ref(db, 'rooms/' + code);
                 const snap = await get(roomRef);
-
                 if(snap.exists() && snap.val().status === 'waiting') {
                     this.room = code;
                     this.role = 'guest';
                     await update(roomRef, { guest: true, status: 'playing' });
                     onDisconnect(roomRef).remove();
-                    
                     this.start('online');
                     this.monitorConnection(roomRef);
-
                     onValue(roomRef, (snap) => {
                         const d = snap.val();
                         if(d && d.state) {
@@ -324,18 +319,11 @@
                             this.updateScore();
                         }
                     });
-                } else {
-                    alert("Room invalid");
-                }
+                } else { alert("Room invalid"); }
             }
 
             monitorConnection(roomRef) {
-                onValue(roomRef, (snap) => {
-                    if(!snap.exists()) {
-                        alert("Connection Lost");
-                        this.reset();
-                    }
-                });
+                onValue(roomRef, (snap) => { if(!snap.exists()) { alert("Connection Lost"); this.reset(); } });
             }
 
             cleanup() {
@@ -347,12 +335,15 @@
                 if(!this.playing || this.paused) return;
                 
                 const move = (p, isMe) => {
-                    if(isMe) p.y += (this.mouseY - p.y) * 0.2 * delta; 
+                    // Limit paddle inside screen
+                    let targetY = Math.max(50, Math.min(LOGICAL_H - 50, isMe ? this.mouseY : p.y));
+                    
+                    if(isMe) p.y += (targetY - p.y) * 0.2 * delta; 
                     else if (this.mode === 'ai') {
                         const dy = this.objs.ball.y - p.y;
                         if(Math.abs(dy)>10) p.y += (dy>0?6:-6) * delta;
+                        p.y = Math.max(50, Math.min(LOGICAL_H - 50, p.y));
                     }
-                    p.y = Math.max(40, Math.min(LOGICAL_H - 40, p.y));
                 };
 
                 if(this.mode === 'ai') {
@@ -385,24 +376,21 @@
 
                 if(b.y < 10 || b.y > LOGICAL_H - 10) b.vy *= -1;
 
-                const hit = (p) => {
-                    return b.x > p.x-18 && b.x < p.x+18 && b.y > p.y-50 && b.y < p.y+50;
-                };
+                const hit = (p) => { return b.x > p.x-20 && b.x < p.x+20 && b.y > p.y-60 && b.y < p.y+60; };
 
                 if(hit(this.objs.L)) { 
                     b.vx = Math.abs(b.vx)*1.05; 
                     b.vy = (b.y - this.objs.L.y)*0.15; 
-                    b.x = this.objs.L.x + 20; 
+                    b.x = this.objs.L.x + 25; 
                 }
                 if(hit(this.objs.R)) { 
                     b.vx = -Math.abs(b.vx)*1.05; 
                     b.vy = (b.y - this.objs.R.y)*0.15; 
-                    b.x = this.objs.R.x - 20; 
+                    b.x = this.objs.R.x - 25; 
                 }
 
                 if(b.x < -20) { this.score.R++; this.resetBall(1); }
                 if(b.x > LOGICAL_W + 20) { this.score.L++; this.resetBall(-1); }
-                
                 this.updateScore();
                 if(this.score.L >= 10 || this.score.R >= 10) this.gameOver();
             }
