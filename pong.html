@@ -3,86 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pong - Pro Multiplayer</title>
+    <title>Pong - Instant Response</title>
     <style>
-        /* --- CORE STYLES --- */
+        /* --- 1. RESET & LAYOUT --- */
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         
         body {
-            background-color: #050505;
-            height: 100vh; width: 100vw;
-            overflow: hidden; 
+            background-color: #000;
+            position: fixed; inset: 0; /* Locks to screen edges */
             display: flex; justify-content: center; align-items: center;
-            font-family: "Segoe UI", sans-serif;
+            overflow: hidden;
+            font-family: sans-serif;
         }
 
-        /* GAME CONTAINER */
-        #game-layer {
+        /* --- 2. THE PERFECT CONTAINER --- */
+        /* This box will grow as big as possible but NEVER cut off */
+        #game-box {
             position: relative;
-            box-shadow: 0 0 40px rgba(0, 243, 255, 0.1);
-            border: 2px solid #222;
+            background: #050505;
+            border: 2px solid #333;
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.1);
+            
+            /* FORCE 4:3 RATIO */
+            aspect-ratio: 4 / 3;
+
+            /* LOGIC: "Be 95% of the screen width, UNLESS that makes you too tall" */
+            width: min(95vw, 126.66vh); 
+            height: min(95vh, 71.25vw); 
         }
+
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* TOUCH ZONES (Invisible layers for better control) */
-        .touch-zone {
-            position: absolute; top: 0; bottom: 0; width: 50%;
-            z-index: 10;
-            /* background: rgba(255,0,0,0.1); Debugging Color */ 
-        }
+        /* TOUCH ZONES */
+        .touch-zone { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 10; cursor: crosshair; }
         #leftZone { left: 0; }
         #rightZone { right: 0; }
 
-        /* UI OVERLAY */
+        /* UI */
         .ui-layer { position: absolute; inset: 0; pointer-events: none; z-index: 20; }
         .interactive { pointer-events: auto; }
         
         .hud { 
-            position: absolute; top: 20px; width: 100%; 
-            display: flex; justify-content: center; gap: 40px;
+            position: absolute; top: 4%; width: 100%; 
+            display: flex; justify-content: center; gap: 15%;
         }
         .score { 
-            color: white; font-size: 40px; font-weight: 900; 
-            text-shadow: 0 4px 10px rgba(0,0,0,0.8); opacity: 0.8;
+            color: white; font-size: clamp(20px, 8vw, 50px); font-weight: 900; opacity: 0.8; 
+            text-shadow: 0 2px 5px rgba(0,0,0,0.8);
         }
 
-        /* SCREENS & MENUS */
+        /* SCREENS */
         .screen {
-            position: absolute; inset: 0; background: rgba(5,5,5,0.95);
+            position: absolute; inset: 0; background: rgba(0,0,0,0.92);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.3s;
+            transition: opacity 0.2s;
         }
         .hidden { opacity: 0; pointer-events: none; }
         
-        h1 { color: #fff; font-size: 40px; letter-spacing: 5px; margin-bottom: 30px; text-transform: uppercase; }
+        h1 { color: #fff; font-size: clamp(30px, 8vw, 60px); margin-bottom: 20px; letter-spacing: 5px; }
         
         button {
-            background: #111; border: 1px solid #444; color: #ccc;
-            padding: 15px 30px; margin: 10px; font-size: 16px; font-weight: bold;
-            text-transform: uppercase; cursor: pointer; min-width: 200px;
-            transition: all 0.2s;
+            background: #111; border: 1px solid #444; color: #eee;
+            padding: clamp(10px, 3vw, 15px) clamp(20px, 5vw, 30px); margin: 10px;
+            font-size: clamp(12px, 3vw, 18px); font-weight: bold;
+            text-transform: uppercase; cursor: pointer; min-width: 40%;
         }
-        button:active { background: #333; transform: scale(0.96); }
+        button:active { background: #333; transform: scale(0.95); }
         .btn-blue { border-color: #00f3ff; color: #00f3ff; }
         .btn-green { border-color: #0f0; color: #0f0; }
 
         .input-code {
             background: #000; border: 2px solid #333; color: #fff;
-            padding: 15px; font-size: 24px; text-align: center; letter-spacing: 5px;
-            width: 180px; margin-bottom: 20px; outline: none;
-        }
-        
-        /* NOTIFICATIONS */
-        #toast {
-            position: absolute; bottom: 30px; background: #333; color: white;
-            padding: 10px 20px; border-radius: 20px; font-size: 12px;
-            opacity: 0; transition: opacity 0.5s;
+            padding: 10px; font-size: 24px; text-align: center; letter-spacing: 5px;
+            width: 60%; margin-bottom: 20px; outline: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-layer">
+    <div id="game-box">
         <div id="leftZone" class="touch-zone interactive"></div>
         <div id="rightZone" class="touch-zone interactive"></div>
 
@@ -91,36 +90,35 @@
                 <div class="score" style="color:#ff0055" id="scoreL">0</div>
                 <div class="score" style="color:#00f3ff" id="scoreR">0</div>
             </div>
-            
-            <div id="toast">Notification</div>
 
             <div id="menuScreen" class="screen interactive">
-                <h1>ARCADE PONG</h1>
+                <h1>PONG</h1>
                 <button class="btn-blue" id="btnAI">Single Player</button>
                 <button class="btn-green" id="btnOnline">Multiplayer</button>
             </div>
 
             <div id="lobbyScreen" class="screen hidden interactive">
-                <h1>LOBBY</h1>
-                <div id="lobbyMain" style="text-align:center">
-                    <button id="btnHost" class="btn-green">Create Room</button>
-                    <div style="margin:15px; color:#555">OR</div>
-                    <input type="number" id="codeIn" class="input-code" placeholder="----">
+                <h1 style="font-size:30px">LOBBY</h1>
+                <div id="lobbyMain" style="text-align:center; width:100%">
+                    <button id="btnHost" class="btn-green">Create</button>
+                    <div style="margin:10px; color:#555">OR</div>
+                    <input type="number" id="codeIn" class="input-code" placeholder="1234">
                     <br>
-                    <button id="btnJoin" class="btn-blue">Join Room</button>
+                    <button id="btnJoin" class="btn-blue">Join</button>
+                    <br><br>
+                    <button id="btnBack" style="border-color:#555; width:auto; padding:8px 20px">Back</button>
                 </div>
                 
                 <div id="lobbyWait" class="hidden" style="text-align:center">
-                    <p style="color:#888; font-size:12px">ROOM CODE</p>
-                    <div style="color:#0f0; font-size:48px; font-family:monospace; margin:10px" id="codeDisp">----</div>
-                    <p style="color:#fff; animation: blink 1s infinite">Waiting for opponent...</p>
+                    <p style="color:#888;">CODE:</p>
+                    <div style="color:#0f0; font-size:40px; font-family:monospace; margin:10px" id="codeDisp">----</div>
+                    <p>Waiting for player...</p>
                 </div>
-                <button id="btnBack" style="margin-top:40px; width:100px; padding:10px; font-size:12px">Back</button>
             </div>
 
-             <div id="overScreen" class="screen hidden interactive">
+            <div id="overScreen" class="screen hidden interactive">
                 <h1 id="winMsg">WINNER</h1>
-                <button onclick="window.location.reload()">MAIN MENU</button>
+                <button onclick="window.location.reload()">MENU</button>
             </div>
         </div>
     </div>
@@ -130,7 +128,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove, get, child, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, update, remove, get, onDisconnect } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -144,125 +142,100 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // --- CONSTANTS ---
-        const W = 800; // Logical Width
-        const H = 600; // Logical Height
+        // LOGICAL SIZE (The internal game resolution)
+        const W = 800;
+        const H = 600;
         
         class PongGame {
             constructor() {
-                // Initialize Pixi
                 this.app = new PIXI.Application({
                     width: W, height: H, backgroundColor: 0x050505,
-                    resolution: Math.min(window.devicePixelRatio, 2), // Cap resolution for performance
-                    autoDensity: true, antialias: false
+                    resolution: Math.min(window.devicePixelRatio, 2),
+                    autoDensity: true
                 });
                 
-                document.getElementById('game-layer').appendChild(this.app.view);
-                this.wrapper = document.getElementById('game-layer');
+                // Add canvas to the aspect-locked box
+                this.box = document.getElementById('game-box');
+                this.box.appendChild(this.app.view);
 
-                // Game State
+                // --- STATE ---
                 this.state = {
                     playing: false, mode: '', role: '', room: null,
                     score: {L:0, R:0},
-                    pL: H/2, pR: H/2, // Paddle positions
-                    bx: W/2, by: H/2, bvx: 0, bvy: 0 // Ball physics
+                    pL: H/2, pR: H/2, // Paddle Positions
+                    bx: W/2, by: H/2, bvx: 0, bvy: 0 // Ball Physics
                 };
                 
-                this.targetY = H/2; // Where the player wants to move
+                this.myInputY = H/2; // The raw input value
                 this.lastNetUpdate = 0;
 
                 this.initGFX();
                 this.initInput();
-                this.resize();
-                window.addEventListener('resize', () => this.resize());
                 
-                // Main Loop
+                // MAIN LOOP
                 this.app.ticker.add((d) => this.loop(d));
             }
 
-            resize() {
-                // Auto-fit Logic: Maintains aspect ratio but fills max screen
-                const ratio = W / H;
-                let w = window.innerWidth;
-                let h = window.innerHeight;
-                
-                if (w / h >= ratio) { w = h * ratio; } 
-                else { h = w / ratio; }
-
-                // Add margins on desktop, full width on mobile
-                if(window.innerWidth > 600) { w *= 0.9; h *= 0.9; }
-                else { w = window.innerWidth; h = w / ratio; }
-
-                this.wrapper.style.width = w + 'px';
-                this.wrapper.style.height = h + 'px';
-                this.scale = W / w; // Store scale for input mapping
-            }
-
             initGFX() {
-                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.4})];
+                // Bloom for neon look
+                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength:0.5})];
 
-                // Net
-                const net = new PIXI.Graphics();
-                net.beginFill(0x222222);
-                for(let y=0; y<H; y+=40) net.drawRect(W/2-2, y, 4, 20);
-                this.app.stage.addChild(net);
+                // Middle Line
+                const line = new PIXI.Graphics();
+                line.beginFill(0x222222);
+                for(let y=0; y<H; y+=40) line.drawRect(W/2-2, y, 4, 20);
+                this.app.stage.addChild(line);
 
-                // Paddles
-                this.gfxL = new PIXI.Graphics();
-                this.gfxL.beginFill(0xff0055); this.gfxL.drawRect(-10,-50,20,100);
-                this.gfxL.x = 40;
-                
-                this.gfxR = new PIXI.Graphics();
-                this.gfxR.beginFill(0x00f3ff); this.gfxR.drawRect(-10,-50,20,100);
-                this.gfxR.x = W - 40;
-
-                this.app.stage.addChild(this.gfxL, this.gfxR);
+                // Helper to make paddles
+                const makePad = (c, x) => {
+                    const g = new PIXI.Graphics();
+                    g.beginFill(c); g.drawRect(-12,-50,24,100); g.endFill();
+                    g.x = x; g.y = H/2;
+                    this.app.stage.addChild(g);
+                    return g;
+                }
+                this.gfxL = makePad(0xff0055, 40);
+                this.gfxR = makePad(0x00f3ff, W-40);
 
                 // Ball
-                this.gfxBall = new PIXI.Graphics();
-                this.gfxBall.beginFill(0xffffff); this.gfxBall.drawRect(-12,-12,24,24);
-                this.app.stage.addChild(this.gfxBall);
+                this.ball = new PIXI.Graphics();
+                this.ball.beginFill(0xffffff); this.ball.drawRect(-10,-10,20,20);
+                this.app.stage.addChild(this.ball);
             }
 
-            // --- OPTIMIZED INPUT ---
             initInput() {
-                const handleMove = (y, isRightSide) => {
-                    // Logic: Map the touch Y to Game Y
-                    // Constraint: If I am P1, I only care about touches if they are valid
-                    if(this.state.mode === 'online') {
-                        if(this.state.role === 'host' && isRightSide) return; // Host ignores right side touches
-                        if(this.state.role === 'guest' && !isRightSide) return; // Guest ignores left side touches
-                    }
-                    this.targetY = Math.max(50, Math.min(H-50, y));
+                // We listen to the CONTAINER, so touch/mouse coordinates are relative to it
+                const handleInput = (e, clientY) => {
+                    if(!this.state.playing) return;
+                    e.preventDefault(); // Stop scrolling
+
+                    // 1. Get the exact size of the game box on screen
+                    const rect = this.box.getBoundingClientRect();
+                    
+                    // 2. Calculate scaling factor (Game Height / Screen Height)
+                    const scaleY = H / rect.height;
+
+                    // 3. Convert Screen Y to Game Y
+                    const relativeY = (clientY - rect.top) * scaleY;
+                    
+                    // 4. Clamp to screen bounds
+                    this.myInputY = Math.max(50, Math.min(H-50, relativeY));
                 };
 
-                const setupZone = (id, isRight) => {
-                    const el = document.getElementById(id);
-                    const proc = (e) => {
-                        e.preventDefault(); // Stop scrolling!
-                        // Get Touch Y relative to the Zone
-                        const rect = this.wrapper.getBoundingClientRect();
-                        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-                        // Map ClientY to Game Coordinates
-                        const gameY = (clientY - rect.top) * this.scale;
-                        handleMove(gameY, isRight);
-                    }
-                    el.addEventListener('mousedown', (e) => { proc(e); });
-                    el.addEventListener('mousemove', (e) => { if(e.buttons) proc(e); });
-                    el.addEventListener('touchstart', (e) => { proc(e); }, {passive:false});
-                    el.addEventListener('touchmove', (e) => { proc(e); }, {passive:false});
-                };
-
-                setupZone('leftZone', false);
-                setupZone('rightZone', true);
+                // Mouse (PC)
+                this.box.addEventListener('mousemove', (e) => handleInput(e, e.clientY));
+                
+                // Touch (Mobile)
+                this.box.addEventListener('touchmove', (e) => handleInput(e, e.touches[0].clientY), {passive:false});
+                this.box.addEventListener('touchstart', (e) => handleInput(e, e.touches[0].clientY), {passive:false});
 
                 // UI Buttons
                 const get = id => document.getElementById(id);
                 get('btnAI').onclick = () => this.startAI();
                 get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
-                get('btnHost').onclick = () => this.createRoom();
-                get('btnJoin').onclick = () => this.joinRoom();
-                get('btnBack').onclick = () => window.location.reload();
+                get('btnBack').onclick = () => { get('lobbyScreen').classList.add('hidden'); get('menuScreen').classList.remove('hidden'); };
+                get('btnHost').onclick = () => this.host();
+                get('btnJoin').onclick = () => this.join();
             }
 
             startAI() {
@@ -272,82 +245,84 @@
                 document.getElementById('menuScreen').classList.add('hidden');
             }
 
-            // --- PREDICTION PHYSICS LOOP ---
             loop(delta) {
                 if(!this.state.playing) return;
-
                 const s = this.state;
                 const lerp = (a, b, n) => (1 - n) * a + n * b;
 
-                // 1. Move Player Paddles (Smooth slide towards finger)
+                // --- 1. PADDLE MOVEMENT (FIXED: INSTANT RESPONSE) ---
+                
                 if(s.mode === 'ai') {
-                    s.pL = lerp(s.pL, this.targetY, 0.2); // Player is Left
-                    // AI Logic
-                    let dest = s.by;
-                    // Simple "Error" to make AI beatable
-                    if(Math.abs(s.bx - s.px) > 300) dest = H/2; 
-                    s.pR += (dest - s.pR) * 0.08 * delta;
+                    // Local Player = INSTANT (No Lerp)
+                    s.pL = this.myInputY;
+                    
+                    // AI = Slow Lerp
+                    let target = s.bx > W/2 ? s.by : H/2;
+                    s.pR = lerp(s.pR, target, 0.08); 
                 } 
                 else if (s.mode === 'online') {
-                    // Move My Paddle Locally
-                    if(s.role === 'host') s.pL = lerp(s.pL, this.targetY, 0.3);
-                    else s.pR = lerp(s.pR, this.targetY, 0.3);
+                    if(s.role === 'host') {
+                        // I am Host (Left) -> Instant Control
+                        s.pL = this.myInputY; 
+                        // Guest (Right) -> Smooth Interpolation (Net Lag hiding)
+                        // (Guest position is updated by network, we just lerp it here for visuals)
+                    } else {
+                        // I am Guest (Right) -> Instant Control
+                        s.pR = this.myInputY;
+                        // Host (Left) -> Smooth Interpolation
+                    }
                 }
 
-                // 2. Ball Physics (Run on BOTH Host and Guest for smoothness)
-                // This is "Client Side Prediction"
+                // --- 2. BALL PHYSICS (Prediction) ---
                 s.bx += s.bvx * delta;
                 s.by += s.bvy * delta;
 
                 // Wall Bounce
                 if(s.by < 10 || s.by > H - 10) { s.bvy *= -1; s.by = Math.max(10, Math.min(H-10, s.by)); }
 
-                // Host Authoritative Collision Logic
-                // (Guest simulates it, but Host overrides if there is a conflict)
+                // Collision Logic (Host Authoritative)
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
-                    this.checkCollision(s.pL, 40, 1);
-                    this.checkCollision(s.pR, W-40, -1);
+                    this.checkHit(s.pL, 40, 1);
+                    this.checkHit(s.pR, W-40, -1);
                     
-                    // Score
                     if(s.bx < -20) { s.score.R++; this.resetBall(1); }
                     if(s.bx > W+20) { s.score.L++; this.resetBall(-1); }
                 }
 
-                // 3. Update Graphics
+                // --- 3. RENDER ---
                 this.gfxL.y = s.pL;
                 this.gfxR.y = s.pR;
-                this.gfxBall.x = s.bx;
-                this.gfxBall.y = s.by;
+                this.ball.x = s.bx;
+                this.ball.y = s.by;
 
-                // 4. Network Sync (30 FPS)
+                // --- 4. NETWORK SYNC (Throttled 30ms) ---
                 if(s.mode === 'online') {
                     const now = Date.now();
-                    if(now - this.lastNetUpdate > 33) {
-                        this.syncNetwork();
+                    if(now - this.lastNetUpdate > 30) {
+                        this.netSync();
                         this.lastNetUpdate = now;
                     }
                 }
             }
 
-            checkCollision(py, px, dir) {
+            checkHit(py, px, dir) {
                 const s = this.state;
-                // AABB Collision
-                if (Math.abs(s.bx - px) < 20 && Math.abs(s.by - py) < 60) {
+                if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 60) {
                     s.bvx = Math.abs(s.bvx) * 1.05; // Speed up
                     if (dir === -1) s.bvx *= -1;
-                    s.bvy = (s.by - py) * 0.15; // Angle control
+                    s.bvy = (s.by - py) * 0.15; // Angle spin
                 }
             }
 
             resetBall(dir) {
                 const s = this.state;
                 s.bx = W/2; s.by = H/2;
-                s.bvx = (dir || (Math.random()>.5?1:-1)) * 9; // Slightly faster
+                s.bvx = (dir || (Math.random()>.5?1:-1)) * 9; 
                 s.bvy = (Math.random()*8)-4;
-                this.updateScore();
+                this.updateUI();
             }
 
-            updateScore() {
+            updateUI() {
                 document.getElementById('scoreL').innerText = this.state.score.L;
                 document.getElementById('scoreR').innerText = this.state.score.R;
                 if(this.state.score.L >= 10 || this.state.score.R >= 10) {
@@ -359,7 +334,7 @@
             }
 
             // --- NETWORKING ---
-            async createRoom() {
+            async host() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.state.room = code;
                 this.state.role = 'host';
@@ -380,13 +355,17 @@
                         this.resetBall();
                         document.getElementById('lobbyScreen').classList.add('hidden');
                     }
-                    // Host reads Guest Paddle Y (gy)
-                    if(d && d.gy) this.state.pR = d.gy; 
+                    // HOST: Smoothly update Guest Paddle ghost
+                    if(d && d.gy) {
+                         const lerp = (a, b, n) => (1 - n) * a + n * b;
+                         this.state.pR = lerp(this.state.pR, d.gy, 0.4); 
+                    }
                 });
             }
 
-            async joinRoom() {
+            async join() {
                 const code = document.getElementById('codeIn').value;
+                if(!code) return;
                 const r = ref(db, 'rooms/'+code);
                 const snap = await get(r);
                 if(snap.exists()) {
@@ -399,64 +378,45 @@
                     document.getElementById('lobbyScreen').classList.add('hidden');
                     
                     onValue(r, (s) => this.onServerMsg(s.val()));
-                } else {
-                    alert("Room not found");
-                }
+                } else { alert("Room not found"); }
             }
 
-            syncNetwork() {
+            netSync() {
                 if(!this.state.room) return;
                 const r = ref(db, 'rooms/'+this.state.room);
-                
                 if(this.state.role === 'host') {
-                    // Host sends Ball State (bx, by, bvx, bvy) + Host Paddle (hy) + Score
                     update(r, {
-                        bx: Math.round(this.state.bx),
-                        by: Math.round(this.state.by),
-                        bvx: this.state.bvx,
-                        bvy: this.state.bvy,
-                        hy: Math.round(this.state.pL),
-                        sc: this.state.score
+                        bx: Math.round(this.state.bx), by: Math.round(this.state.by),
+                        bvx: this.state.bvx, bvy: this.state.bvy,
+                        hy: Math.round(this.state.pL), sc: this.state.score
                     });
                 } else {
-                    // Guest sends Guest Paddle (gy)
+                    // Guest ONLY sends their input position
                     update(r, { gy: Math.round(this.state.pR) });
                 }
             }
 
             onServerMsg(data) {
-                if(!data || !this.state.playing) return;
+                if(!data || !this.state.playing || this.state.role !== 'guest') return;
+                const s = this.state;
+                const lerp = (a, b, n) => (1 - n) * a + n * b;
+
+                // GUEST: Smoothly update Host Paddle ghost
+                if(data.hy) s.pL = lerp(s.pL, data.hy, 0.4);
                 
-                if(this.state.role === 'guest') {
-                    const s = this.state;
-                    
-                    // Sync Host Paddle
-                    if(data.hy) s.pL = data.hy; 
-                    
-                    // Sync Score
-                    if(data.sc) { s.score = data.sc; this.updateScore(); }
+                if(data.sc) { s.score = data.sc; this.updateUI(); }
 
-                    // BALL SYNC & SMOOTHING (The Magic Fix)
-                    if(data.bx !== undefined) {
-                        // Calculate distance between Local Ball and Server Ball
-                        const dx = s.bx - data.bx;
-                        const dy = s.by - data.by;
-                        const dist = Math.sqrt(dx*dx + dy*dy);
-
-                        // If discrepancy is small (< 50px), just nudge velocity to correct it
-                        // This keeps it smooth.
-                        if(dist < 50) {
-                            s.bx += (data.bx - s.bx) * 0.1; 
-                            s.by += (data.by - s.by) * 0.1;
-                            // Still adopt server velocity so we don't drift further
-                            s.bvx = data.bvx; 
-                            s.bvy = data.bvy;
-                        } 
-                        // If discrepancy is huge (Lag spike), teleport to sync
-                        else {
-                            s.bx = data.bx; s.by = data.by;
-                            s.bvx = data.bvx; s.bvy = data.bvy;
-                        }
+                // Ball Correction (Avoids jitter)
+                if(data.bx !== undefined) {
+                    const dist = Math.abs(s.bx - data.bx) + Math.abs(s.by - data.by);
+                    if(dist < 60) {
+                        // Smooth nudging
+                        s.bx += (data.bx - s.bx) * 0.15; 
+                        s.by += (data.by - s.by) * 0.15;
+                        s.bvx = data.bvx; s.bvy = data.bvy;
+                    } else {
+                        // Hard reset (Lag spike)
+                        s.bx = data.bx; s.by = data.by;
                     }
                 }
             }
