@@ -100,6 +100,30 @@ header h1 {
   -webkit-text-fill-color: transparent;
 }
 
+header .user-info {
+  display: none;
+  align-items: center;
+  gap: 15px;
+}
+
+header .user-info.visible {
+  display: flex;
+}
+
+header .username {
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+header .session-badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
 header button {
   border: none;
   padding: 10px 24px;
@@ -115,6 +139,11 @@ header button {
 header button:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px var(--accent-glow);
+}
+
+header .logout-btn {
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
 /* --- HERO SECTION --- */
@@ -214,6 +243,7 @@ input:focus {
 
 input.valid { border-color: #22c55e; }
 input.invalid { border-color: #ef4444; }
+input.warning { border-color: #f59e0b; }
 
 .error-msg {
   color: #ef4444;
@@ -225,6 +255,47 @@ input.invalid { border-color: #ef4444; }
 }
 
 .error-msg.show { display: block; }
+
+.warning-msg {
+  color: #f59e0b;
+  font-size: 12px;
+  margin-top: -12px;
+  margin-bottom: 10px;
+  padding-left: 5px;
+  display: none;
+}
+
+.warning-msg.show { display: block; }
+
+.password-strength {
+  height: 4px;
+  border-radius: 2px;
+  margin-top: -12px;
+  margin-bottom: 10px;
+  background: rgba(255,255,255,0.1);
+  overflow: hidden;
+}
+
+.password-strength-bar {
+  height: 100%;
+  width: 0%;
+  transition: width 0.3s, background 0.3s;
+}
+
+.password-strength-bar.weak {
+  width: 33%;
+  background: #ef4444;
+}
+
+.password-strength-bar.medium {
+  width: 66%;
+  background: #f59e0b;
+}
+
+.password-strength-bar.strong {
+  width: 100%;
+  background: #22c55e;
+}
 
 .hidden { display: none; }
 
@@ -279,6 +350,14 @@ input.invalid { border-color: #ef4444; }
   font-weight: 600;
 }
 
+.info-text {
+  font-size: 11px;
+  color: #94a3b8;
+  margin-top: -8px;
+  margin-bottom: 12px;
+  padding-left: 5px;
+}
+
 /* --- ANIMATIONS --- */
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes popIn { 
@@ -298,12 +377,19 @@ input.invalid { border-color: #ef4444; }
 
 <header>
   <h1>WebArcade 🎮</h1>
-  <button onclick="openModal()">Login / Signup</button>
+  <div id="headerActions">
+    <button onclick="openModal()" id="loginBtn">Login / Signup</button>
+    <div class="user-info" id="userInfo">
+      <span class="username" id="usernameDisplay"></span>
+      <span class="session-badge" id="sessionBadge">● Active</span>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
 </header>
 
 <div class="hero">
   <h2>Play.<br>Compete.<br>Relax.</h2>
-  <p>Your personal retro arcade dashboard. Save your scores, beat your friends, and play instantly.<br><br>
+  <p id="welcomeText">Your personal retro arcade dashboard. Save your scores, beat your friends, and play instantly.<br><br>
   <small style="color: var(--text-muted);">⚠️ Login required to play.</small></p>
 </div>
 
@@ -316,11 +402,16 @@ input.invalid { border-color: #ef4444; }
     <input id="username" type="text" placeholder="Username (3-20 chars)" class="hidden" autocomplete="off" maxlength="20">
     <div class="error-msg" id="usernameError"></div>
     
-    <input id="email" type="email" placeholder="Email Address">
+    <input id="email" type="email" placeholder="Email Address" autocomplete="email">
     <div class="error-msg" id="emailError"></div>
     
-    <input id="password" type="password" placeholder="Password (6+ chars)">
+    <input id="password" type="password" placeholder="Password (8+ chars)" autocomplete="current-password">
+    <div class="password-strength hidden" id="strengthContainer">
+      <div class="password-strength-bar" id="strengthBar"></div>
+    </div>
     <div class="error-msg" id="passwordError"></div>
+    <div class="warning-msg" id="passwordWarning"></div>
+    <div class="info-text hidden" id="breachInfo">We check passwords against known breaches</div>
 
     <button class="main-btn" id="actionBtn">Continue</button>
 
@@ -338,16 +429,24 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  updateProfile
+  updateProfile,
+  onAuthStateChanged,
+  signOut,
+  setPersistence,
+  browserLocalPersistence
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 import {
   getFirestore,
   doc,
   setDoc,
+  getDoc,
+  updateDoc,
   collection,
   query,
   where,
-  getDocs
+  getDocs,
+  arrayUnion,
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -363,12 +462,171 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// CRITICAL: Set persistence to LOCAL (survives browser close)
+setPersistence(auth, browserLocalPersistence);
+
+// --- GLOBAL STATE ---
+let currentUser = null;
+let currentDeviceId = null;
+
+// --- DEVICE ID GENERATION ---
+function getDeviceId() {
+  let deviceId = localStorage.getItem('deviceId');
+  if (!deviceId) {
+    deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('deviceId', deviceId);
+  }
+  return deviceId;
+}
+
+// --- SESSION MANAGEMENT ---
+async function registerSession(userId, deviceId) {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const activeSessions = userData.activeSessions || [];
+      const maxSessions = userData.maxSessions || 2;
+      
+      // Check if device already registered
+      if (!activeSessions.includes(deviceId)) {
+        // Check session limit
+        if (activeSessions.length >= maxSessions) {
+          throw new Error(`Session limit reached. Maximum ${maxSessions} devices allowed. Please logout from another device first.`);
+        }
+        
+        // Add new session
+        await updateDoc(userDocRef, {
+          activeSessions: arrayUnion(deviceId),
+          lastActivity: new Date()
+        });
+      } else {
+        // Update last activity
+        await updateDoc(userDocRef, {
+          lastActivity: new Date()
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Session registration error:", error);
+    throw error;
+  }
+}
+
+async function unregisterSession(userId, deviceId) {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, {
+      activeSessions: arrayRemove(deviceId),
+      currentGameSession: null // Clear any active game session
+    });
+  } catch (error) {
+    console.error("Session unregister error:", error);
+  }
+}
+
+// --- PASSWORD BREACH CHECK ---
+async function checkPasswordBreach(password) {
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(password);
+    const hashBuffer = await crypto.subtle.digest('SHA-1', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+    
+    const prefix = hashHex.substring(0, 5);
+    const suffix = hashHex.substring(5);
+    
+    const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
+    const text = await response.text();
+    
+    const lines = text.split('\n');
+    for (let line of lines) {
+      const [hashSuffix, count] = line.split(':');
+      if (hashSuffix === suffix) {
+        return parseInt(count);
+      }
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error("Breach check failed:", error);
+    return 0;
+  }
+}
+
+// --- AUTHENTICATION STATE LISTENER ---
+onAuthStateChanged(auth, async (user) => {
+  const loginBtn = document.getElementById('loginBtn');
+  const userInfo = document.getElementById('userInfo');
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  const welcomeText = document.getElementById('welcomeText');
+  
+  if (user) {
+    try {
+      currentUser = user;
+      currentDeviceId = getDeviceId();
+      
+      // Register this session
+      await registerSession(user.uid, currentDeviceId);
+      
+      // Update UI
+      loginBtn.style.display = 'none';
+      userInfo.classList.add('visible');
+      
+      // Get username from Firestore
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const username = userDoc.data().username;
+        usernameDisplay.textContent = username;
+        welcomeText.innerHTML = `Welcome back, <strong>${username}</strong>! Ready to play?<br><br>
+        <small style="color: var(--text-muted);">Your scores are being tracked.</small>`;
+      } else {
+        usernameDisplay.textContent = user.displayName || 'Player';
+        welcomeText.innerHTML = `Welcome back! Ready to play?`;
+      }
+      
+      // TODO: Redirect to dashboard/games page
+      // window.location.href = "dashboard.html";
+      
+    } catch (error) {
+      console.error("Session error:", error);
+      if (error.message.includes("Session limit")) {
+        alert(error.message);
+        await signOut(auth);
+      }
+    }
+  } else {
+    // User logged out
+    currentUser = null;
+    loginBtn.style.display = 'block';
+    userInfo.classList.remove('visible');
+    welcomeText.innerHTML = `Your personal retro arcade dashboard. Save your scores, beat your friends, and play instantly.<br><br>
+    <small style="color: var(--text-muted);">⚠️ Login required to play.</small>`;
+  }
+});
+
+// --- LOGOUT ---
+window.logout = async function() {
+  if (currentUser && currentDeviceId) {
+    await unregisterSession(currentUser.uid, currentDeviceId);
+  }
+  await signOut(auth);
+  location.reload();
+};
+
+// --- UI ELEMENTS ---
 const modal = document.getElementById("modal");
 const statusEl = document.getElementById("status");
 const actionBtn = document.getElementById("actionBtn");
 const titleEl = document.getElementById("modalTitle");
 const switchText = document.getElementById("switchText");
 const usernameInput = document.getElementById("username");
+const strengthContainer = document.getElementById("strengthContainer");
+const strengthBar = document.getElementById("strengthBar");
+const breachInfo = document.getElementById("breachInfo");
 
 const inputs = {
   username: usernameInput,
@@ -381,6 +639,8 @@ const errors = {
   email: document.getElementById("emailError"),
   password: document.getElementById("passwordError")
 };
+
+const passwordWarning = document.getElementById("passwordWarning");
 
 let mode = "login";
 
@@ -409,7 +669,6 @@ function validateEmail(email) {
     return "Please enter a valid email address";
   }
   
-  // Block fake/temporary email domains
   const blockedDomains = [
     'test.com', 'fake.com', 'example.com', 'mail.com',
     'tempmail.com', '10minutemail.com', 'guerrillamail.com',
@@ -422,7 +681,6 @@ function validateEmail(email) {
     return "Please use a real email address, not temporary/fake emails";
   }
   
-  // Block suspicious patterns
   const suspiciousPatterns = [
     /^test\d*@/i, /^fake\d*@/i, /^demo\d*@/i,
     /^admin@/i, /^sample@/i, /^user\d+@/i
@@ -437,9 +695,27 @@ function validateEmail(email) {
   return null;
 }
 
+function calculatePasswordStrength(password) {
+  let strength = 0;
+  
+  if (password.length >= 8) strength++;
+  if (password.length >= 12) strength++;
+  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
+  if (/\d/.test(password)) strength++;
+  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  
+  return strength;
+}
+
 function validatePassword(password) {
-  if (!password || password.length < 6) {
-    return "Password must be at least 6 characters";
+  if (!password || password.length < 8) {
+    return "Password must be at least 8 characters";
+  }
+  if (!/[a-zA-Z]/.test(password)) {
+    return "Password must contain letters";
+  }
+  if (!/\d/.test(password)) {
+    return "Password must contain at least one number";
   }
   return null;
 }
@@ -474,35 +750,49 @@ async function checkEmailExists(email) {
     return aData.Answer && aData.Answer.length > 0;
   } catch (error) {
     console.error("Email domain check failed:", error);
-    return true; // Allow on network error
+    return true;
   }
 }
 
 // --- UI HELPERS ---
 
 function showError(field, message) {
-  inputs[field].classList.remove("valid");
+  inputs[field].classList.remove("valid", "warning");
   inputs[field].classList.add("invalid");
   errors[field].textContent = message;
   errors[field].classList.add("show");
 }
 
+function showWarning(field, message) {
+  inputs[field].classList.remove("valid", "invalid");
+  inputs[field].classList.add("warning");
+  if (field === "password") {
+    passwordWarning.textContent = message;
+    passwordWarning.classList.add("show");
+  }
+}
+
 function clearError(field) {
-  inputs[field].classList.remove("invalid");
+  inputs[field].classList.remove("invalid", "warning");
   inputs[field].classList.add("valid");
   errors[field].classList.remove("show");
+  if (field === "password") {
+    passwordWarning.classList.remove("show");
+  }
 }
 
 function clearAllErrors() {
   Object.keys(inputs).forEach(field => {
-    inputs[field].classList.remove("valid", "invalid");
+    inputs[field].classList.remove("valid", "invalid", "warning");
     errors[field].classList.remove("show");
   });
+  passwordWarning.classList.remove("show");
 }
 
 // --- REAL-TIME VALIDATION (Only for signup mode) ---
 
-let usernameTimeout, emailTimeout;
+let usernameTimeout, emailTimeout, passwordTimeout;
+let lastPasswordBreachCheck = "";
 
 inputs.username.addEventListener("input", async (e) => {
   if (mode !== "signup") return;
@@ -546,16 +836,42 @@ inputs.email.addEventListener("input", (e) => {
   }
 });
 
-inputs.password.addEventListener("input", (e) => {
+inputs.password.addEventListener("input", async (e) => {
   if (mode !== "signup") return;
   
   const password = e.target.value;
   const error = validatePassword(password);
   
+  // Update strength bar
+  const strength = calculatePasswordStrength(password);
+  strengthBar.className = "password-strength-bar";
+  if (strength >= 4) {
+    strengthBar.classList.add("strong");
+  } else if (strength >= 2) {
+    strengthBar.classList.add("medium");
+  } else if (password.length > 0) {
+    strengthBar.classList.add("weak");
+  }
+  
   if (error) {
     showError("password", error);
+    passwordWarning.classList.remove("show");
   } else {
     clearError("password");
+    
+    // Check for breaches (debounced)
+    clearTimeout(passwordTimeout);
+    passwordTimeout = setTimeout(async () => {
+      if (password === lastPasswordBreachCheck) return;
+      lastPasswordBreachCheck = password;
+      
+      const breachCount = await checkPasswordBreach(password);
+      if (breachCount > 0) {
+        showWarning("password", `⚠️ This password has been found in ${breachCount.toLocaleString()} data breaches. Choose a different one.`);
+      } else {
+        passwordWarning.classList.remove("show");
+      }
+    }, 1000);
   }
 });
 
@@ -589,9 +905,16 @@ window.toggleMode = () => {
   if (mode === "signup") {
     usernameInput.classList.remove("hidden");
     errors.username.classList.remove("hidden");
+    strengthContainer.classList.remove("hidden");
+    breachInfo.classList.remove("hidden");
+    inputs.password.setAttribute("autocomplete", "new-password");
   } else {
     usernameInput.classList.add("hidden");
     errors.username.classList.add("hidden");
+    strengthContainer.classList.add("hidden");
+    breachInfo.classList.add("hidden");
+    passwordWarning.classList.remove("show");
+    inputs.password.setAttribute("autocomplete", "current-password");
   }
   
   clearAllErrors();
@@ -617,15 +940,27 @@ actionBtn.onclick = async () => {
 
   try {
     if (mode === "login") {
-      // LOGIN MODE - Simple validation
+      // LOGIN MODE
       statusEl.textContent = "Logging in...";
-      await signInWithEmailAndPassword(auth, emailVal, passVal);
-      statusEl.textContent = "Success! Entering Arcade...";
+      actionBtn.disabled = true;
+      
+      const deviceId = getDeviceId();
+      const cred = await signInWithEmailAndPassword(auth, emailVal, passVal);
+      
+      // Register session (will check limits)
+      await registerSession(cred.user.uid, deviceId);
+      
+      statusEl.textContent = "Success! Welcome back...";
       statusEl.classList.add("success");
-      setTimeout(() => { location.href = "blog.html"; }, 1000);
+      
+      // Modal will close automatically via onAuthStateChanged
+      setTimeout(() => {
+        modal.style.display = "none";
+        actionBtn.disabled = false;
+      }, 1000);
       
     } else {
-      // SIGNUP MODE - Full validation
+      // SIGNUP MODE
       const usernameError = validateUsername(userVal);
       const emailError = validateEmail(emailVal);
       const passwordError = validatePassword(passVal);
@@ -659,10 +994,21 @@ actionBtn.onclick = async () => {
         return;
       }
 
+      // CRITICAL: Check password breach
+      statusEl.textContent = "Checking password security...";
+      const breachCount = await checkPasswordBreach(passVal);
+      if (breachCount > 0) {
+        showWarning("password", `⚠️ This password has been found in ${breachCount.toLocaleString()} data breaches. Choose a different one.`);
+        statusEl.textContent = "";
+        alert(`Security Warning: This password has appeared in ${breachCount.toLocaleString()} data breaches. Please choose a more secure password.`);
+        return;
+      }
+
       // Create account
       actionBtn.disabled = true;
       statusEl.textContent = "Creating account...";
       
+      const deviceId = getDeviceId();
       const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
       
       await updateProfile(cred.user, { displayName: userVal });
@@ -673,12 +1019,21 @@ actionBtn.onclick = async () => {
         email: emailVal,
         createdAt: new Date(),
         best2048: 0,
-        bestFlappy: 0
+        bestFlappy: 0,
+        // Session management
+        activeSessions: [deviceId],
+        maxSessions: 2,
+        currentGameSession: null,
+        lastActivity: new Date()
       });
 
-      statusEl.textContent = "Success! Entering Arcade...";
+      statusEl.textContent = "Success! Welcome to WebArcade...";
       statusEl.classList.add("success");
-      setTimeout(() => { location.href = "blog.html"; }, 1000);
+      
+      setTimeout(() => {
+        modal.style.display = "none";
+        actionBtn.disabled = false;
+      }, 1000);
     }
 
   } catch (err) {
@@ -687,7 +1042,6 @@ actionBtn.onclick = async () => {
     
     let msg = err.message;
     
-    // Handle Firebase errors
     if (err.code === "auth/email-already-in-use") {
       msg = "This email is already registered. Try logging in instead.";
       showError("email", "Email already in use");
@@ -697,8 +1051,11 @@ actionBtn.onclick = async () => {
     } else if (err.code === "auth/weak-password") {
       msg = "Password is too weak";
       showError("password", "Password too weak");
-    } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password") {
+    } else if (err.code === "auth/user-not-found" || err.code === "auth/wrong-password" || err.code === "auth/invalid-credential") {
       msg = "Invalid email or password";
+    } else if (msg.includes("Session limit")) {
+      // Custom session limit error
+      msg = err.message;
     }
     
     if (msg.includes("Firebase:")) {
