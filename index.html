@@ -581,15 +581,12 @@ onAuthStateChanged(auth, async (user) => {
       if (userDoc.exists()) {
         const username = userDoc.data().username;
         usernameDisplay.textContent = username;
-        welcomeText.innerHTML = `Welcome back, <strong>${username}</strong>! Ready to play?<br><br>
-        <small style="color: var(--text-muted);">Your scores are being tracked.</small>`;
       } else {
         usernameDisplay.textContent = user.displayName || 'Player';
-        welcomeText.innerHTML = `Welcome back! Ready to play?`;
       }
-      
-      // TODO: Redirect to dashboard/games page
-      // window.location.href = "dashboard.html";
+
+      // Redirect to blog page after successful auth
+      window.location.href = "blog.html";
       
     } catch (error) {
       console.error("Session error:", error);
@@ -950,14 +947,10 @@ actionBtn.onclick = async () => {
       // Register session (will check limits)
       await registerSession(cred.user.uid, deviceId);
       
-      statusEl.textContent = "Success! Welcome back...";
+      statusEl.textContent = "Success! Redirecting...";
       statusEl.classList.add("success");
       
-      // Modal will close automatically via onAuthStateChanged
-      setTimeout(() => {
-        modal.style.display = "none";
-        actionBtn.disabled = false;
-      }, 1000);
+      // Redirect handled by onAuthStateChanged
       
     } else {
       // SIGNUP MODE
@@ -1027,13 +1020,10 @@ actionBtn.onclick = async () => {
         lastActivity: new Date()
       });
 
-      statusEl.textContent = "Success! Welcome to WebArcade...";
+      statusEl.textContent = "Success! Redirecting...";
       statusEl.classList.add("success");
       
-      setTimeout(() => {
-        modal.style.display = "none";
-        actionBtn.disabled = false;
-      }, 1000);
+      // Redirect handled by onAuthStateChanged
     }
 
   } catch (err) {
