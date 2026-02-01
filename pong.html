@@ -6,178 +6,97 @@
     <title>Neon Pong</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
+        body { background-color: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: "Courier New", Courier, monospace; display: flex; justify-content: center; align-items: center; }
+        canvas { display: block; box-shadow: 0 0 50px rgba(0, 255, 255, 0.2); background: #050505; }
         
-        body {
-            background-color: #000;
-            overflow: hidden;
-            width: 100vw; height: 100vh;
-            font-family: "Courier New", Courier, monospace;
-            display: flex; justify-content: center; align-items: center;
-        }
-
-        canvas {
-            display: block;
-            box-shadow: 0 0 50px rgba(0, 255, 255, 0.2);
-            background: #050505;
-        }
-
+        /* Enhanced touch zones with visual feedback */
         .touch-zone { 
             position: absolute; 
-            top: 80px;
+            top: 0;
             bottom: 0; 
             width: 50%; 
             z-index: 5;
             pointer-events: auto;
+            transition: background 0.3s;
         }
+        .touch-zone.active { background: rgba(255,255,255,0.05); }
         #leftZone { left: 0; }
         #rightZone { right: 0; }
-
-        .ui-layer { 
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            pointer-events: none; z-index: 20;
-            display: flex; flex-direction: column; align-items: center;
-        }
-        .interactive { pointer-events: auto; }
-
-        .hud { 
-            width: 100%; padding: 12px 16px;
-            display: flex; flex-direction: column; align-items: center;
-            pointer-events: none;
-        }
-        .score-row {
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; max-width: 600px;
-        }
-        .score-box { 
-            display: flex; gap: 60px; 
-            font-size: clamp(28px, 9vw, 60px); 
-            font-weight: bold; text-shadow: 0 0 10px currentColor; 
-        }
         
-        .player-info {
-            display: flex; justify-content: space-between; width: 100%; max-width: 500px;
-            margin-top: -4px; font-weight: bold; letter-spacing: 2px;
-            font-size: clamp(9px, 2.5vw, 14px);
+        /* Touch indicator */
+        .touch-indicator {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 3px solid rgba(255,255,255,0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 6;
         }
+        .touch-indicator.visible { opacity: 1; }
+
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; display: flex; flex-direction: column; align-items: center; }
+        .interactive { pointer-events: auto; }
+        .hud { width: 100%; padding: 12px 16px; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
+        .score-row { display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 600px; }
+        .score-box { display: flex; gap: 60px; font-size: clamp(28px, 9vw, 60px); font-weight: bold; text-shadow: 0 0 10px currentColor; }
+        .player-info { display: flex; justify-content: space-between; width: 100%; max-width: 500px; margin-top: -4px; font-weight: bold; letter-spacing: 2px; font-size: clamp(9px, 2.5vw, 14px); }
         .label-l { color: #ff0055; text-shadow: 0 0 5px #ff0055; }
         .label-r { color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
-
-        .screen {
-            position: absolute; inset: 0; 
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(4px);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: opacity 0.3s;
-            padding: 20px;
-            overflow-y: auto;
-            pointer-events: auto;
-        }
+        
+        .screen { position: absolute; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.3s; padding: 20px; overflow-y: auto; pointer-events: auto; }
         .hidden { opacity: 0; pointer-events: none; }
-
-        h1 {
-            color: #fff; 
-            font-size: clamp(24px, 7vw, 50px); 
-            margin-bottom: clamp(12px, 3vh, 30px); 
-            letter-spacing: clamp(2px, 1vw, 5px);
-            text-shadow: 0 0 20px #00f3ff; text-transform: uppercase; text-align: center;
-        }
-
+        h1 { color: #fff; font-size: clamp(24px, 7vw, 50px); margin-bottom: clamp(12px, 3vh, 30px); letter-spacing: clamp(2px, 1vw, 5px); text-shadow: 0 0 20px #00f3ff; text-transform: uppercase; text-align: center; }
         h2 { font-size: clamp(36px, 10vw, 60px); }
-
-        button {
-            background: rgba(0,0,0,0.6); 
-            border: 2px solid #fff; color: #fff;
-            padding: clamp(8px, 2vh, 15px) clamp(16px, 5vw, 40px); 
-            margin: clamp(4px, 1vh, 10px);
-            font-size: clamp(12px, 3.2vw, 18px); 
-            font-weight: bold; letter-spacing: 2px;
-            text-transform: uppercase; cursor: pointer;
-            box-shadow: 0 0 10px rgba(255,255,255,0.1);
-            transition: all 0.2s;
-            min-width: clamp(130px, 40vw, 200px);
-        }
+        button { background: rgba(0,0,0,0.6); border: 2px solid #fff; color: #fff; padding: clamp(8px, 2vh, 15px) clamp(16px, 5vw, 40px); margin: clamp(4px, 1vh, 10px); font-size: clamp(12px, 3.2vw, 18px); font-weight: bold; letter-spacing: 2px; text-transform: uppercase; cursor: pointer; box-shadow: 0 0 10px rgba(255,255,255,0.1); transition: all 0.2s; min-width: clamp(130px, 40vw, 200px); }
         button:active { transform: scale(0.95); background: #222; }
         button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-        
         .btn-cyan { border-color: #00f3ff; color: #00f3ff; text-shadow: 0 0 5px #00f3ff; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
         .btn-pink { border-color: #ff0055; color: #ff0055; text-shadow: 0 0 5px #ff0055; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
-        
-        .btn-exit {
-            position: absolute; top: 12px; left: 12px;
-            border-color: #ff3333; color: #ff3333;
-            padding: clamp(6px, 1.5vh, 10px) clamp(10px, 3vw, 20px); 
-            min-width: auto; 
-            font-size: clamp(10px, 2.8vw, 14px);
-            box-shadow: 0 0 5px rgba(255, 50, 50, 0.5);
-            z-index: 100;
-            pointer-events: auto;
-        }
-
-        input {
-            background: transparent; border: none; border-bottom: 2px solid #00f3ff;
-            color: #fff; font-size: clamp(20px, 6vw, 30px); text-align: center; letter-spacing: 5px;
-            width: clamp(120px, 45vw, 200px); margin: clamp(8px, 2vh, 20px); outline: none; 
-            padding: clamp(6px, 1.5vh, 10px);
-        }
-
-        .lobby-divider {
-            color: #666; 
-            margin: clamp(4px, 1vh, 10px) 0;
-            font-size: clamp(11px, 3vw, 16px);
-        }
-
-        .btn-back {
-            font-size: clamp(10px, 2.5vw, 12px) !important; 
-            min-width: clamp(80px, 25vw, 100px) !important; 
-            border-color: #555 !important; color: #aaa !important;
-            margin-top: clamp(6px, 1.5vh, 8px);
-        }
-
-        .feedback-text {
-            color: #ff3333;
-            font-size: clamp(10px, 2.8vw, 13px);
-            min-height: 1.4em;
-            margin-top: 4px;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
+        .btn-exit { position: absolute; top: 12px; left: 12px; border-color: #ff3333; color: #ff3333; padding: clamp(6px, 1.5vh, 10px) clamp(10px, 3vw, 20px); min-width: auto; font-size: clamp(10px, 2.8vw, 14px); box-shadow: 0 0 5px rgba(255, 50, 50, 0.5); z-index: 100; pointer-events: auto; }
+        input { background: transparent; border: none; border-bottom: 2px solid #00f3ff; color: #fff; font-size: clamp(20px, 6vw, 30px); text-align: center; letter-spacing: 5px; width: clamp(120px, 45vw, 200px); margin: clamp(8px, 2vh, 20px); outline: none; padding: clamp(6px, 1.5vh, 10px); }
+        .lobby-divider { color: #666; margin: clamp(4px, 1vh, 10px) 0; font-size: clamp(11px, 3vw, 16px); }
+        .btn-back { font-size: clamp(10px, 2.5vw, 12px) !important; min-width: clamp(80px, 25vw, 100px) !important; border-color: #555 !important; color: #aaa !important; margin-top: clamp(6px, 1.5vh, 8px); }
+        .feedback-text { color: #ff3333; font-size: clamp(10px, 2.8vw, 13px); min-height: 1.4em; margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; }
         .room-code-label { color: #aaa; font-size: clamp(11px, 3vw, 16px); }
         .room-code-display { color: #0f0; font-size: clamp(36px, 10vw, 60px); margin: 6px 0; text-shadow: 0 0 20px #0f0; }
         .waiting-text { color: #fff; margin-top: clamp(8px, 2vh, 20px); font-size: clamp(12px, 3.2vw, 16px); }
-        
-        .error-notice {
-            color: #ff6b6b;
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid #ff3333;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-top: 10px;
-            font-size: clamp(10px, 2.5vw, 12px);
-            max-width: 90%;
-            text-align: center;
-        }
-
-        .back-btn-link {
-            position: absolute; top: 12px; right: 12px;
-            background: rgba(0,0,0,0.6); border: 2px solid #555;
-            color: #aaa; padding: clamp(6px, 1.5vh, 10px) clamp(10px, 3vw, 20px);
-            text-decoration: none; font-weight: bold; font-size: clamp(10px, 2.8vw, 14px);
-            border-radius: 4px; text-transform: uppercase; z-index: 100;
-            display: inline-block;
-        }
+        .error-notice { color: #ff6b6b; background: rgba(255, 0, 0, 0.1); border: 1px solid #ff3333; padding: 10px 15px; border-radius: 8px; margin-top: 10px; font-size: clamp(10px, 2.5vw, 12px); max-width: 90%; text-align: center; }
+        .back-btn-link { position: absolute; top: 12px; right: 12px; background: rgba(0,0,0,0.6); border: 2px solid #555; color: #aaa; padding: clamp(6px, 1.5vh, 10px) clamp(10px, 3vw, 20px); text-decoration: none; font-weight: bold; font-size: clamp(10px, 2.8vw, 14px); border-radius: 4px; text-transform: uppercase; z-index: 100; display: inline-block; }
         .back-btn-link:hover { background: rgba(50,50,50,0.8); }
+        
+        /* Connection status indicator */
+        .connection-status {
+            position: absolute;
+            top: 50px;
+            right: 12px;
+            background: rgba(0,0,0,0.8);
+            border: 2px solid;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            z-index: 101;
+            display: none;
+        }
+        .connection-status.connected { border-color: #0f0; color: #0f0; }
+        .connection-status.disconnected { border-color: #f00; color: #f00; }
     </style>
 </head>
 <body>
 
     <div id="leftZone" class="touch-zone"></div>
     <div id="rightZone" class="touch-zone"></div>
+    <div id="touchIndicator" class="touch-indicator"></div>
 
     <div class="ui-layer">
         <div class="hud hidden" id="gameHud">
             <button class="btn-exit interactive" id="btnExit">EXIT</button>
             <a href="blog.html" class="back-btn-link">← DASH</a>
+            <div id="connectionStatus" class="connection-status"></div>
             <div class="score-row">
                 <div class="score-box">
                     <div style="color:#ff0055" id="scoreL">0</div>
@@ -203,7 +122,7 @@
             <div id="lobbyMain" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
                 <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
                 <div class="lobby-divider">--- OR JOIN ---</div>
-                <input type="tel" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4" pattern="[0-9]*">
+                <input type="tel" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off">
                 <div class="feedback-text" id="joinFeedback"></div>
                 <button id="btnJoin" class="btn-pink">JOIN GAME</button>
                 <button id="btnBack" class="btn-back">BACK</button>
@@ -244,19 +163,11 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        const W = 800;
-        const H = 600;
-        const BALL_RADIUS = 8;
-        const PADDLE_WIDTH = 16;
-        const PADDLE_HEIGHT = 100;
-        
-        const BALL_BASE_SPEED_X = 420;
-        const BALL_MAX_SPEED     = 850;
-        const BALL_ACCEL_FACTOR  = 1.07;
-        const PADDLE_MIN_Y       = PADDLE_HEIGHT/2 + 10;
-        const PADDLE_MAX_Y       = H - PADDLE_HEIGHT/2 - 10;
-        const WIN_SCORE          = 10;
-        const COLLISION_COOLDOWN = 70;
+        const W = 800, H = 600;
+        const BALL_RADIUS = 8, PADDLE_WIDTH = 16, PADDLE_HEIGHT = 100;
+        const BALL_BASE_SPEED_X = 420, BALL_MAX_SPEED = 850, BALL_ACCEL_FACTOR = 1.07;
+        const PADDLE_MIN_Y = PADDLE_HEIGHT/2 + 10, PADDLE_MAX_Y = H - PADDLE_HEIGHT/2 - 10;
+        const WIN_SCORE = 10, COLLISION_COOLDOWN = 70;
 
         class PongGame {
             constructor() {
@@ -270,8 +181,7 @@
                 
                 this.state = {
                     playing: false, mode: '', role: '', room: null,
-                    score: {L:0, R:0},
-                    pL: H/2, pR: H/2,
+                    score: {L:0, R:0}, pL: H/2, pR: H/2,
                     bx: W/2, by: H/2, bvx: 0, bvy: 0
                 };
                 
@@ -284,7 +194,8 @@
                 this.lastHitTimeL = 0;
                 this.lastHitTimeR = 0;
                 this.lastScoreUpdate = 0;
-                this.pendingCleanup = false;
+                this.connectionCheckInterval = null;
+                this.lastServerUpdate = Date.now();
 
                 this.initGFX();
                 this.initUI();
@@ -292,12 +203,8 @@
                 this.resize();
                 
                 window.addEventListener('resize', () => this.resize());
-                window.addEventListener('visibilitychange', () => this.handleVisibilityChange());
                 window.addEventListener('beforeunload', () => {
-                    if (this.state.room) {
-                        // Synchronous cleanup for beforeunload
-                        navigator.sendBeacon && this.beaconCleanup();
-                    }
+                    if (this.state.room) navigator.sendBeacon && this.beaconCleanup();
                 });
                 
                 this.app.ticker.add((d) => this.loop(d));
@@ -308,21 +215,11 @@
                 const url = this.state.role === 'host' 
                     ? `${firebaseConfig.databaseURL}/rooms/${this.state.room}.json`
                     : `${firebaseConfig.databaseURL}/rooms/${this.state.room}/g.json`;
-                    
                 navigator.sendBeacon(url, JSON.stringify(null));
             }
 
-            handleVisibilityChange() {
-                if(document.hidden && this.state.playing && this.state.mode === 'online') {
-                    // Pause or warn user they're about to disconnect
-                    console.warn('Tab hidden - game may disconnect');
-                }
-            }
-
             resize() {
-                const screenW = window.innerWidth;
-                const screenH = window.innerHeight;
-                const scale = Math.min(screenW / W, screenH / H);
+                const scale = Math.min(window.innerWidth / W, window.innerHeight / H);
                 this.app.view.style.width  = `${W * scale}px`;
                 this.app.view.style.height = `${H * scale}px`;
                 this.scaleFactor = scale;
@@ -330,25 +227,17 @@
 
             initGFX() {
                 try {
-                    if(PIXI.filters && PIXI.filters.BloomFilter) {
-                        this.app.stage.filters = [new PIXI.filters.BloomFilter({
-                            strength: 0.4, 
-                            quality: 4,
-                            blur: 8
-                        })];
+                    if(PIXI.filters?.BloomFilter) {
+                        this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.4, quality: 4, blur: 8})];
                     }
-                } catch(e) { 
-                    console.warn('Bloom filter unavailable');
-                }
+                } catch(e) {}
                 
-                // Net
                 const net = new PIXI.Graphics();
                 net.beginFill(0x333333);
                 for(let y = 10; y < H; y += 30) net.drawRect(W/2 - 1, y, 2, 15);
                 net.endFill();
                 this.app.stage.addChild(net);
 
-                // Paddles
                 const makePad = (c, x) => {
                     const g = new PIXI.Graphics();
                     g.beginFill(c);
@@ -364,7 +253,6 @@
                 this.gfxL = makePad(0xff0055, 30);
                 this.gfxR = makePad(0x00f3ff, W - 30);
 
-                // Ball
                 this.ball = new PIXI.Graphics();
                 this.ball.beginFill(0xffffff);
                 this.ball.drawCircle(0, 0, BALL_RADIUS);
@@ -373,33 +261,48 @@
                 this.ball.y = H/2;
                 this.app.stage.addChild(this.ball);
                 
-                // Trail effect
                 this.ballTrail = new PIXI.Graphics();
                 this.app.stage.addChildAt(this.ballTrail, 1);
             }
 
             initInput() {
-                const onInput = (clientY) => {
+                const touchIndicator = document.getElementById('touchIndicator');
+                
+                const onInput = (clientY, show = false) => {
                     if(!this.state.playing) return;
                     const rect = this.app.view.getBoundingClientRect();
                     let relativeY = (clientY - rect.top) / this.scaleFactor;
                     this.inputY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, relativeY));
+                    
+                    if(show) {
+                        touchIndicator.style.left = rect.left + rect.width/2 + 'px';
+                        touchIndicator.style.top = clientY + 'px';
+                        touchIndicator.classList.add('visible');
+                    }
                 };
 
                 window.addEventListener('mousemove', (e) => onInput(e.clientY));
 
-                const touchHandler = (e) => {
-                    e.preventDefault();
-                    if(e.touches.length > 0) onInput(e.touches[0].clientY);
-                };
-                
                 const zones = document.querySelectorAll('.touch-zone');
                 zones.forEach(z => {
-                    z.addEventListener('touchmove',  touchHandler, { passive: false });
-                    z.addEventListener('touchstart', touchHandler, { passive: false });
+                    z.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        z.classList.add('active');
+                        if(e.touches.length > 0) onInput(e.touches[0].clientY, true);
+                    }, { passive: false });
+                    
+                    z.addEventListener('touchmove', (e) => {
+                        e.preventDefault();
+                        if(e.touches.length > 0) onInput(e.touches[0].clientY, true);
+                    }, { passive: false });
+                    
+                    z.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        z.classList.remove('active');
+                        touchIndicator.classList.remove('visible');
+                    }, { passive: false });
                 });
                 
-                // Keyboard controls
                 window.addEventListener('keydown', (e) => {
                     if(!this.state.playing) return;
                     if(e.key === 'ArrowUp') this.inputY = Math.max(PADDLE_MIN_Y, this.inputY - 20);
@@ -409,20 +312,15 @@
 
             initUI() {
                 const el = id => document.getElementById(id);
-                el('btnAI').onclick     = () => this.startAI();
+                el('btnAI').onclick = () => this.startAI();
                 el('btnOnline').onclick = () => this.showLobby();
-                el('btnBack').onclick   = () => this.hideLobby();
-                el('btnHost').onclick   = () => this.host();
-                el('btnJoin').onclick   = () => this.join();
-                el('btnExit').onclick   = () => this.manualExit();
+                el('btnBack').onclick = () => this.hideLobby();
+                el('btnHost').onclick = () => this.host();
+                el('btnJoin').onclick = () => this.join();
+                el('btnExit').onclick = () => this.manualExit();
                 el('btnCancelHost').onclick = () => this.cancelHosting();
-                
-                // Prevent form submission on enter
                 el('codeIn').addEventListener('keypress', (e) => {
-                    if(e.key === 'Enter') {
-                        e.preventDefault();
-                        this.join();
-                    }
+                    if(e.key === 'Enter') { e.preventDefault(); this.join(); }
                 });
             }
 
@@ -435,65 +333,51 @@
                 document.getElementById('lobbyScreen').classList.add('hidden');
                 document.getElementById('menuScreen').classList.remove('hidden');
                 document.getElementById('joinFeedback').textContent = '';
-                document.getElementById('btnJoin').disabled = false;
-                document.getElementById('btnHost').disabled = false;
+                ['btnJoin', 'btnHost'].forEach(id => document.getElementById(id).disabled = false);
             }
 
             startAI() {
-                this.state.mode    = 'ai';
-                this.state.playing = true;
-                this.state.score = {L:0, R:0};
+                this.state = {...this.state, mode: 'ai', playing: true, score: {L:0, R:0}};
                 this.resetBall();
                 document.getElementById('menuScreen').classList.add('hidden');
                 document.getElementById('gameHud').classList.remove('hidden');
             }
 
             async manualExit() {
-                if(this.pendingCleanup) return;
-                this.pendingCleanup = true;
                 await this.cleanup();
-                this.pendingCleanup = false;
                 window.location.reload();
             }
 
             async cancelHosting() {
-                if(this.pendingCleanup) return;
-                this.pendingCleanup = true;
                 await this.cleanup();
                 document.getElementById('lobbyWait').classList.add('hidden');
                 document.getElementById('lobbyMain').classList.remove('hidden');
-                document.getElementById('btnJoin').disabled = false;
-                document.getElementById('btnHost').disabled = false;
-                this.pendingCleanup = false;
+                ['btnJoin', 'btnHost'].forEach(id => document.getElementById(id).disabled = false);
             }
 
             async cleanup() {
                 if(this.isCleaningUp) return;
                 this.isCleaningUp = true;
 
-                // Remove listener
+                if(this.connectionCheckInterval) {
+                    clearInterval(this.connectionCheckInterval);
+                    this.connectionCheckInterval = null;
+                }
+
                 if(this.roomRef) {
-                    try {
-                        off(this.roomRef);
-                    } catch(e) {}
+                    try { off(this.roomRef); } catch(e) {}
                     this.roomListener = null;
                     this.roomRef = null;
                 }
 
-                // Clean Firebase
                 if(this.state.room) {
-                    const room = this.state.room;
-                    const role = this.state.role;
-                    
+                    const room = this.state.room, role = this.state.role;
                     this.state.room = null;
                     this.state.role = '';
                     
                     try {
-                        if(role === 'host') {
-                            await remove(ref(db, 'rooms/' + room));
-                        } else if(role === 'guest') {
-                            await update(ref(db, 'rooms/' + room), { g: null });
-                        }
+                        if(role === 'host') await remove(ref(db, 'rooms/' + room));
+                        else if(role === 'guest') await update(ref(db, 'rooms/' + room), { g: null });
                     } catch(e) {}
                 }
                 
@@ -506,30 +390,32 @@
                 document.getElementById('gameHud').classList.add('hidden');
                 document.getElementById('winMsg').innerText = reason || "GAME OVER";
                 document.getElementById('overScreen').classList.remove('hidden');
+                document.getElementById('connectionStatus').style.display = 'none';
+            }
+
+            updateConnectionStatus(connected) {
+                const status = document.getElementById('connectionStatus');
+                if(this.state.mode === 'online' && this.state.playing) {
+                    status.style.display = 'block';
+                    status.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
+                    status.textContent = connected ? 'CONNECTED' : 'RECONNECTING...';
+                } else {
+                    status.style.display = 'none';
+                }
             }
 
             loop(delta) {
                 if(!this.state.playing) return;
-
-                const dt = Math.min(delta / 60, 0.033); // Cap at 33ms
+                const dt = Math.min(delta / 60, 0.033);
                 const s = this.state;
 
-                // Paddle movement
                 if(s.mode === 'ai') {
                     s.pL = this.inputY;
-
-                    // AI that scales with ball speed
-                    const baseSpeed = 320;
-                    const speedBoost = Math.abs(s.bvx) * 0.22;
-                    const aiSpeed = Math.min(500, baseSpeed + speedBoost);
-                    
+                    const aiSpeed = Math.min(500, 320 + Math.abs(s.bvx) * 0.22);
                     const target = s.bx > W / 2 ? s.by : H / 2;
                     const diff = target - s.pR;
                     const maxMove = aiSpeed * dt;
-                    
-                    if(Math.abs(diff) <= maxMove) s.pR = target;
-                    else s.pR += Math.sign(diff) * maxMove;
-                    
+                    s.pR = Math.abs(diff) <= maxMove ? target : s.pR + Math.sign(diff) * maxMove;
                     s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
                 } else if(s.mode === 'online') {
                     if(s.role === 'host') s.pL = this.inputY;
@@ -539,34 +425,27 @@
                 s.pL = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pL));
                 s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
 
-                // Ball physics
-                const oldX = s.bx;
-                const oldY = s.by;
-                
+                const oldX = s.bx, oldY = s.by;
                 s.bx += s.bvx * dt;
                 s.by += s.bvy * dt;
 
-                // Wall bounce
                 if(s.by - BALL_RADIUS < 0) {
                     s.by = BALL_RADIUS;
-                    s.bvy = Math.abs(s.bvy) * 0.98; // Slight damping
+                    s.bvy = Math.abs(s.bvy) * 0.98;
                 } else if(s.by + BALL_RADIUS > H) {
                     s.by = H - BALL_RADIUS;
                     s.bvy = -Math.abs(s.bvy) * 0.98;
                 }
 
-                // Trail
                 this.ballTrail.clear();
                 this.ballTrail.lineStyle(BALL_RADIUS * 1.5, 0xffffff, 0.15);
                 this.ballTrail.moveTo(oldX, oldY);
                 this.ballTrail.lineTo(s.bx, s.by);
 
-                // Collision & scoring
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
                     this.checkHit(s.pL, 30, 1);
                     this.checkHit(s.pR, W - 30, -1);
 
-                    // Score with debounce
                     const now = Date.now();
                     if(now - this.lastScoreUpdate > 500) {
                         if(s.bx + BALL_RADIUS < 0) {
@@ -581,52 +460,45 @@
                     }
                 }
 
-                // Render
                 this.gfxL.y = s.pL;
                 this.gfxR.y = s.pR;
                 this.ball.x = s.bx;
                 this.ball.y = s.by;
 
-                // Network sync
-                if(s.mode === 'online' && s.playing && this.roomRef) {
+                if(s.mode === 'online' && s.playing && this.roomRef && !this.isCleaningUp) {
                     const now = Date.now();
                     if(now - this.lastNet > 16) {
                         this.netSync();
                         this.lastNet = now;
                     }
+                    
+                    // Connection status check
+                    this.updateConnectionStatus(now - this.lastServerUpdate < 3000);
                 }
             }
 
             checkHit(py, px, dir) {
-                const s = this.state;
-                const now = Date.now();
+                const s = this.state, now = Date.now();
                 const cooldown = (dir === 1) ? this.lastHitTimeL : this.lastHitTimeR;
                 if(now - cooldown < COLLISION_COOLDOWN) return;
                 
                 const movingToward = (dir === 1 && s.bvx < 0) || (dir === -1 && s.bvx > 0);
                 if(!movingToward) return;
 
-                // Circle-rect collision
                 const closestX = Math.max(px - PADDLE_WIDTH/2, Math.min(s.bx, px + PADDLE_WIDTH/2));
                 const closestY = Math.max(py - PADDLE_HEIGHT/2, Math.min(s.by, py + PADDLE_HEIGHT/2));
-                const distX = s.bx - closestX;
-                const distY = s.by - closestY;
-                const distSq = (distX * distX) + (distY * distY);
+                const distSq = (s.bx - closestX) ** 2 + (s.by - closestY) ** 2;
                 
-                if(distSq <= (BALL_RADIUS * BALL_RADIUS)) {
+                if(distSq <= BALL_RADIUS ** 2) {
                     if(dir === 1) this.lastHitTimeL = now;
                     else this.lastHitTimeR = now;
                     
-                    let newSpeed = Math.abs(s.bvx) * BALL_ACCEL_FACTOR;
-                    newSpeed = Math.min(newSpeed, BALL_MAX_SPEED);
-
+                    let newSpeed = Math.min(Math.abs(s.bvx) * BALL_ACCEL_FACTOR, BALL_MAX_SPEED);
                     s.bvx = newSpeed * dir;
                     
                     const relativePos = (s.by - py) / (PADDLE_HEIGHT/2);
                     s.bvy = relativePos * newSpeed * 0.45;
-
-                    const maxVy = newSpeed * 0.55;
-                    s.bvy = Math.max(-maxVy, Math.min(maxVy, s.bvy));
+                    s.bvy = Math.max(-newSpeed * 0.55, Math.min(newSpeed * 0.55, s.bvy));
 
                     const pushout = BALL_RADIUS + PADDLE_WIDTH/2 + Math.abs(s.bvx) * 0.02;
                     s.bx = (dir === 1) ? (px + pushout) : (px - pushout);
@@ -638,25 +510,17 @@
                 const s = this.state;
                 s.bx = W / 2;
                 s.by = H / 2;
-                const d = dir || (Math.random() > 0.5 ? 1 : -1);
-                s.bvx = d * BALL_BASE_SPEED_X;
-                
-                const minV = 70;
-                const maxV = 140;
-                s.bvy = (Math.random() * (maxV - minV) + minV) * (Math.random() > 0.5 ? 1 : -1);
+                s.bvx = (dir || (Math.random() > 0.5 ? 1 : -1)) * BALL_BASE_SPEED_X;
+                s.bvy = (Math.random() * 70 + 70) * (Math.random() > 0.5 ? 1 : -1);
 
                 document.getElementById('scoreL').innerText = s.score.L;
                 document.getElementById('scoreR').innerText = s.score.R;
 
                 if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
                     const winner = s.score.L > s.score.R ? "PLAYER 1 WINS!" : "PLAYER 2 WINS!";
-                    
                     if(s.room && s.role === 'host') {
                         const room = s.room;
-                        update(ref(db, 'rooms/' + room), { 
-                            gameOver: true,
-                            winner: winner 
-                        }).then(() => {
+                        update(ref(db, 'rooms/' + room), { gameOver: true, winner }).then(() => {
                             this.stopGame(winner);
                             setTimeout(() => this.cleanup(), 1500);
                         }).catch(() => {
@@ -670,45 +534,34 @@
             }
 
             async host() {
-                if(document.getElementById('btnHost').disabled) return;
-                document.getElementById('btnHost').disabled = true;
+                const btn = document.getElementById('btnHost');
+                if(btn.disabled) return;
+                btn.disabled = true;
                 
                 let code, attempts = 0;
-                const maxAttempts = 10;
-                
-                while(attempts < maxAttempts) {
+                while(attempts < 10) {
                     code = Math.floor(1000 + Math.random() * 9000).toString();
                     try {
                         const exists = await get(ref(db, 'rooms/' + code));
                         if(!exists.exists()) break;
-                    } catch(e) {
-                        console.error('Room check error:', e);
-                        break;
-                    }
+                    } catch(e) { break; }
                     attempts++;
                 }
                 
-                if(attempts >= maxAttempts) {
-                    this.showError('Failed to create room. Try again.');
-                    document.getElementById('btnHost').disabled = false;
+                if(attempts >= 10) {
+                    this.showError('Failed to create room');
+                    btn.disabled = false;
                     return;
                 }
 
-                this.state.room = code;
-                this.state.role = 'host';
-                this.state.score = {L:0, R:0};
-                
+                this.state = {...this.state, room: code, role: 'host', score: {L:0, R:0}};
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
 
                 try {
                     this.roomRef = ref(db, 'rooms/' + code);
-                    await set(this.roomRef, { 
-                        h: true, 
-                        status: 'waiting',
-                        created: Date.now()
-                    });
+                    await set(this.roomRef, { h: true, status: 'waiting', created: Date.now() });
                     onDisconnect(this.roomRef).remove();
 
                     this.roomListener = onValue(this.roomRef, (snap) => {
@@ -716,12 +569,14 @@
                         const d = snap.val();
                         if(!d) return;
 
-                        if(d.g && !this.state.playing && !this.isCleaningUp) {
+                        if(d.g && !this.state.playing) {
                             this.state.mode = 'online';
                             this.state.playing = true;
+                            this.lastServerUpdate = Date.now();
                             this.resetBall();
                             document.getElementById('lobbyScreen').classList.add('hidden');
                             document.getElementById('gameHud').classList.remove('hidden');
+                            this.updateConnectionStatus(true);
                         }
 
                         if(d.gameOver && d.winner && this.state.playing) {
@@ -738,77 +593,72 @@
                         if(d.gy !== undefined && this.state.playing) {
                             const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.gy));
                             this.state.pR += (validY - this.state.pR) * 0.65;
+                            this.lastServerUpdate = Date.now();
                         }
                     }, (error) => {
-                        console.error('Host listener error:', error);
+                        console.error('Host error:', error);
                         this.showError('Connection lost');
                         this.cleanup();
                     });
                 } catch(error) {
                     console.error('Host error:', error);
-                    this.showError('Failed to create room: ' + error.message);
+                    this.showError('Failed to create room');
                     this.cancelHosting();
                 }
             }
 
             async join() {
                 const code = document.getElementById('codeIn').value.trim();
-                const fb   = document.getElementById('joinFeedback');
-                const joinBtn = document.getElementById('btnJoin');
+                const fb = document.getElementById('joinFeedback');
+                const btn = document.getElementById('btnJoin');
 
-                if(!code || code.length !== 4 || !/^\d{4}$/.test(code)) {
+                if(!code || !/^\d{4}$/.test(code)) {
                     fb.textContent = 'Enter valid 4-digit code';
                     return;
                 }
 
-                if(joinBtn.disabled) return;
-                joinBtn.disabled = true;
+                if(btn.disabled) return;
+                btn.disabled = true;
                 fb.textContent = 'Connecting...';
 
                 const timeoutId = setTimeout(() => {
                     fb.textContent = 'Connection timeout';
-                    joinBtn.disabled = false;
+                    btn.disabled = false;
                 }, 10000);
 
                 try {
                     this.roomRef = ref(db, 'rooms/' + code);
                     const snap = await get(this.roomRef);
-
                     clearTimeout(timeoutId);
 
                     if(!snap.exists()) {
                         fb.textContent = 'Room not found';
-                        joinBtn.disabled = false;
+                        btn.disabled = false;
                         return;
                     }
 
                     const roomData = snap.val();
                     if(roomData.g) {
                         fb.textContent = 'Room is full';
-                        joinBtn.disabled = false;
+                        btn.disabled = false;
                         return;
                     }
 
                     if(roomData.gameOver) {
                         fb.textContent = 'Game already ended';
-                        joinBtn.disabled = false;
+                        btn.disabled = false;
                         return;
                     }
 
-                    fb.textContent = '';
-                    this.state.room = code;
-                    this.state.role = 'guest';
-                    this.state.score = {L:0, R:0};
-
-                    await update(this.roomRef, { g: true });
+                    this.state = {...this.state, room: code, role: 'guest', score: {L:0, R:0}, mode: 'online', playing: true};
+                    this.lastServerUpdate = Date.now();
                     
-                    const guestRef = ref(db, 'rooms/' + code + '/g');
-                    onDisconnect(guestRef).remove();
+                    await update(this.roomRef, { g: true });
+                    onDisconnect(ref(db, 'rooms/' + code + '/g')).remove();
 
-                    this.state.mode = 'online';
-                    this.state.playing = true;
                     document.getElementById('lobbyScreen').classList.add('hidden');
                     document.getElementById('gameHud').classList.remove('hidden');
+                    this.updateConnectionStatus(true);
 
                     this.roomListener = onValue(this.roomRef, (s) => {
                         if(this.isCleaningUp) return;
@@ -819,15 +669,15 @@
                         }
                         this.onServer(d);
                     }, (error) => {
-                        console.error('Guest listener error:', error);
+                        console.error('Guest error:', error);
                         this.stopGame("CONNECTION LOST");
                     });
                 } catch(error) {
                     clearTimeout(timeoutId);
                     console.error('Join error:', error);
                     fb.textContent = 'Connection failed';
-                    joinBtn.disabled = false;
-                    this.showError('Failed to join: ' + error.message);
+                    btn.disabled = false;
+                    this.showError('Failed to join');
                 }
             }
 
@@ -840,15 +690,16 @@
 
                     if(s.role === 'host') {
                         update(r, {
-                            bx:  Math.round(s.bx),
-                            by:  Math.round(s.by),
-                            bvx: Math.round(s.bvx),
-                            bvy: Math.round(s.bvy),
-                            hy:  Math.round(s.pL),
-                            sc:  s.score
+                            bx: Math.round(s.bx), by: Math.round(s.by),
+                            bvx: Math.round(s.bvx), bvy: Math.round(s.bvy),
+                            hy: Math.round(s.pL), sc: s.score,
+                            lastUpdate: Date.now()
                         }).catch(() => {});
                     } else {
-                        update(r, { gy: Math.round(s.pR) }).catch(() => {});
+                        update(r, { 
+                            gy: Math.round(s.pR),
+                            gLastUpdate: Date.now()
+                        }).catch(() => {});
                     }
                 } catch(e) {}
             }
@@ -876,17 +727,15 @@
                 if(d.bx !== undefined && d.bvx !== undefined) {
                     s.bvx = d.bvx;
                     s.bvy = d.bvy;
-
                     const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
-                    const threshold = 100;
-                    
-                    if(dist < threshold) {
+                    if(dist < 100) {
                         s.bx += (d.bx - s.bx) * 0.65;
                         s.by += (d.by - s.by) * 0.65;
                     } else {
                         s.bx = d.bx;
                         s.by = d.by;
                     }
+                    this.lastServerUpdate = Date.now();
                 }
             }
 
@@ -902,7 +751,7 @@
             try {
                 new PongGame();
             } catch(error) {
-                console.error('Fatal error:', error);
+                console.error('Fatal:', error);
                 alert('Failed to start game. Please refresh.');
             }
         });
