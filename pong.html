@@ -271,7 +271,8 @@
                 this.lastNet = 0;
                 this.roomListener = null;
                 this.isCleaningUp = false;
-                this.lastHitTime = 0; // Collision cooldown tracker
+                this.lastHitTimeL = 0; // Left paddle cooldown
+                this.lastHitTimeR = 0; // Right paddle cooldown
 
                 this.initGFX();
                 this.initUI();
@@ -498,9 +499,10 @@
             checkHit(py, px, dir) {
                 const s = this.state;
                 
-                // Collision cooldown - prevent multiple hits in quick succession
+                // Per-paddle collision cooldown - prevent multiple hits in quick succession
                 const now = Date.now();
-                if(now - this.lastHitTime < 100) return; // 100ms cooldown
+                const cooldownTime = (dir === 1) ? this.lastHitTimeL : this.lastHitTimeR;
+                if(now - cooldownTime < 100) return; // 100ms cooldown per paddle
                 
                 // dir === 1  → left paddle  (ball must be moving left, i.e. bvx < 0)
                 // dir === -1 → right paddle (ball must be moving right, i.e. bvx > 0)
@@ -523,21 +525,28 @@
                 const verticalOverlap = ballBottom > paddleTop && ballTop < paddleBottom;
                 
                 if(horizontalOverlap && verticalOverlap) {
-                    this.lastHitTime = now; // Set cooldown
+                    // Set per-paddle cooldown
+                    if(dir === 1) this.lastHitTimeL = now;
+                    else this.lastHitTimeR = now;
                     
                     // Reverse and accelerate, but cap at max speed
                     let newSpeed = Math.abs(s.bvx) * BALL_ACCEL_FACTOR;
                     if(newSpeed > BALL_MAX_SPEED) newSpeed = BALL_MAX_SPEED;
 
-                    s.bvx = newSpeed * dir;                // dir flips sign correctly
-                    s.bvy = (s.by - py) * 4.5;             // vertical kick based on hit offset (scaled for px/s)
+                    s.bvx = newSpeed * dir;
+                    
+                    // Improved vertical kick - more consistent
+                    const relativeHitPos = (s.by - py) / 60; // -1 to 1
+                    s.bvy = relativeHitPos * newSpeed * 0.6; // Scale with ball speed
 
                     // Clamp total vertical speed so ball stays playable
                     const maxVy = newSpeed * 0.7;
                     s.bvy = Math.max(-maxVy, Math.min(maxVy, s.bvy));
 
                     // Push ball WELL outside paddle to prevent multi-hit and phasing
-                    s.bx = (dir === 1) ? (px + 30) : (px - 30);
+                    // Increase pushout based on ball speed for high-speed collisions
+                    const pushout = Math.max(35, newSpeed * 0.04);
+                    s.bx = (dir === 1) ? (px + pushout) : (px - pushout);
                     
                     // Ensure ball stays in bounds after correction
                     s.bx = Math.max(20, Math.min(W - 20, s.bx));
@@ -550,7 +559,16 @@
                 s.by = H / 2;
                 const d = dir || (Math.random() > 0.5 ? 1 : -1);
                 s.bvx = d * BALL_BASE_SPEED_X;
-                s.bvy = (Math.random() * 240) - 120; // gentle vertical spread in px/s
+                
+                // Better initial angle - avoid too horizontal or too vertical
+                // Range: ±60 to ±180 px/s (avoids near-horizontal and near-vertical)
+                const minVertical = 60;
+                const maxVertical = 180;
+                const verticalRange = maxVertical - minVertical;
+                s.bvy = (Math.random() * verticalRange * 2) - verticalRange;
+                if(Math.abs(s.bvy) < minVertical) {
+                    s.bvy = s.bvy >= 0 ? minVertical : -minVertical;
+                }
 
                 document.getElementById('scoreL').innerText = s.score.L;
                 document.getElementById('scoreR').innerText = s.score.R;
@@ -567,7 +585,7 @@
                             this.stopGame(winner);
                             setTimeout(() => {
                                 remove(ref(db, 'rooms/' + s.room)).catch(e => console.error(e));
-                            }, 100);
+                            }, 500); // Increased to 500ms for better reliability
                         }).catch(e => console.error(e));
                     } else {
                         this.stopGame(winner);
@@ -606,7 +624,16 @@
                             document.getElementById('gameHud').classList.remove('hidden');
                         }
 
-                        // Guest disconnected mid-game
+                        // Check for game over BEFORE checking disconnect
+                        if(d.gameOver && d.winner) {
+                            this.stopGame(d.winner);
+                            setTimeout(() => {
+                                remove(ref(db, 'rooms/' + code)).catch(e => console.error(e));
+                            }, 500);
+                            return;
+                        }
+
+                        // Guest disconnected mid-game (only if not game over)
                         if(this.state.playing && !d.g) {
                             this.stopGame("OPPONENT LEFT");
                             remove(ref(db, 'rooms/' + code)).catch(e => console.error(e));
@@ -628,26 +655,40 @@
             async join() {
                 const code = document.getElementById('codeIn').value.trim();
                 const fb   = document.getElementById('joinFeedback');
+                const joinBtn = document.getElementById('btnJoin');
 
                 if(!code || code.length !== 4) {
                     fb.textContent = 'Enter a 4-digit code';
                     return;
                 }
 
+                // Debounce - disable button
+                if(joinBtn.disabled) return;
+                joinBtn.disabled = true;
                 fb.textContent = 'Connecting...';
+
+                // Add timeout
+                const timeoutId = setTimeout(() => {
+                    fb.textContent = 'Connection timeout';
+                    joinBtn.disabled = false;
+                }, 10000); // 10 second timeout
 
                 try {
                     const r    = ref(db, 'rooms/' + code);
                     const snap = await get(r);
 
+                    clearTimeout(timeoutId);
+
                     if(!snap.exists()) {
                         fb.textContent = 'Room not found';
+                        joinBtn.disabled = false;
                         return;
                     }
 
                     const roomData = snap.val();
                     if(roomData.g) {
                         fb.textContent = 'Room is full';
+                        joinBtn.disabled = false;
                         return;
                     }
 
@@ -675,8 +716,10 @@
                         this.onServer(d);
                     });
                 } catch(error) {
+                    clearTimeout(timeoutId);
                     console.error('Join error:', error);
                     fb.textContent = 'Connection failed';
+                    joinBtn.disabled = false;
                     this.showError('Failed to join: ' + error.message);
                 }
             }
