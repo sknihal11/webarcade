@@ -574,7 +574,7 @@ async function loadLeaderboard() {
       let players = [];
       snap.forEach(doc => {
         const d = doc.data();
-        const totalRating = (d.best2048 || 0) + ((d.bestFlappy || 0) * 10);
+        const totalRating = (d.best2048 || 0) + ((d.bestFlappy || 0) * 2);
         if (totalRating > 0) {
             players.push({
                 name: d.username || "Unknown",
