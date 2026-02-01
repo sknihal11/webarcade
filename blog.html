@@ -303,7 +303,7 @@ footer { margin-top: 60px; padding: 30px; text-align: center; color: var(--text-
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, updateProfile, deleteUser, signOut } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { getFirestore, doc, getDoc, collection, getDocs, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -314,6 +314,192 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 let currentUser;
 
+// ============================================
+// SECURITY: DEVICE ID & SESSION MANAGEMENT
+// ============================================
+let currentDeviceId = null;
+
+function getDeviceId() {
+  let deviceId = localStorage.getItem('deviceId');
+  if (!deviceId) {
+    deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('deviceId', deviceId);
+  }
+  return deviceId;
+}
+
+async function registerSession(userId, deviceId) {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    const userDoc = await getDoc(userDocRef);
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data();
+      const activeSessions = userData.activeSessions || [];
+      const maxSessions = userData.maxSessions || 2;
+      
+      if (!activeSessions.includes(deviceId)) {
+        if (activeSessions.length >= maxSessions) {
+          throw new Error(`Session limit reached. Maximum ${maxSessions} devices allowed. Please logout from another device.`);
+        }
+        
+        await updateDoc(userDocRef, {
+          activeSessions: arrayUnion(deviceId),
+          lastActivity: new Date()
+        });
+      } else {
+        await updateDoc(userDocRef, {
+          lastActivity: new Date()
+        });
+      }
+      
+      // Initialize session fields if they don't exist
+      if (!userData.hasOwnProperty('activeSessions')) {
+        await updateDoc(userDocRef, {
+          activeSessions: [deviceId],
+          maxSessions: 2,
+          currentGameSession: null
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Session registration error:", error);
+    throw error;
+  }
+}
+
+async function unregisterSession(userId, deviceId) {
+  try {
+    const userDocRef = doc(db, "users", userId);
+    await updateDoc(userDocRef, {
+      activeSessions: arrayRemove(deviceId),
+      currentGameSession: null
+    });
+  } catch (error) {
+    console.error("Session unregister error:", error);
+  }
+}
+
+// ============================================
+// GLOBAL GAME PROTECTION API
+// ============================================
+window.GameProtection = {
+  currentUser: null,
+  deviceId: null,
+  isInGame: false,
+  currentGameId: null,
+  
+  async startGame(gameId = null) {
+    if (!gameId) {
+      gameId = 'game_' + Date.now() + '_' + Math.random().toString(36).substring(2, 9);
+    }
+    
+    if (!this.currentUser) {
+      return { success: false, error: "Please login to play" };
+    }
+    
+    try {
+      const userDocRef = doc(db, "users", this.currentUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const currentGameSession = userDoc.data().currentGameSession;
+        
+        if (currentGameSession && currentGameSession.gameId !== gameId) {
+          return { success: false, error: "You are already in another game. Please exit that game first." };
+        }
+        
+        if (currentGameSession && 
+            currentGameSession.gameId === gameId && 
+            currentGameSession.deviceId !== this.deviceId) {
+          return { success: false, error: "This account is already playing this game on another device." };
+        }
+        
+        // Clean up stale sessions
+        if (currentGameSession && currentGameSession.joinedAt) {
+          const joinedAt = currentGameSession.joinedAt.toDate();
+          const diffMinutes = (new Date() - joinedAt) / (1000 * 60);
+          
+          if (diffMinutes > 30) {
+            await updateDoc(userDocRef, {
+              currentGameSession: null
+            });
+          }
+        }
+        
+        await updateDoc(userDocRef, {
+          currentGameSession: {
+            gameId: gameId,
+            deviceId: this.deviceId,
+            joinedAt: new Date(),
+            status: "active"
+          },
+          lastActivity: new Date()
+        });
+        
+        this.isInGame = true;
+        this.currentGameId = gameId;
+        
+        return { success: true, gameId };
+      }
+      
+      return { success: false, error: "User data not found" };
+      
+    } catch (error) {
+      console.error("Game session error:", error);
+      return { success: false, error: error.message };
+    }
+  },
+  
+  async endGame() {
+    if (!this.currentUser || !this.isInGame) return;
+    
+    try {
+      const userDocRef = doc(db, "users", this.currentUser.uid);
+      await updateDoc(userDocRef, {
+        currentGameSession: null,
+        lastActivity: new Date()
+      });
+      
+      this.isInGame = false;
+      this.currentGameId = null;
+    } catch (error) {
+      console.error("Error ending game session:", error);
+    }
+  },
+  
+  isLoggedIn() {
+    return this.currentUser !== null;
+  },
+  
+  getUser() {
+    return this.currentUser;
+  },
+  
+  getAuth() {
+    return auth;
+  },
+  
+  getDb() {
+    return db;
+  }
+};
+
+// ============================================
+// PAGE UNLOAD CLEANUP
+// ============================================
+window.addEventListener('beforeunload', async () => {
+  if (window.GameProtection.currentUser && window.GameProtection.isInGame) {
+    await window.GameProtection.endGame();
+  }
+  if (currentUser && currentDeviceId) {
+    await unregisterSession(currentUser.uid, currentDeviceId);
+  }
+});
+
+// ============================================
+// EXISTING CODE (UNCHANGED)
+// ============================================
 const els = {
     topName: document.getElementById("usernameTop"),
     topAvatar: document.getElementById("avatarTop"),
@@ -340,6 +526,24 @@ async function syncAnnouncement() {
 onAuthStateChanged(auth, async (user) => {
   if (!user) { location.replace("index.html"); return; }
   currentUser = user;
+  
+  // SECURITY: Register session
+  try {
+    currentDeviceId = getDeviceId();
+    await registerSession(user.uid, currentDeviceId);
+    
+    // Make available globally for game protection
+    window.GameProtection.currentUser = user;
+    window.GameProtection.deviceId = currentDeviceId;
+  } catch (error) {
+    console.error("Session error:", error);
+    if (error.message.includes("Session limit")) {
+      alert(error.message);
+      await signOut(auth);
+      location.replace("index.html");
+      return;
+    }
+  }
 
   els.topName.textContent = user.displayName || "Player";
   const photo = user.photoURL || "https://i.imgur.com/8Km9tLL.png";
@@ -419,10 +623,24 @@ window.saveAvatar = async () => {
   els.topAvatar.src = newUrl;
   alert("Avatar updated!");
 };
-window.logoutUser = async () => { await signOut(auth); location.replace("index.html"); };
+window.logoutUser = async () => { 
+  // SECURITY: Unregister session before logout
+  if (currentUser && currentDeviceId) {
+    await unregisterSession(currentUser.uid, currentDeviceId);
+  }
+  await signOut(auth); 
+  location.replace("index.html"); 
+};
 window.deleteAccount = async () => {
   if (confirm("Are you sure? This cannot be undone.")) {
-    try { await deleteUser(currentUser); location.replace("index.html"); } 
+    try { 
+      // SECURITY: Unregister session before deleting
+      if (currentUser && currentDeviceId) {
+        await unregisterSession(currentUser.uid, currentDeviceId);
+      }
+      await deleteUser(currentUser); 
+      location.replace("index.html"); 
+    } 
     catch(e) { alert("Error: " + e.message); }
   }
 };
