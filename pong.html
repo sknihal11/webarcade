@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong - Final</title>
+    <title>Neon Pong - Fixed & Enhanced</title>
     <style>
         /* --- RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -38,9 +38,21 @@
         /* HUD */
         .hud { 
             width: 100%; padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .score-row {
             display: flex; justify-content: space-between; align-items: center;
+            width: 100%; max-width: 600px;
         }
         .score-box { display: flex; gap: 80px; font-size: 60px; font-weight: bold; text-shadow: 0 0 10px currentColor; }
+        
+        /* Player Details Labels */
+        .player-info {
+            display: flex; justify-content: space-between; width: 100%; max-width: 500px;
+            margin-top: -10px; font-weight: bold; letter-spacing: 2px;
+        }
+        .label-l { color: #ff0055; text-shadow: 0 0 5px #ff0055; }
+        .label-r { color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
 
         /* MENUS */
         .screen {
@@ -73,8 +85,8 @@
         .btn-cyan { border-color: #00f3ff; color: #00f3ff; text-shadow: 0 0 5px #00f3ff; box-shadow: 0 0 10px rgba(0, 243, 255, 0.3); }
         .btn-pink { border-color: #ff0055; color: #ff0055; text-shadow: 0 0 5px #ff0055; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
         
-        /* EXIT BUTTON (Small & Red) */
         .btn-exit {
+            position: absolute; top: 20px; left: 20px;
             border-color: #ff3333; color: #ff3333;
             padding: 10px 20px; min-width: auto; font-size: 14px;
             box-shadow: 0 0 5px rgba(255, 50, 50, 0.5);
@@ -95,11 +107,17 @@
     <div class="ui-layer">
         <div class="hud hidden" id="gameHud">
             <button class="btn-exit interactive" id="btnExit">EXIT</button>
-            <div class="score-box">
-                <div style="color:#ff0055" id="scoreL">0</div>
-                <div style="color:#00f3ff" id="scoreR">0</div>
+            <div class="score-row">
+                <div class="score-box">
+                    <div style="color:#ff0055" id="scoreL">0</div>
+                    <div style="color:#00f3ff" id="scoreR">0</div>
+                </div>
             </div>
-            <div style="width: 80px;"></div> </div>
+            <div class="player-info">
+                <span class="label-l">PLAYER 1</span>
+                <span class="label-r">PLAYER 2</span>
+            </div>
+        </div>
 
         <div id="menuScreen" class="screen interactive">
             <h1>NEON PONG</h1>
@@ -239,12 +257,8 @@
                 get('btnBack').onclick = () => { get('lobbyScreen').classList.add('hidden'); get('menuScreen').classList.remove('hidden'); };
                 get('btnHost').onclick = () => this.host();
                 get('btnJoin').onclick = () => this.join();
-                
-                // EXIT BUTTON LOGIC
                 get('btnExit').onclick = () => this.manualExit();
             }
-
-            // --- GAME LOGIC ---
 
             startAI() {
                 this.state.mode = 'ai';
@@ -256,10 +270,9 @@
 
             manualExit() {
                 this.stopGame("YOU LEFT");
-                // If online, cleanup Firebase
                 if(this.state.room) {
                     if(this.state.role === 'host') remove(ref(db, 'rooms/'+this.state.room));
-                    else update(ref(db, 'rooms/'+this.state.room), { g: null, status: 'ended' });
+                    else update(ref(db, 'rooms/'+this.state.room), { g: null });
                 }
                 window.location.reload();
             }
@@ -286,11 +299,17 @@
                     else s.pR = this.inputY;
                 }
 
+                // Physics simulation (Authoritative on Host, Predictive on Guest)
                 s.bx += s.bvx * delta;
                 s.by += s.bvy * delta;
 
-                if(s.by < 10 || s.by > H - 10) { s.bvy *= -1; s.by = Math.max(10, Math.min(H-10, s.by)); }
+                // Wall Bounce
+                if(s.by < 12 || s.by > H - 12) { 
+                    s.bvy *= -1; 
+                    s.by = Math.max(12, Math.min(H-12, s.by)); 
+                }
 
+                // Collision & Scoring (Only Host calculates to prevent desync)
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
                     this.checkHit(s.pL, 40, 1);
                     this.checkHit(s.pR, W-40, -1);
@@ -315,9 +334,11 @@
             checkHit(py, px, dir) {
                 const s = this.state;
                 if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
-                    s.bvx = Math.abs(s.bvx) * 1.05;
+                    s.bvx = Math.abs(s.bvx) * 1.05; // Slightly speed up
                     if (dir === -1) s.bvx *= -1;
                     s.bvy = (s.by - py) * 0.15;
+                    // Move ball out of paddle to prevent multi-hit
+                    s.bx = px + (dir * 26);
                 }
             }
 
@@ -330,12 +351,12 @@
                 document.getElementById('scoreR').innerText = s.score.R;
                 
                 if(s.score.L >= 10 || s.score.R >= 10) {
-                    this.stopGame(s.score.L > s.score.R ? "RED WINS" : "BLUE WINS");
-                    if(s.room) remove(ref(db, 'rooms/'+s.room));
+                    this.stopGame(s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
+                    if(s.room && s.role === 'host') remove(ref(db, 'rooms/'+s.room));
                 }
             }
 
-            // --- NETWORK WITH DISCONNECT HANDLING ---
+            // --- NETWORK ---
 
             async host() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -346,14 +367,13 @@
                 document.getElementById('codeDisp').innerText = code;
 
                 const r = ref(db, 'rooms/'+code);
-                await set(r, { h: true });
-                onDisconnect(r).remove(); // If Host closes tab, destroy room
+                await set(r, { h: true, status: 'waiting' });
+                onDisconnect(r).remove(); 
 
                 onValue(r, (snap) => {
                     const d = snap.val();
                     if(!d) return; 
 
-                    // Start Game when Guest joins
                     if(d.g && !this.state.playing) {
                         this.state.mode = 'online';
                         this.state.playing = true;
@@ -362,13 +382,12 @@
                         document.getElementById('gameHud').classList.remove('hidden');
                     }
                     
-                    // STOP GAME if Guest leaves
                     if(this.state.playing && !d.g) {
                         this.stopGame("OPPONENT LEFT");
                         remove(ref(db, 'rooms/'+code));
                     }
 
-                    if(d.gy) {
+                    if(d.gy !== undefined) {
                          const lerp = (a,b,n) => (1-n)*a+n*b;
                          this.state.pR = lerp(this.state.pR, d.gy, 0.4);
                     }
@@ -385,7 +404,6 @@
                     this.state.room = code;
                     this.state.role = 'guest';
                     
-                    // If Guest closes tab, remove 'g' from DB
                     await update(r, { g: true });
                     onDisconnect(ref(db, 'rooms/'+code+'/g')).remove();
 
@@ -396,7 +414,6 @@
                     
                     onValue(r, (s) => {
                         const d = s.val();
-                        // STOP GAME if Room (Host) disappears
                         if(!d) {
                             this.stopGame("HOST DISCONNECTED");
                             return;
@@ -411,9 +428,12 @@
                 const r = ref(db, 'rooms/'+this.state.room);
                 if(this.state.role === 'host') {
                     update(r, {
-                        bx: Math.round(this.state.bx), by: Math.round(this.state.by),
-                        bvx: this.state.bvx, bvy: this.state.bvy,
-                        hy: Math.round(this.state.pL), sc: this.state.score
+                        bx: Math.round(this.state.bx), 
+                        by: Math.round(this.state.by),
+                        bvx: this.state.bvx, 
+                        bvy: this.state.bvy,
+                        hy: Math.round(this.state.pL), 
+                        sc: this.state.score
                     });
                 } else {
                     update(r, { gy: Math.round(this.state.pR) });
@@ -425,14 +445,21 @@
                 const s = this.state;
                 const lerp = (a,b,n) => (1-n)*a+n*b;
 
-                if(d.hy) s.pL = lerp(s.pL, d.hy, 0.4);
-                if(d.sc) { s.score = d.sc; document.getElementById('scoreL').innerText=s.score.L; document.getElementById('scoreR').innerText=s.score.R; }
+                // Smoothly pull Guest's paddle to Host's position
+                if(d.hy !== undefined) s.pL = lerp(s.pL, d.hy, 0.4);
+                
+                if(d.sc) { 
+                    s.score = d.sc; 
+                    document.getElementById('scoreL').innerText = s.score.L; 
+                    document.getElementById('scoreR').innerText = s.score.R; 
+                }
 
                 if(d.bx !== undefined) {
+                    // Smooth Ball Sync: If drift is small, lerp. If large, snap.
                     const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
-                    if(dist < 70) {
-                        s.bx += (d.bx - s.bx) * 0.15;
-                        s.by += (d.by - s.by) * 0.15;
+                    if(dist < 80) {
+                        s.bx = lerp(s.bx, d.bx, 0.3);
+                        s.by = lerp(s.by, d.by, 0.3);
                         s.bvx = d.bvx; s.bvy = d.bvy;
                     } else {
                         s.bx = d.bx; s.by = d.by;
