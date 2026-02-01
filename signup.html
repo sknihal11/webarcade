@@ -1,477 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Sign Up – WebArcade</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Sign Up – WebArcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-  body {
-    margin: 0;
-    min-height: 100vh;
-    font-family: "Segoe UI", sans-serif;
-    background: radial-gradient(circle at top, #1e293b, #020617);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #e5e7eb;
-  }
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: "Segoe UI", sans-serif;
+            background: radial-gradient(circle at top, #1e293b, #020617);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #e5e7eb;
+        }
 
-  .card {
-    background: rgba(255,255,255,0.05);
-    backdrop-filter: blur(20px);
-    border-radius: 18px;
-    padding: 32px;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 25px 60px rgba(0,0,0,.4);
-    animation: fade 0.8s ease;
-  }
+        .card {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border-radius: 18px;
+            padding: 32px;
+            width: 100%;
+            max-width: 380px;
+            box-shadow: 0 25px 60px rgba(0,0,0,.4);
+            animation: fade 0.8s ease;
+        }
 
-  h1 {
-    text-align: center;
-    margin-bottom: 8px;
-  }
+        h1 { text-align: center; margin-bottom: 8px; }
+        p { text-align: center; opacity: 0.85; font-size: 14px; margin-bottom: 24px; }
 
-  p {
-    text-align: center;
-    opacity: 0.85;
-    font-size: 14px;
-    margin-bottom: 24px;
-  }
+        input {
+            width: 100%;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            border: 2px solid transparent;
+            outline: none;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 15px;
+            transition: border-color 0.3s;
+        }
 
-  input {
-    width: 100%;
-    padding: 14px;
-    margin-bottom: 14px;
-    border-radius: 10px;
-    border: 2px solid transparent;
-    outline: none;
-    background: rgba(255,255,255,0.1);
-    color: white;
-    font-size: 15px;
-    transition: border-color 0.3s;
-  }
+        input::placeholder { color: #cbd5f5; }
+        input.valid { border-color: #22c55e; }
+        input.invalid { border-color: #ef4444; }
 
-  input::placeholder {
-    color: #cbd5f5;
-  }
+        .error-msg {
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: -10px;
+            margin-bottom: 10px;
+            padding-left: 5px;
+            display: none;
+        }
 
-  input.valid {
-    border-color: #22c55e;
-  }
+        .error-msg.show { display: block; }
 
-  input.invalid {
-    border-color: #ef4444;
-  }
+        button {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform .2s, box-shadow .2s;
+        }
 
-  .error-msg {
-    color: #ef4444;
-    font-size: 12px;
-    margin-top: -10px;
-    margin-bottom: 10px;
-    padding-left: 5px;
-    display: none;
-  }
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99,102,241,.5);
+        }
 
-  .error-msg.show {
-    display: block;
-  }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
 
-  button {
-    width: 100%;
-    padding: 14px;
-    border: none;
-    border-radius: 12px;
-    background: linear-gradient(135deg, #6366f1, #818cf8);
-    color: white;
-    font-size: 16px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: transform .2s, box-shadow .2s;
-  }
+        .link { text-align: center; margin-top: 16px; font-size: 14px; }
+        .link a { color: #818cf8; text-decoration: none; font-weight: bold; }
 
-  button:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(99,102,241,.5);
-  }
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: none; }
+        }
 
-  button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-
-  .link {
-    text-align: center;
-    margin-top: 16px;
-    font-size: 14px;
-  }
-
-  .link a {
-    color: #818cf8;
-    text-decoration: none;
-    font-weight: bold;
-  }
-
-  @keyframes fade {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: none; }
-  }
-
-  .loading {
-    pointer-events: none;
-    opacity: 0.7;
-  }
-</style>
+        .loading { pointer-events: none; opacity: 0.7; }
+    </style>
 </head>
-
 <body>
 
 <div class="card">
-  <h1>WebArcade 🎮</h1>
-  <p>Create your account</p>
+    <h1>WebArcade 🎮</h1>
+    <p>Create your account</p>
 
-  <input id="username" type="text" placeholder="Username (3-20 chars, alphanumeric)" maxlength="20" />
-  <div class="error-msg" id="usernameError"></div>
+    <input id="username" type="text" placeholder="Username (3-20 chars)" maxlength="20" />
+    <div class="error-msg" id="usernameError"></div>
 
-  <input id="email" type="email" placeholder="Email (must be real)" />
-  <div class="error-msg" id="emailError"></div>
+    <input id="email" type="email" placeholder="Real Email Address" />
+    <div class="error-msg" id="emailError"></div>
 
-  <input id="password" type="password" placeholder="Password (min 6 chars)" />
-  <div class="error-msg" id="passwordError"></div>
+    <input id="password" type="password" placeholder="Password (Min 8 chars, 1 Cap, 1 Num)" />
+    <div class="error-msg" id="passwordError"></div>
 
-  <button id="signupBtn" onclick="signupUser()">Sign Up</button>
+    <button id="signupBtn" onclick="signupUser()">Sign Up</button>
 
-  <div class="link">
-    Already have an account?
-    <a href="login.html">Login</a>
-  </div>
+    <div class="link">
+        Already have an account? <a href="login.html">Login</a>
+    </div>
 </div>
 
-<!-- FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-  import {
-    getAuth,
-    createUserWithEmailAndPassword,
-    updateProfile
-  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    collection,
-    query,
-    where,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-    authDomain: "webarcade-d4c3d.firebaseapp.com",
-    projectId: "webarcade-d4c3d",
-    storageBucket: "webarcade-d4c3d.firebasestorage.app",
-    messagingSenderId: "918209461327",
-    appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-  };
+    const firebaseConfig = {
+        apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+        authDomain: "webarcade-d4c3d.firebaseapp.com",
+        projectId: "webarcade-d4c3d",
+        storageBucket: "webarcade-d4c3d.firebasestorage.app",
+        messagingSenderId: "918209461327",
+        appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+    };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  // --- VALIDATION HELPERS ---
-  
-  function validateUsername(username) {
-    if (!username || username.length < 3) {
-      return "Username must be at least 3 characters";
+    // --- ENHANCED VALIDATION ---
+    function validateUsername(u) {
+        if (!u || u.length < 3) return "Min 3 characters required";
+        if (!/^[a-zA-Z0-9_]+$/.test(u)) return "Letters, numbers, and underscores only";
+        return null;
     }
-    if (username.length > 20) {
-      return "Username must be less than 20 characters";
-    }
-    if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-      return "Username can only contain letters, numbers, and underscores";
-    }
-    return null;
-  }
 
-  function validateEmail(email) {
-    if (!email) {
-      return "Email is required";
+    function validateEmail(e) {
+        const pattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return pattern.test(e) ? null : "Enter a valid email address";
     }
-    
-    // Basic email pattern
-    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailPattern.test(email)) {
-      return "Please enter a valid email address";
+
+    // Fixed password logic to satisfy browser security checks
+    function validatePassword(p) {
+        if (p.length < 8) return "Min 8 characters required";
+        if (!/[A-Z]/.test(p)) return "Must include at least one uppercase letter";
+        if (!/[0-9]/.test(p)) return "Must include at least one number";
+        return null;
     }
-    
-    // Check for common fake/temporary email domains
-    const blockedDomains = [
-      'test.com', 'fake.com', 'example.com', 'mail.com',
-      'tempmail.com', '10minutemail.com', 'guerrillamail.com',
-      'mailinator.com', 'throwaway.email', 'temp-mail.org',
-      'fakeinbox.com', 'yopmail.com'
-    ];
-    
-    const domain = email.split('@')[1]?.toLowerCase();
-    if (blockedDomains.includes(domain)) {
-      return "Please use a real email address, not temporary/fake emails";
+
+    const inputs = {
+        username: document.getElementById("username"),
+        email: document.getElementById("email"),
+        password: document.getElementById("password")
+    };
+    const errDivs = {
+        username: document.getElementById("usernameError"),
+        email: document.getElementById("emailError"),
+        password: document.getElementById("passwordError")
+    };
+
+    function showUIError(field, msg) {
+        inputs[field].classList.add("invalid");
+        inputs[field].classList.remove("valid");
+        errDivs[field].textContent = msg;
+        errDivs[field].classList.add("show");
     }
-    
-    // Check for suspicious patterns
-    const suspiciousPatterns = [
-      /^test\d*@/i,
-      /^fake\d*@/i,
-      /^demo\d*@/i,
-      /^admin@/i,
-      /^sample@/i,
-      /^user\d+@/i
-    ];
-    
-    for (let pattern of suspiciousPatterns) {
-      if (pattern.test(email)) {
-        return "Please use a real email address";
-      }
+
+    function clearUIError(field) {
+        inputs[field].classList.remove("invalid");
+        inputs[field].classList.add("valid");
+        errDivs[field].classList.remove("show");
     }
-    
-    // Check for common email providers (whitelist approach)
-    const trustedDomains = [
-      'gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com',
-      'icloud.com', 'protonmail.com', 'aol.com', 'zoho.com',
-      'live.com', 'msn.com', 'yandex.com', 'mail.ru'
-    ];
-    
-    if (!trustedDomains.includes(domain)) {
-      // Still allow but warn
-      return null; // You could make this stricter by returning an error
-    }
-    
-    return null;
-  }
 
-  function validatePassword(password) {
-    if (!password || password.length < 6) {
-      return "Password must be at least 6 characters";
-    }
-    return null;
-  }
+    // --- CORE SIGNUP LOGIC ---
+    window.signupUser = async function () {
+        const username = inputs.username.value.trim();
+        const email = inputs.email.value.trim();
+        const password = inputs.password.value;
 
-  // --- CHECK USERNAME UNIQUENESS ---
-  
-  async function isUsernameTaken(username) {
-    try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("usernameLower", "==", username.toLowerCase()));
-      const snapshot = await getDocs(q);
-      return !snapshot.empty;
-    } catch (error) {
-      console.error("Error checking username:", error);
-      return false;
-    }
-  }
+        // Run validations
+        const uErr = validateUsername(username);
+        const eErr = validateEmail(email);
+        const pErr = validatePassword(password);
 
-  // --- EMAIL EXISTENCE CHECK (Simple DNS/MX Check Simulation) ---
-  
-  async function checkEmailExists(email) {
-    // Extract domain
-    const domain = email.split('@')[1];
-    if (!domain) return false;
-    
-    try {
-      // Try to verify the domain exists by checking if it's resolvable
-      // We'll use a simple fetch to a public DNS-over-HTTPS service
-      const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
-      const data = await response.json();
-      
-      // If MX records exist, the domain can receive emails
-      if (data.Answer && data.Answer.length > 0) {
-        return true;
-      }
-      
-      // If no MX records, check if domain at least exists (A record)
-      const aResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
-      const aData = await aResponse.json();
-      
-      return aData.Answer && aData.Answer.length > 0;
-    } catch (error) {
-      console.error("Email domain check failed:", error);
-      // If check fails, allow signup (don't block due to network issues)
-      return true;
-    }
-  }
+        if (uErr) return showUIError("username", uErr);
+        if (eErr) return showUIError("email", eErr);
+        if (pErr) return showUIError("password", pErr);
 
-  // --- UI HELPERS ---
-  
-  const inputs = {
-    username: document.getElementById("username"),
-    email: document.getElementById("email"),
-    password: document.getElementById("password")
-  };
+        const btn = document.getElementById("signupBtn");
+        btn.disabled = true;
+        btn.textContent = "Setting up account...";
+        document.querySelector(".card").classList.add("loading");
 
-  const errors = {
-    username: document.getElementById("usernameError"),
-    email: document.getElementById("emailError"),
-    password: document.getElementById("passwordError")
-  };
+        try {
+            // 1. Create Auth User
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            
+            // 2. Generate a unique Session ID for this device
+            const sessionId = crypto.randomUUID();
+            localStorage.setItem("active_arcade_session", sessionId);
 
-  function showError(field, message) {
-    inputs[field].classList.remove("valid");
-    inputs[field].classList.add("invalid");
-    errors[field].textContent = message;
-    errors[field].classList.add("show");
-  }
+            // 3. Update Auth Profile
+            await updateProfile(cred.user, { displayName: username });
 
-  function clearError(field) {
-    inputs[field].classList.remove("invalid");
-    inputs[field].classList.add("valid");
-    errors[field].classList.remove("show");
-  }
+            // 4. Create Firestore document with Session Lock
+            await setDoc(doc(db, "users", cred.user.uid), {
+                username: username,
+                usernameLower: username.toLowerCase(),
+                email: email,
+                activeSessionId: sessionId, // This is the key to preventing multi-device play
+                createdAt: new Date(),
+                stats: { wins: 0, losses: 0 }
+            });
 
-  // --- REAL-TIME VALIDATION ---
-  
-  let usernameTimeout;
-  inputs.username.addEventListener("input", async (e) => {
-    const username = e.target.value.trim();
-    const error = validateUsername(username);
-    
-    if (error) {
-      showError("username", error);
-    } else {
-      // Debounce username check
-      clearTimeout(usernameTimeout);
-      usernameTimeout = setTimeout(async () => {
-        const taken = await isUsernameTaken(username);
-        if (taken) {
-          showError("username", "Username already taken");
-        } else {
-          clearError("username");
+            alert("Welcome to WebArcade! 🎉");
+            window.location.href = "index.html";
+
+        } catch (error) {
+            btn.disabled = false;
+            btn.textContent = "Sign Up";
+            document.querySelector(".card").classList.remove("loading");
+            
+            if (error.code === "auth/email-already-in-use") {
+                showUIError("email", "Email already registered");
+            } else {
+                alert(error.message);
+            }
         }
-      }, 500);
-    }
-  });
+    };
 
-  let emailTimeout;
-  inputs.email.addEventListener("input", (e) => {
-    const email = e.target.value.trim();
-    const error = validateEmail(email);
-    
-    if (error) {
-      showError("email", error);
-    } else {
-      clearError("email");
-      
-      // Debounce email domain check
-      clearTimeout(emailTimeout);
-      emailTimeout = setTimeout(async () => {
-        const exists = await checkEmailExists(email);
-        if (!exists) {
-          showError("email", "Email domain doesn't exist or can't receive emails");
-        }
-      }, 800);
-    }
-  });
+    // Real-time UI feedback
+    Object.keys(inputs).forEach(key => {
+        inputs[key].addEventListener("input", () => clearUIError(key));
+    });
 
-  inputs.password.addEventListener("input", (e) => {
-    const password = e.target.value;
-    const error = validatePassword(password);
-    
-    if (error) {
-      showError("password", error);
-    } else {
-      clearError("password");
-    }
-  });
-
-  // --- SIGNUP FUNCTION ---
-
-  window.signupUser = async function () {
-    const username = inputs.username.value.trim();
-    const email = inputs.email.value.trim();
-    const password = inputs.password.value;
-
-    // Validate all fields
-    const usernameError = validateUsername(username);
-    const emailError = validateEmail(email);
-    const passwordError = validatePassword(password);
-
-    if (usernameError) {
-      showError("username", usernameError);
-      return;
-    }
-    if (emailError) {
-      showError("email", emailError);
-      return;
-    }
-    if (passwordError) {
-      showError("password", passwordError);
-      return;
-    }
-
-    // Check username uniqueness
-    const taken = await isUsernameTaken(username);
-    if (taken) {
-      showError("username", "Username already taken");
-      return;
-    }
-
-    // Check email domain exists
-    const emailExists = await checkEmailExists(email);
-    if (!emailExists) {
-      showError("email", "Email domain doesn't exist. Please use a real email.");
-      return;
-    }
-
-    // Disable button during signup
-    const btn = document.getElementById("signupBtn");
-    btn.disabled = true;
-    btn.textContent = "Creating Account...";
-    document.querySelector(".card").classList.add("loading");
-
-    try {
-      // Create Firebase Auth account
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-
-      // Set display name
-      await updateProfile(cred.user, {
-        displayName: username
-      });
-
-      // Create Firestore user document
-      await setDoc(doc(db, "users", cred.user.uid), {
-        username: username,
-        usernameLower: username.toLowerCase(),
-        email: email,
-        best2048: 0,
-        bestFlappy: 0,
-        createdAt: new Date()
-      });
-
-      alert("Account created! 🎉");
-      window.location.href = "index.html";
-
-    } catch (error) {
-      // Re-enable button on error
-      btn.disabled = false;
-      btn.textContent = "Sign Up";
-      document.querySelector(".card").classList.remove("loading");
-
-      let errorMessage = error.message;
-      
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already registered. Try logging in instead.";
-        showError("email", "Email already in use");
-      } else if (error.code === "auth/invalid-email") {
-        errorMessage = "Invalid email format";
-        showError("email", "Invalid email");
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "Password is too weak";
-        showError("password", "Password too weak");
-      }
-      
-      alert(errorMessage);
-    }
-  };
 </script>
-
 </body>
 </html>
