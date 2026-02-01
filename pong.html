@@ -23,7 +23,14 @@
         }
 
         /* --- CONTROLS --- */
-        .touch-zone { position: absolute; top:0; bottom:0; width: 50%; z-index: 10; }
+        .touch-zone { 
+            position: absolute; 
+            top: 80px; /* Don't cover header */
+            bottom: 0; 
+            width: 50%; 
+            z-index: 5; /* Below UI buttons */
+            pointer-events: auto;
+        }
         #leftZone { left: 0; }
         #rightZone { right: 0; }
 
@@ -39,6 +46,7 @@
         .hud { 
             width: 100%; padding: 12px 16px;
             display: flex; flex-direction: column; align-items: center;
+            pointer-events: none;
         }
         .score-row {
             display: flex; justify-content: space-between; align-items: center;
@@ -62,12 +70,13 @@
         /* MENUS */
         .screen {
             position: absolute; inset: 0; 
-            background: rgba(0,0,0,0.9);
+            background: rgba(0,0,0,0.95);
             backdrop-filter: blur(4px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.3s;
             padding: 20px;
             overflow-y: auto;
+            pointer-events: auto;
         }
         .hidden { opacity: 0; pointer-events: none; }
 
@@ -106,6 +115,8 @@
             min-width: auto; 
             font-size: clamp(10px, 2.8vw, 14px);
             box-shadow: 0 0 5px rgba(255, 50, 50, 0.5);
+            z-index: 100;
+            pointer-events: auto;
         }
 
         input {
@@ -140,12 +151,24 @@
         .room-code-label { color: #aaa; font-size: clamp(11px, 3vw, 16px); }
         .room-code-display { color: #0f0; font-size: clamp(36px, 10vw, 60px); margin: 6px 0; text-shadow: 0 0 20px #0f0; }
         .waiting-text { color: #fff; margin-top: clamp(8px, 2vh, 20px); font-size: clamp(12px, 3.2vw, 16px); }
+        
+        .error-notice {
+            color: #ff6b6b;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff3333;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: clamp(10px, 2.5vw, 12px);
+            max-width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <div id="leftZone" class="touch-zone interactive"></div>
-    <div id="rightZone" class="touch-zone interactive"></div>
+    <div id="leftZone" class="touch-zone"></div>
+    <div id="rightZone" class="touch-zone"></div>
 
     <div class="ui-layer">
         <div class="hud hidden" id="gameHud">
@@ -166,6 +189,7 @@
             <h1>NEON PONG</h1>
             <button class="btn-cyan" id="btnAI">SINGLE PLAYER</button>
             <button class="btn-pink" id="btnOnline">MULTIPLAYER</button>
+            <div id="connectionError" class="error-notice hidden"></div>
         </div>
 
         <div id="lobbyScreen" class="screen hidden interactive">
@@ -173,7 +197,7 @@
             <div id="lobbyMain" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
                 <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
                 <div class="lobby-divider">--- OR JOIN ---</div>
-                <input type="number" id="codeIn" placeholder="CODE" inputmode="numeric">
+                <input type="tel" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4">
                 <div class="feedback-text" id="joinFeedback"></div>
                 <button id="btnJoin" class="btn-pink">JOIN GAME</button>
                 <button id="btnBack" class="btn-back">BACK</button>
@@ -183,6 +207,7 @@
                 <p class="room-code-label">ROOM CODE:</p>
                 <h2 class="room-code-display" id="codeDisp">----</h2>
                 <p class="waiting-text">Waiting for opponent...</p>
+                <button id="btnCancelHost" class="btn-back" style="margin-top: 20px;">CANCEL</button>
             </div>
         </div>
 
@@ -202,6 +227,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
             authDomain: "webarcade-d4c3d.firebaseapp.com",
+            databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com/",
             projectId: "webarcade-d4c3d",
             storageBucket: "webarcade-d4c3d.firebasestorage.app",
             messagingSenderId: "918209461327",
@@ -219,6 +245,9 @@
         const BALL_MAX_SPEED     = 1050; // absolute cap so rallies don't become unplayable
         const BALL_ACCEL_FACTOR  = 1.05; // speed multiplier per paddle hit
         const AI_TRACK_SPEED     = 380;  // max pixels/sec the AI paddle can move
+        const PADDLE_MIN_Y       = 60;
+        const PADDLE_MAX_Y       = H - 60;
+        const WIN_SCORE          = 10;
 
         class PongGame {
             constructor() {
@@ -240,12 +269,15 @@
                 this.inputY = H/2;
                 this.scaleFactor = 1;
                 this.lastNet = 0;
+                this.roomListener = null;
+                this.isCleaningUp = false;
 
                 this.initGFX();
                 this.initUI();
                 this.initInput();
                 this.resize();
                 window.addEventListener('resize', () => this.resize());
+                window.addEventListener('beforeunload', () => this.cleanup());
                 this.app.ticker.add((d) => this.loop(d));
             }
 
@@ -259,10 +291,14 @@
             }
 
             initGFX() {
-                // BloomFilter may not load instantly — guard it
+                // BloomFilter with fallback
                 try {
-                    this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
-                } catch(e) { /* pixi-filters not ready, skip bloom */ }
+                    if(PIXI.filters && PIXI.filters.BloomFilter) {
+                        this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
+                    }
+                } catch(e) { 
+                    console.warn('Bloom filter not available:', e);
+                }
                 
                 const net = new PIXI.Graphics();
                 net.beginFill(0x333333);
@@ -291,7 +327,7 @@
                     if(!this.state.playing) return;
                     const rect = this.app.view.getBoundingClientRect();
                     let relativeY = (clientY - rect.top) / this.scaleFactor;
-                    this.inputY = Math.max(60, Math.min(H - 60, relativeY));
+                    this.inputY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, relativeY));
                 };
 
                 window.addEventListener('mousemove', (e) => onInput(e.clientY));
@@ -310,11 +346,23 @@
             initUI() {
                 const el = id => document.getElementById(id);
                 el('btnAI').onclick     = () => this.startAI();
-                el('btnOnline').onclick = () => { el('menuScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); };
-                el('btnBack').onclick   = () => { el('lobbyScreen').classList.add('hidden'); el('menuScreen').classList.remove('hidden'); el('joinFeedback').textContent = ''; };
+                el('btnOnline').onclick = () => this.showLobby();
+                el('btnBack').onclick   = () => this.hideLobby();
                 el('btnHost').onclick   = () => this.host();
                 el('btnJoin').onclick   = () => this.join();
                 el('btnExit').onclick   = () => this.manualExit();
+                el('btnCancelHost').onclick = () => this.cancelHosting();
+            }
+
+            showLobby() {
+                document.getElementById('menuScreen').classList.add('hidden');
+                document.getElementById('lobbyScreen').classList.remove('hidden');
+            }
+
+            hideLobby() {
+                document.getElementById('lobbyScreen').classList.add('hidden');
+                document.getElementById('menuScreen').classList.remove('hidden');
+                document.getElementById('joinFeedback').textContent = '';
             }
 
             startAI() {
@@ -325,13 +373,38 @@
                 document.getElementById('gameHud').classList.remove('hidden');
             }
 
-            manualExit() {
-                this.stopGame("YOU LEFT");
-                if(this.state.room) {
-                    if(this.state.role === 'host') remove(ref(db, 'rooms/' + this.state.room));
-                    else update(ref(db, 'rooms/' + this.state.room), { g: null });
-                }
+            async manualExit() {
+                await this.cleanup();
                 window.location.reload();
+            }
+
+            async cancelHosting() {
+                await this.cleanup();
+                document.getElementById('lobbyWait').classList.add('hidden');
+                document.getElementById('lobbyMain').classList.remove('hidden');
+            }
+
+            async cleanup() {
+                if(this.isCleaningUp) return;
+                this.isCleaningUp = true;
+
+                if(this.roomListener) {
+                    this.roomListener();
+                    this.roomListener = null;
+                }
+
+                if(this.state.room) {
+                    try {
+                        if(this.state.role === 'host') {
+                            await remove(ref(db, 'rooms/' + this.state.room));
+                        } else if(this.state.role === 'guest') {
+                            await update(ref(db, 'rooms/' + this.state.room), { g: null });
+                        }
+                    } catch(e) {
+                        console.error('Cleanup error:', e);
+                    }
+                    this.state.room = null;
+                }
             }
 
             stopGame(reason) {
@@ -369,10 +442,19 @@
                     } else {
                         s.pR += Math.sign(diff) * maxMove;
                     }
+                    // Clamp AI paddle
+                    s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
                 } else if(s.mode === 'online') {
-                    if(s.role === 'host') s.pL = this.inputY;
-                    else                  s.pR = this.inputY;
+                    if(s.role === 'host') {
+                        s.pL = this.inputY;
+                    } else {
+                        s.pR = this.inputY;
+                    }
                 }
+
+                // Clamp paddle positions to valid range
+                s.pL = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pL));
+                s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
 
                 // ── Ball physics (frame-rate independent) ──
                 s.bx += s.bvx * dtClamped;
@@ -403,7 +485,7 @@
                 this.ball.y  = s.by;
 
                 // ── Net sync (online only) ──
-                if(s.mode === 'online') {
+                if(s.mode === 'online' && s.playing) {
                     const now = Date.now();
                     if(now - this.lastNet > 30) {
                         this.netSync();
@@ -447,9 +529,12 @@
                 document.getElementById('scoreL').innerText = s.score.L;
                 document.getElementById('scoreR').innerText = s.score.R;
 
-                if(s.score.L >= 10 || s.score.R >= 10) {
-                    this.stopGame(s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
-                    if(s.room && s.role === 'host') remove(ref(db, 'rooms/' + s.room));
+                if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
+                    const winner = s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+                    this.stopGame(winner);
+                    if(s.room && s.role === 'host') {
+                        remove(ref(db, 'rooms/' + s.room)).catch(e => console.error(e));
+                    }
                 }
             }
 
@@ -461,38 +546,46 @@
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
                 this.state.room = code;
                 this.state.role = 'host';
+                
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
 
-                const r = ref(db, 'rooms/' + code);
-                await set(r, { h: true, status: 'waiting' });
-                onDisconnect(r).remove();
+                try {
+                    const r = ref(db, 'rooms/' + code);
+                    await set(r, { h: true, status: 'waiting' });
+                    onDisconnect(r).remove();
 
-                onValue(r, (snap) => {
-                    const d = snap.val();
-                    if(!d) return;
+                    this.roomListener = onValue(r, (snap) => {
+                        const d = snap.val();
+                        if(!d) return;
 
-                    // Guest joined → start
-                    if(d.g && !this.state.playing) {
-                        this.state.mode    = 'online';
-                        this.state.playing = true;
-                        this.resetBall();
-                        document.getElementById('lobbyScreen').classList.add('hidden');
-                        document.getElementById('gameHud').classList.remove('hidden');
-                    }
+                        // Guest joined → start
+                        if(d.g && !this.state.playing) {
+                            this.state.mode    = 'online';
+                            this.state.playing = true;
+                            this.resetBall();
+                            document.getElementById('lobbyScreen').classList.add('hidden');
+                            document.getElementById('gameHud').classList.remove('hidden');
+                        }
 
-                    // Guest disconnected mid-game
-                    if(this.state.playing && !d.g) {
-                        this.stopGame("OPPONENT LEFT");
-                        remove(ref(db, 'rooms/' + code));
-                    }
+                        // Guest disconnected mid-game
+                        if(this.state.playing && !d.g) {
+                            this.stopGame("OPPONENT LEFT");
+                            remove(ref(db, 'rooms/' + code)).catch(e => console.error(e));
+                        }
 
-                    // Pull guest paddle position (lerp for smoothness)
-                    if(d.gy !== undefined && this.state.playing) {
-                        this.state.pR += (d.gy - this.state.pR) * 0.4;
-                    }
-                });
+                        // Pull guest paddle position (lerp for smoothness + validate)
+                        if(d.gy !== undefined && this.state.playing) {
+                            const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.gy));
+                            this.state.pR += (validY - this.state.pR) * 0.4;
+                        }
+                    });
+                } catch(error) {
+                    console.error('Host error:', error);
+                    this.showError('Failed to create room: ' + error.message);
+                    this.cancelHosting();
+                }
             }
 
             async join() {
@@ -506,52 +599,74 @@
 
                 fb.textContent = 'Connecting...';
 
-                const r    = ref(db, 'rooms/' + code);
-                const snap = await get(r);
+                try {
+                    const r    = ref(db, 'rooms/' + code);
+                    const snap = await get(r);
 
-                if(!snap.exists()) {
-                    fb.textContent = 'Room not found';
-                    return;
-                }
-
-                fb.textContent = '';
-                this.state.room = code;
-                this.state.role = 'guest';
-
-                await update(r, { g: true });
-                onDisconnect(ref(db, 'rooms/' + code + '/g')).remove();
-
-                this.state.mode    = 'online';
-                this.state.playing = true;
-                document.getElementById('lobbyScreen').classList.add('hidden');
-                document.getElementById('gameHud').classList.remove('hidden');
-
-                onValue(r, (s) => {
-                    const d = s.val();
-                    if(!d) {
-                        this.stopGame("HOST DISCONNECTED");
+                    if(!snap.exists()) {
+                        fb.textContent = 'Room not found';
                         return;
                     }
-                    this.onServer(d);
-                });
+
+                    const roomData = snap.val();
+                    if(roomData.g) {
+                        fb.textContent = 'Room is full';
+                        return;
+                    }
+
+                    fb.textContent = '';
+                    this.state.room = code;
+                    this.state.role = 'guest';
+
+                    await update(r, { g: true });
+                    
+                    // Set up disconnect handler for guest marker only
+                    const guestRef = ref(db, 'rooms/' + code + '/g');
+                    onDisconnect(guestRef).remove();
+
+                    this.state.mode    = 'online';
+                    this.state.playing = true;
+                    document.getElementById('lobbyScreen').classList.add('hidden');
+                    document.getElementById('gameHud').classList.remove('hidden');
+
+                    this.roomListener = onValue(r, (s) => {
+                        const d = s.val();
+                        if(!d) {
+                            this.stopGame("HOST DISCONNECTED");
+                            return;
+                        }
+                        this.onServer(d);
+                    });
+                } catch(error) {
+                    console.error('Join error:', error);
+                    fb.textContent = 'Connection failed';
+                    this.showError('Failed to join: ' + error.message);
+                }
             }
 
             netSync() {
-                if(!this.state.room) return;
-                const r = ref(db, 'rooms/' + this.state.room);
-                const s = this.state;
+                if(!this.state.room || !this.state.playing) return;
+                
+                try {
+                    const r = ref(db, 'rooms/' + this.state.room);
+                    const s = this.state;
 
-                if(s.role === 'host') {
-                    update(r, {
-                        bx:  Math.round(s.bx),
-                        by:  Math.round(s.by),
-                        bvx: s.bvx,
-                        bvy: s.bvy,
-                        hy:  Math.round(s.pL),
-                        sc:  s.score
-                    });
-                } else {
-                    update(r, { gy: Math.round(s.pR) });
+                    if(s.role === 'host') {
+                        update(r, {
+                            bx:  Math.round(s.bx),
+                            by:  Math.round(s.by),
+                            bvx: Math.round(s.bvx * 100) / 100,
+                            bvy: Math.round(s.bvy * 100) / 100,
+                            hy:  Math.round(s.pL),
+                            sc:  s.score
+                        }).catch(e => console.error('Sync error:', e));
+                    } else {
+                        update(r, { 
+                            gy: Math.round(s.pR) 
+                        }).catch(e => console.error('Sync error:', e));
+                    }
+                } catch(error) {
+                    console.error('Network sync error:', error);
                 }
             }
 
@@ -559,9 +674,10 @@
                 if(!d || !this.state.playing || this.state.role !== 'guest') return;
                 const s = this.state;
 
-                // Host paddle — smooth pull
+                // Host paddle — smooth pull + validation
                 if(d.hy !== undefined) {
-                    s.pL += (d.hy - s.pL) * 0.4;
+                    const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.hy));
+                    s.pL += (validY - s.pL) * 0.4;
                 }
 
                 // Score is authoritative from host
@@ -569,11 +685,17 @@
                     s.score = d.sc;
                     document.getElementById('scoreL').innerText = s.score.L;
                     document.getElementById('scoreR').innerText = s.score.R;
+                    
+                    // Check for game over on guest side too
+                    if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
+                        const winner = s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
+                        this.stopGame(winner);
+                    }
                 }
 
                 // Ball sync: always apply host velocity for smooth local prediction.
                 // Position: lerp if close, snap if far apart (corrects large drift).
-                if(d.bx !== undefined) {
+                if(d.bx !== undefined && d.bvx !== undefined) {
                     // Always take the host velocity so local physics predicts correctly
                     s.bvx = d.bvx;
                     s.bvy = d.bvy;
@@ -588,9 +710,24 @@
                     }
                 }
             }
+
+            showError(message) {
+                const errorEl = document.getElementById('connectionError');
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+                setTimeout(() => errorEl.classList.add('hidden'), 5000);
+            }
         }
 
-        new PongGame();
+        // Initialize game when PIXI and Firebase are ready
+        window.addEventListener('load', () => {
+            try {
+                new PongGame();
+            } catch(error) {
+                console.error('Game initialization error:', error);
+                alert('Failed to start game. Please refresh the page.');
+            }
+        });
     </script>
 </body>
 </html>
