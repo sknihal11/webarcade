@@ -271,6 +271,7 @@
                 this.lastNet = 0;
                 this.roomListener = null;
                 this.isCleaningUp = false;
+                this.lastHitTime = 0; // Collision cooldown tracker
 
                 this.initGFX();
                 this.initUI();
@@ -487,7 +488,7 @@
                 // ── Net sync (online only) ──
                 if(s.mode === 'online' && s.playing) {
                     const now = Date.now();
-                    if(now - this.lastNet > 30) {
+                    if(now - this.lastNet > 16) { // ~60Hz sync instead of 33Hz
                         this.netSync();
                         this.lastNet = now;
                     }
@@ -496,12 +497,34 @@
 
             checkHit(py, px, dir) {
                 const s = this.state;
+                
+                // Collision cooldown - prevent multiple hits in quick succession
+                const now = Date.now();
+                if(now - this.lastHitTime < 100) return; // 100ms cooldown
+                
                 // dir === 1  → left paddle  (ball must be moving left, i.e. bvx < 0)
                 // dir === -1 → right paddle (ball must be moving right, i.e. bvx > 0)
                 const movingTowardPaddle = (dir === 1 && s.bvx < 0) || (dir === -1 && s.bvx > 0);
                 if(!movingTowardPaddle) return;
 
-                if(Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
+                // Expanded hitbox detection - check if ball overlaps with paddle
+                const ballLeft = s.bx - 12;
+                const ballRight = s.bx + 12;
+                const ballTop = s.by - 12;
+                const ballBottom = s.by + 12;
+                
+                const paddleLeft = px - 10;
+                const paddleRight = px + 10;
+                const paddleTop = py - 60;
+                const paddleBottom = py + 60;
+                
+                // AABB collision detection
+                const horizontalOverlap = ballRight > paddleLeft && ballLeft < paddleRight;
+                const verticalOverlap = ballBottom > paddleTop && ballTop < paddleBottom;
+                
+                if(horizontalOverlap && verticalOverlap) {
+                    this.lastHitTime = now; // Set cooldown
+                    
                     // Reverse and accelerate, but cap at max speed
                     let newSpeed = Math.abs(s.bvx) * BALL_ACCEL_FACTOR;
                     if(newSpeed > BALL_MAX_SPEED) newSpeed = BALL_MAX_SPEED;
@@ -513,8 +536,11 @@
                     const maxVy = newSpeed * 0.7;
                     s.bvy = Math.max(-maxVy, Math.min(maxVy, s.bvy));
 
-                    // Push ball out of paddle so it can't multi-hit
-                    s.bx = px + dir * 26;
+                    // Push ball WELL outside paddle to prevent multi-hit and phasing
+                    s.bx = (dir === 1) ? (px + 30) : (px - 30);
+                    
+                    // Ensure ball stays in bounds after correction
+                    s.bx = Math.max(20, Math.min(W - 20, s.bx));
                 }
             }
 
@@ -531,9 +557,20 @@
 
                 if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
                     const winner = s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
-                    this.stopGame(winner);
+                    
+                    // Broadcast game over to guest before stopping
                     if(s.room && s.role === 'host') {
-                        remove(ref(db, 'rooms/' + s.room)).catch(e => console.error(e));
+                        update(ref(db, 'rooms/' + s.room), { 
+                            gameOver: true,
+                            winner: winner 
+                        }).then(() => {
+                            this.stopGame(winner);
+                            setTimeout(() => {
+                                remove(ref(db, 'rooms/' + s.room)).catch(e => console.error(e));
+                            }, 100);
+                        }).catch(e => console.error(e));
+                    } else {
+                        this.stopGame(winner);
                     }
                 }
             }
@@ -578,7 +615,7 @@
                         // Pull guest paddle position (lerp for smoothness + validate)
                         if(d.gy !== undefined && this.state.playing) {
                             const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.gy));
-                            this.state.pR += (validY - this.state.pR) * 0.4;
+                            this.state.pR += (validY - this.state.pR) * 0.5; // Increased smoothing
                         }
                     });
                 } catch(error) {
@@ -674,10 +711,16 @@
                 if(!d || !this.state.playing || this.state.role !== 'guest') return;
                 const s = this.state;
 
+                // Check for game over from host
+                if(d.gameOver && d.winner) {
+                    this.stopGame(d.winner);
+                    return;
+                }
+
                 // Host paddle — smooth pull + validation
                 if(d.hy !== undefined) {
                     const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.hy));
-                    s.pL += (validY - s.pL) * 0.4;
+                    s.pL += (validY - s.pL) * 0.5; // Increased smoothing
                 }
 
                 // Score is authoritative from host
@@ -685,12 +728,6 @@
                     s.score = d.sc;
                     document.getElementById('scoreL').innerText = s.score.L;
                     document.getElementById('scoreR').innerText = s.score.R;
-                    
-                    // Check for game over on guest side too
-                    if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
-                        const winner = s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS";
-                        this.stopGame(winner);
-                    }
                 }
 
                 // Ball sync: always apply host velocity for smooth local prediction.
@@ -701,10 +738,12 @@
                     s.bvy = d.bvy;
 
                     const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
-                    if(dist < 80) {
-                        s.bx += (d.bx - s.bx) * 0.3;
-                        s.by += (d.by - s.by) * 0.3;
+                    if(dist < 100) {
+                        // Smooth interpolation for small differences
+                        s.bx += (d.bx - s.bx) * 0.5;
+                        s.by += (d.by - s.by) * 0.5;
                     } else {
+                        // Snap for large differences (corrects desync)
                         s.bx = d.bx;
                         s.by = d.by;
                     }
