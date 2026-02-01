@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong - Fixed & Enhanced</title>
+    <title>Neon Pong</title>
     <style>
         /* --- RESET --- */
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
@@ -37,19 +37,24 @@
 
         /* HUD */
         .hud { 
-            width: 100%; padding: 20px;
+            width: 100%; padding: 12px 16px;
             display: flex; flex-direction: column; align-items: center;
         }
         .score-row {
             display: flex; justify-content: space-between; align-items: center;
             width: 100%; max-width: 600px;
         }
-        .score-box { display: flex; gap: 80px; font-size: 60px; font-weight: bold; text-shadow: 0 0 10px currentColor; }
+        .score-box { 
+            display: flex; gap: 60px; 
+            font-size: clamp(28px, 9vw, 60px); 
+            font-weight: bold; text-shadow: 0 0 10px currentColor; 
+        }
         
         /* Player Details Labels */
         .player-info {
             display: flex; justify-content: space-between; width: 100%; max-width: 500px;
-            margin-top: -10px; font-weight: bold; letter-spacing: 2px;
+            margin-top: -4px; font-weight: bold; letter-spacing: 2px;
+            font-size: clamp(9px, 2.5vw, 14px);
         }
         .label-l { color: #ff0055; text-shadow: 0 0 5px #ff0055; }
         .label-r { color: #00f3ff; text-shadow: 0 0 5px #00f3ff; }
@@ -61,24 +66,33 @@
             backdrop-filter: blur(4px);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: opacity 0.3s;
+            padding: 20px;
+            overflow-y: auto;
         }
         .hidden { opacity: 0; pointer-events: none; }
 
         h1 {
-            color: #fff; font-size: 50px; margin-bottom: 30px; letter-spacing: 5px;
+            color: #fff; 
+            font-size: clamp(24px, 7vw, 50px); 
+            margin-bottom: clamp(12px, 3vh, 30px); 
+            letter-spacing: clamp(2px, 1vw, 5px);
             text-shadow: 0 0 20px #00f3ff; text-transform: uppercase; text-align: center;
         }
+
+        h2 { font-size: clamp(36px, 10vw, 60px); }
 
         /* BUTTONS */
         button {
             background: rgba(0,0,0,0.6); 
             border: 2px solid #fff; color: #fff;
-            padding: 15px 40px; margin: 10px;
-            font-size: 18px; font-weight: bold; letter-spacing: 2px;
+            padding: clamp(8px, 2vh, 15px) clamp(16px, 5vw, 40px); 
+            margin: clamp(4px, 1vh, 10px);
+            font-size: clamp(12px, 3.2vw, 18px); 
+            font-weight: bold; letter-spacing: 2px;
             text-transform: uppercase; cursor: pointer;
             box-shadow: 0 0 10px rgba(255,255,255,0.1);
             transition: all 0.2s;
-            min-width: 200px;
+            min-width: clamp(130px, 40vw, 200px);
         }
         button:active { transform: scale(0.95); background: #222; }
         
@@ -86,17 +100,46 @@
         .btn-pink { border-color: #ff0055; color: #ff0055; text-shadow: 0 0 5px #ff0055; box-shadow: 0 0 10px rgba(255, 0, 85, 0.3); }
         
         .btn-exit {
-            position: absolute; top: 20px; left: 20px;
+            position: absolute; top: 12px; left: 12px;
             border-color: #ff3333; color: #ff3333;
-            padding: 10px 20px; min-width: auto; font-size: 14px;
+            padding: clamp(6px, 1.5vh, 10px) clamp(10px, 3vw, 20px); 
+            min-width: auto; 
+            font-size: clamp(10px, 2.8vw, 14px);
             box-shadow: 0 0 5px rgba(255, 50, 50, 0.5);
         }
 
         input {
             background: transparent; border: none; border-bottom: 2px solid #00f3ff;
-            color: #fff; font-size: 30px; text-align: center; letter-spacing: 5px;
-            width: 200px; margin: 20px; outline: none; padding: 10px;
+            color: #fff; font-size: clamp(20px, 6vw, 30px); text-align: center; letter-spacing: 5px;
+            width: clamp(120px, 45vw, 200px); margin: clamp(8px, 2vh, 20px); outline: none; 
+            padding: clamp(6px, 1.5vh, 10px);
         }
+
+        .lobby-divider {
+            color: #666; 
+            margin: clamp(4px, 1vh, 10px) 0;
+            font-size: clamp(11px, 3vw, 16px);
+        }
+
+        .btn-back {
+            font-size: clamp(10px, 2.5vw, 12px) !important; 
+            min-width: clamp(80px, 25vw, 100px) !important; 
+            border-color: #555 !important; color: #aaa !important;
+            margin-top: clamp(6px, 1.5vh, 8px);
+        }
+
+        .feedback-text {
+            color: #ff3333;
+            font-size: clamp(10px, 2.8vw, 13px);
+            min-height: 1.4em;
+            margin-top: 4px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .room-code-label { color: #aaa; font-size: clamp(11px, 3vw, 16px); }
+        .room-code-display { color: #0f0; font-size: clamp(36px, 10vw, 60px); margin: 6px 0; text-shadow: 0 0 20px #0f0; }
+        .waiting-text { color: #fff; margin-top: clamp(8px, 2vh, 20px); font-size: clamp(12px, 3.2vw, 16px); }
     </style>
 </head>
 <body>
@@ -127,20 +170,19 @@
 
         <div id="lobbyScreen" class="screen hidden interactive">
             <h1>LOBBY</h1>
-            <div id="lobbyMain" style="text-align:center">
+            <div id="lobbyMain" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
                 <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
-                <div style="color:#666; margin:10px">--- OR JOIN ---</div>
-                <input type="number" id="codeIn" placeholder="CODE">
-                <br>
+                <div class="lobby-divider">--- OR JOIN ---</div>
+                <input type="number" id="codeIn" placeholder="CODE" inputmode="numeric">
+                <div class="feedback-text" id="joinFeedback"></div>
                 <button id="btnJoin" class="btn-pink">JOIN GAME</button>
-                <br><br>
-                <button id="btnBack" style="font-size:12px; min-width:100px; border-color:#555; color:#aaa">BACK</button>
+                <button id="btnBack" class="btn-back">BACK</button>
             </div>
             
-            <div id="lobbyWait" class="hidden" style="text-align:center">
-                <p style="color:#aaa">ROOM CODE:</p>
-                <h2 style="color:#0f0; font-size:60px; margin:10px; text-shadow: 0 0 20px #0f0" id="codeDisp">----</h2>
-                <p style="color:#fff; margin-top:20px">Waiting for opponent...</p>
+            <div id="lobbyWait" class="hidden" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+                <p class="room-code-label">ROOM CODE:</p>
+                <h2 class="room-code-display" id="codeDisp">----</h2>
+                <p class="waiting-text">Waiting for opponent...</p>
             </div>
         </div>
 
@@ -172,6 +214,12 @@
         const W = 800;
         const H = 600;
 
+        // Base speed constants (pixels per second)
+        const BALL_BASE_SPEED_X = 540;   // starting horizontal speed
+        const BALL_MAX_SPEED     = 1050; // absolute cap so rallies don't become unplayable
+        const BALL_ACCEL_FACTOR  = 1.05; // speed multiplier per paddle hit
+        const AI_TRACK_SPEED     = 380;  // max pixels/sec the AI paddle can move
+
         class PongGame {
             constructor() {
                 this.app = new PIXI.Application({
@@ -191,6 +239,7 @@
                 
                 this.inputY = H/2;
                 this.scaleFactor = 1;
+                this.lastNet = 0;
 
                 this.initGFX();
                 this.initUI();
@@ -204,32 +253,36 @@
                 const screenW = window.innerWidth;
                 const screenH = window.innerHeight;
                 const scale = Math.min(screenW / W, screenH / H);
-                this.app.view.style.width = `${W * scale}px`;
+                this.app.view.style.width  = `${W * scale}px`;
                 this.app.view.style.height = `${H * scale}px`;
                 this.scaleFactor = scale;
             }
 
             initGFX() {
-                this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
+                // BloomFilter may not load instantly — guard it
+                try {
+                    this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.6})];
+                } catch(e) { /* pixi-filters not ready, skip bloom */ }
                 
                 const net = new PIXI.Graphics();
                 net.beginFill(0x333333);
-                for(let y=10; y<H; y+=40) net.drawRect(W/2-2, y, 4, 20);
+                for(let y = 10; y < H; y += 40) net.drawRect(W/2 - 2, y, 4, 20);
+                net.endFill();
                 this.app.stage.addChild(net);
 
                 const makePad = (c, x) => {
                     const g = new PIXI.Graphics();
-                    g.beginFill(c); g.drawRect(-10,-60,20,120); g.endFill();
+                    g.beginFill(c);     g.drawRect(-10, -60, 20, 120); g.endFill();
                     g.beginFill(0xffffff, 0.5); g.drawRect(-4, -50, 8, 100); g.endFill();
                     g.x = x; g.y = H/2;
                     this.app.stage.addChild(g);
                     return g;
-                }
+                };
                 this.gfxL = makePad(0xff0055, 40);
-                this.gfxR = makePad(0x00f3ff, W-40);
+                this.gfxR = makePad(0x00f3ff, W - 40);
 
                 this.ball = new PIXI.Graphics();
-                this.ball.beginFill(0xffffff); this.ball.drawRect(-12,-12,24,24);
+                this.ball.beginFill(0xffffff); this.ball.drawRect(-12, -12, 24, 24); this.ball.endFill();
                 this.app.stage.addChild(this.ball);
             }
 
@@ -238,30 +291,34 @@
                     if(!this.state.playing) return;
                     const rect = this.app.view.getBoundingClientRect();
                     let relativeY = (clientY - rect.top) / this.scaleFactor;
-                    this.inputY = Math.max(60, Math.min(H-60, relativeY));
+                    this.inputY = Math.max(60, Math.min(H - 60, relativeY));
                 };
 
                 window.addEventListener('mousemove', (e) => onInput(e.clientY));
-                const touchHandler = (e) => { e.preventDefault(); onInput(e.touches[0].clientY); };
+
+                const touchHandler = (e) => {
+                    e.preventDefault();
+                    if(e.touches.length > 0) onInput(e.touches[0].clientY);
+                };
                 const zones = document.querySelectorAll('.touch-zone');
                 zones.forEach(z => {
-                    z.addEventListener('touchmove', touchHandler, {passive:false});
-                    z.addEventListener('touchstart', touchHandler, {passive:false});
+                    z.addEventListener('touchmove',  touchHandler, { passive: false });
+                    z.addEventListener('touchstart', touchHandler, { passive: false });
                 });
             }
 
             initUI() {
-                const get = id => document.getElementById(id);
-                get('btnAI').onclick = () => this.startAI();
-                get('btnOnline').onclick = () => { get('menuScreen').classList.add('hidden'); get('lobbyScreen').classList.remove('hidden'); };
-                get('btnBack').onclick = () => { get('lobbyScreen').classList.add('hidden'); get('menuScreen').classList.remove('hidden'); };
-                get('btnHost').onclick = () => this.host();
-                get('btnJoin').onclick = () => this.join();
-                get('btnExit').onclick = () => this.manualExit();
+                const el = id => document.getElementById(id);
+                el('btnAI').onclick     = () => this.startAI();
+                el('btnOnline').onclick = () => { el('menuScreen').classList.add('hidden'); el('lobbyScreen').classList.remove('hidden'); };
+                el('btnBack').onclick   = () => { el('lobbyScreen').classList.add('hidden'); el('menuScreen').classList.remove('hidden'); el('joinFeedback').textContent = ''; };
+                el('btnHost').onclick   = () => this.host();
+                el('btnJoin').onclick   = () => this.join();
+                el('btnExit').onclick   = () => this.manualExit();
             }
 
             startAI() {
-                this.state.mode = 'ai';
+                this.state.mode    = 'ai';
                 this.state.playing = true;
                 this.resetBall();
                 document.getElementById('menuScreen').classList.add('hidden');
@@ -271,8 +328,8 @@
             manualExit() {
                 this.stopGame("YOU LEFT");
                 if(this.state.room) {
-                    if(this.state.role === 'host') remove(ref(db, 'rooms/'+this.state.room));
-                    else update(ref(db, 'rooms/'+this.state.room), { g: null });
+                    if(this.state.role === 'host') remove(ref(db, 'rooms/' + this.state.room));
+                    else update(ref(db, 'rooms/' + this.state.room), { g: null });
                 }
                 window.location.reload();
             }
@@ -284,47 +341,71 @@
                 document.getElementById('overScreen').classList.remove('hidden');
             }
 
+            // ──────────────────────────────────────────────
+            // MAIN LOOP  (delta = PIXI frames at 60fps base)
+            // dt = real seconds elapsed this tick
+            // ──────────────────────────────────────────────
             loop(delta) {
                 if(!this.state.playing) return;
+
+                // Convert PIXI's frame-delta to seconds
+                const dt = delta / 60;
+                // Guard against huge spikes (e.g. tab hidden then resumed)
+                const dtClamped = Math.min(dt, 0.1);
+
                 const s = this.state;
-                const lerp = (a, b, n) => (1 - n) * a + n * b;
 
+                // ── Paddle movement ──
                 if(s.mode === 'ai') {
+                    // Player paddle tracks mouse/touch instantly
                     s.pL = this.inputY;
-                    let target = s.bx > W/2 ? s.by : H/2;
-                    s.pR = lerp(s.pR, target, 0.08);
-                } 
-                else if (s.mode === 'online') {
+
+                    // AI paddle chases ball (or rests at centre when ball is on player side)
+                    const target = s.bx > W / 2 ? s.by : H / 2;
+                    const diff   = target - s.pR;
+                    const maxMove = AI_TRACK_SPEED * dtClamped;
+                    if(Math.abs(diff) <= maxMove) {
+                        s.pR = target;
+                    } else {
+                        s.pR += Math.sign(diff) * maxMove;
+                    }
+                } else if(s.mode === 'online') {
                     if(s.role === 'host') s.pL = this.inputY;
-                    else s.pR = this.inputY;
+                    else                  s.pR = this.inputY;
                 }
 
-                // Physics simulation (Authoritative on Host, Predictive on Guest)
-                s.bx += s.bvx * delta;
-                s.by += s.bvy * delta;
+                // ── Ball physics (frame-rate independent) ──
+                s.bx += s.bvx * dtClamped;
+                s.by += s.bvy * dtClamped;
 
-                // Wall Bounce
-                if(s.by < 12 || s.by > H - 12) { 
-                    s.bvy *= -1; 
-                    s.by = Math.max(12, Math.min(H-12, s.by)); 
+                // Wall bounce (top / bottom)
+                if(s.by < 12) {
+                    s.by  = 12 - (s.by - 12);   // reflect overshoot
+                    s.bvy = Math.abs(s.bvy);
+                } else if(s.by > H - 12) {
+                    s.by  = (H - 12) - (s.by - (H - 12));
+                    s.bvy = -Math.abs(s.bvy);
                 }
 
-                // Collision & Scoring (Only Host calculates to prevent desync)
+                // ── Collision & scoring (authoritative on host / AI) ──
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
-                    this.checkHit(s.pL, 40, 1);
-                    this.checkHit(s.pR, W-40, -1);
-                    if(s.bx < -20) { s.score.R++; this.resetBall(1); }
-                    if(s.bx > W+20) { s.score.L++; this.resetBall(-1); }
+                    this.checkHit(s.pL,  40,     1);
+                    this.checkHit(s.pR, W - 40, -1);
+
+                    if(s.bx < -20)    { s.score.R++; this.resetBall(1);  }
+                    else if(s.bx > W + 20) { s.score.L++; this.resetBall(-1); }
                 }
 
+                // ── Render ──
                 this.gfxL.y = s.pL;
                 this.gfxR.y = s.pR;
-                this.ball.x = s.bx;
-                this.ball.y = s.by;
+                this.ball.x  = s.bx;
+                this.ball.y  = s.by;
 
+                // ── Net sync (online only) ──
                 if(s.mode === 'online') {
                     const now = Date.now();
-                    if(now - (this.lastNet || 0) > 30) {
+                    if(now - this.lastNet > 30) {
                         this.netSync();
                         this.lastNet = now;
                     }
@@ -333,30 +414,48 @@
 
             checkHit(py, px, dir) {
                 const s = this.state;
-                if (Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
-                    s.bvx = Math.abs(s.bvx) * 1.05; // Slightly speed up
-                    if (dir === -1) s.bvx *= -1;
-                    s.bvy = (s.by - py) * 0.15;
-                    // Move ball out of paddle to prevent multi-hit
-                    s.bx = px + (dir * 26);
+                // dir === 1  → left paddle  (ball must be moving left, i.e. bvx < 0)
+                // dir === -1 → right paddle (ball must be moving right, i.e. bvx > 0)
+                const movingTowardPaddle = (dir === 1 && s.bvx < 0) || (dir === -1 && s.bvx > 0);
+                if(!movingTowardPaddle) return;
+
+                if(Math.abs(s.bx - px) < 25 && Math.abs(s.by - py) < 70) {
+                    // Reverse and accelerate, but cap at max speed
+                    let newSpeed = Math.abs(s.bvx) * BALL_ACCEL_FACTOR;
+                    if(newSpeed > BALL_MAX_SPEED) newSpeed = BALL_MAX_SPEED;
+
+                    s.bvx = newSpeed * dir;                // dir flips sign correctly
+                    s.bvy = (s.by - py) * 4.5;             // vertical kick based on hit offset (scaled for px/s)
+
+                    // Clamp total vertical speed so ball stays playable
+                    const maxVy = newSpeed * 0.7;
+                    s.bvy = Math.max(-maxVy, Math.min(maxVy, s.bvy));
+
+                    // Push ball out of paddle so it can't multi-hit
+                    s.bx = px + dir * 26;
                 }
             }
 
             resetBall(dir) {
                 const s = this.state;
-                s.bx = W/2; s.by = H/2;
-                s.bvx = (dir || (Math.random()>.5?1:-1)) * 9;
-                s.bvy = (Math.random()*8)-4;
+                s.bx = W / 2;
+                s.by = H / 2;
+                const d = dir || (Math.random() > 0.5 ? 1 : -1);
+                s.bvx = d * BALL_BASE_SPEED_X;
+                s.bvy = (Math.random() * 240) - 120; // gentle vertical spread in px/s
+
                 document.getElementById('scoreL').innerText = s.score.L;
                 document.getElementById('scoreR').innerText = s.score.R;
-                
+
                 if(s.score.L >= 10 || s.score.R >= 10) {
                     this.stopGame(s.score.L > s.score.R ? "PLAYER 1 WINS" : "PLAYER 2 WINS");
-                    if(s.room && s.role === 'host') remove(ref(db, 'rooms/'+s.room));
+                    if(s.room && s.role === 'host') remove(ref(db, 'rooms/' + s.room));
                 }
             }
 
-            // --- NETWORK ---
+            // ─────────────────────────
+            // NETWORK (Firebase RTDB)
+            // ─────────────────────────
 
             async host() {
                 const code = Math.floor(1000 + Math.random() * 9000).toString();
@@ -366,103 +465,126 @@
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
 
-                const r = ref(db, 'rooms/'+code);
+                const r = ref(db, 'rooms/' + code);
                 await set(r, { h: true, status: 'waiting' });
-                onDisconnect(r).remove(); 
+                onDisconnect(r).remove();
 
                 onValue(r, (snap) => {
                     const d = snap.val();
-                    if(!d) return; 
+                    if(!d) return;
 
+                    // Guest joined → start
                     if(d.g && !this.state.playing) {
-                        this.state.mode = 'online';
+                        this.state.mode    = 'online';
                         this.state.playing = true;
                         this.resetBall();
                         document.getElementById('lobbyScreen').classList.add('hidden');
                         document.getElementById('gameHud').classList.remove('hidden');
                     }
-                    
+
+                    // Guest disconnected mid-game
                     if(this.state.playing && !d.g) {
                         this.stopGame("OPPONENT LEFT");
-                        remove(ref(db, 'rooms/'+code));
+                        remove(ref(db, 'rooms/' + code));
                     }
 
-                    if(d.gy !== undefined) {
-                         const lerp = (a,b,n) => (1-n)*a+n*b;
-                         this.state.pR = lerp(this.state.pR, d.gy, 0.4);
+                    // Pull guest paddle position (lerp for smoothness)
+                    if(d.gy !== undefined && this.state.playing) {
+                        this.state.pR += (d.gy - this.state.pR) * 0.4;
                     }
                 });
             }
 
             async join() {
-                const code = document.getElementById('codeIn').value;
-                if(!code) return;
-                const r = ref(db, 'rooms/'+code);
-                const snap = await get(r);
-                
-                if(snap.exists()) {
-                    this.state.room = code;
-                    this.state.role = 'guest';
-                    
-                    await update(r, { g: true });
-                    onDisconnect(ref(db, 'rooms/'+code+'/g')).remove();
+                const code = document.getElementById('codeIn').value.trim();
+                const fb   = document.getElementById('joinFeedback');
 
-                    this.state.mode = 'online';
-                    this.state.playing = true;
-                    document.getElementById('lobbyScreen').classList.add('hidden');
-                    document.getElementById('gameHud').classList.remove('hidden');
-                    
-                    onValue(r, (s) => {
-                        const d = s.val();
-                        if(!d) {
-                            this.stopGame("HOST DISCONNECTED");
-                            return;
-                        }
-                        this.onServer(d);
-                    });
-                } else alert("Invalid Code");
+                if(!code || code.length !== 4) {
+                    fb.textContent = 'Enter a 4-digit code';
+                    return;
+                }
+
+                fb.textContent = 'Connecting...';
+
+                const r    = ref(db, 'rooms/' + code);
+                const snap = await get(r);
+
+                if(!snap.exists()) {
+                    fb.textContent = 'Room not found';
+                    return;
+                }
+
+                fb.textContent = '';
+                this.state.room = code;
+                this.state.role = 'guest';
+
+                await update(r, { g: true });
+                onDisconnect(ref(db, 'rooms/' + code + '/g')).remove();
+
+                this.state.mode    = 'online';
+                this.state.playing = true;
+                document.getElementById('lobbyScreen').classList.add('hidden');
+                document.getElementById('gameHud').classList.remove('hidden');
+
+                onValue(r, (s) => {
+                    const d = s.val();
+                    if(!d) {
+                        this.stopGame("HOST DISCONNECTED");
+                        return;
+                    }
+                    this.onServer(d);
+                });
             }
 
             netSync() {
                 if(!this.state.room) return;
-                const r = ref(db, 'rooms/'+this.state.room);
-                if(this.state.role === 'host') {
+                const r = ref(db, 'rooms/' + this.state.room);
+                const s = this.state;
+
+                if(s.role === 'host') {
                     update(r, {
-                        bx: Math.round(this.state.bx), 
-                        by: Math.round(this.state.by),
-                        bvx: this.state.bvx, 
-                        bvy: this.state.bvy,
-                        hy: Math.round(this.state.pL), 
-                        sc: this.state.score
+                        bx:  Math.round(s.bx),
+                        by:  Math.round(s.by),
+                        bvx: s.bvx,
+                        bvy: s.bvy,
+                        hy:  Math.round(s.pL),
+                        sc:  s.score
                     });
                 } else {
-                    update(r, { gy: Math.round(this.state.pR) });
+                    update(r, { gy: Math.round(s.pR) });
                 }
             }
 
             onServer(d) {
                 if(!d || !this.state.playing || this.state.role !== 'guest') return;
                 const s = this.state;
-                const lerp = (a,b,n) => (1-n)*a+n*b;
 
-                // Smoothly pull Guest's paddle to Host's position
-                if(d.hy !== undefined) s.pL = lerp(s.pL, d.hy, 0.4);
-                
-                if(d.sc) { 
-                    s.score = d.sc; 
-                    document.getElementById('scoreL').innerText = s.score.L; 
-                    document.getElementById('scoreR').innerText = s.score.R; 
+                // Host paddle — smooth pull
+                if(d.hy !== undefined) {
+                    s.pL += (d.hy - s.pL) * 0.4;
                 }
 
+                // Score is authoritative from host
+                if(d.sc) {
+                    s.score = d.sc;
+                    document.getElementById('scoreL').innerText = s.score.L;
+                    document.getElementById('scoreR').innerText = s.score.R;
+                }
+
+                // Ball sync: always apply host velocity for smooth local prediction.
+                // Position: lerp if close, snap if far apart (corrects large drift).
                 if(d.bx !== undefined) {
-                    // Smooth Ball Sync: If drift is small, lerp. If large, snap.
+                    // Always take the host velocity so local physics predicts correctly
+                    s.bvx = d.bvx;
+                    s.bvy = d.bvy;
+
                     const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
                     if(dist < 80) {
-                        s.bx = lerp(s.bx, d.bx, 0.3);
-                        s.by = lerp(s.by, d.by, 0.3);
-                        s.bvx = d.bvx; s.bvy = d.bvy;
+                        s.bx += (d.bx - s.bx) * 0.3;
+                        s.by += (d.by - s.by) * 0.3;
                     } else {
-                        s.bx = d.bx; s.by = d.by;
+                        s.bx = d.bx;
+                        s.by = d.by;
                     }
                 }
             }
