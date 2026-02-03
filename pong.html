@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong</title>
+    <title>Neon Pong - WebRTC Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: "Courier New", Courier, monospace; display: flex; justify-content: center; align-items: center; }
@@ -33,7 +33,6 @@
         .interactive { pointer-events: auto; }
         .hud { width: 100%; padding: 20px 16px; display: flex; flex-direction: column; align-items: center; pointer-events: none; }
         
-        /* Fixed score positioning for mobile */
         .score-row { 
             display: flex; 
             justify-content: center; 
@@ -94,8 +93,17 @@
         }
         .connection-status.connected { border-color: #0f0; color: #0f0; }
         .connection-status.disconnected { border-color: #f00; color: #f00; }
+        .connection-status.connecting { border-color: #ff0; color: #ff0; }
 
-        /* Loading indicator */
+        .latency-display {
+            position: absolute; top: 90px; right: 12px;
+            background: rgba(0,0,0,0.8); border: 2px solid #00f3ff;
+            padding: 6px 12px; border-radius: 8px;
+            font-size: 11px; font-weight: bold;
+            color: #00f3ff;
+            z-index: 101; display: none;
+        }
+
         .loading-spinner {
             border: 3px solid rgba(0, 243, 255, 0.2);
             border-top: 3px solid #00f3ff;
@@ -121,6 +129,7 @@
             <button class="btn-exit interactive" id="btnExit">EXIT</button>
             <a href="blog.html" class="back-btn-link">← DASH</a>
             <div id="connectionStatus" class="connection-status"></div>
+            <div id="latencyDisplay" class="latency-display">RTT: --ms</div>
             <div class="score-row">
                 <div class="score-box">
                     <div style="color:#ff0055" id="scoreL">0</div>
@@ -189,12 +198,378 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
+        // Game Constants
         const W = 800, H = 600;
         const BALL_RADIUS = 8, PADDLE_WIDTH = 16, PADDLE_HEIGHT = 100;
         const BALL_BASE_SPEED_X = 420, BALL_MAX_SPEED = 850, BALL_ACCEL_FACTOR = 1.07;
         const PADDLE_MIN_Y = PADDLE_HEIGHT/2 + 10, PADDLE_MAX_Y = H - PADDLE_HEIGHT/2 - 10;
-        const WIN_SCORE = 10, COLLISION_COOLDOWN = 80;
+        const WIN_SCORE = 10;
+        const PHYSICS_HZ = 120; // Fixed physics timestep
+        const NETWORK_HZ = 120; // Network update rate
+        const PHYSICS_DT = 1000 / PHYSICS_HZ;
+        const NETWORK_DT = 1000 / NETWORK_HZ;
 
+        // WebRTC Configuration
+        const ICE_SERVERS = [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' }
+        ];
+
+        // Physics Engine - Authoritative on Host
+        class PhysicsEngine {
+            constructor() {
+                this.bx = W / 2;
+                this.by = H / 2;
+                this.bvx = 0;
+                this.bvy = 0;
+                this.pL = H / 2;
+                this.pR = H / 2;
+                this.scoreL = 0;
+                this.scoreR = 0;
+                this.lastHitTimeL = 0;
+                this.lastHitTimeR = 0;
+                this.accumulator = 0;
+            }
+
+            reset(dir) {
+                this.bx = W / 2;
+                this.by = H / 2;
+                const d = dir || (Math.random() > 0.5 ? 1 : -1);
+                this.bvx = d * BALL_BASE_SPEED_X;
+                this.bvy = (Math.random() * 70 + 70) * (Math.random() > 0.5 ? 1 : -1);
+            }
+
+            update(dt) {
+                // Fixed timestep physics
+                this.accumulator += dt;
+                
+                while (this.accumulator >= PHYSICS_DT) {
+                    this.step(PHYSICS_DT / 1000); // Convert to seconds
+                    this.accumulator -= PHYSICS_DT;
+                }
+            }
+
+            step(dt) {
+                // Ball movement
+                this.bx += this.bvx * dt;
+                this.by += this.bvy * dt;
+
+                // Wall collisions
+                if (this.by - BALL_RADIUS < 0) {
+                    this.by = BALL_RADIUS;
+                    this.bvy = Math.abs(this.bvy) * 0.98;
+                } else if (this.by + BALL_RADIUS > H) {
+                    this.by = H - BALL_RADIUS;
+                    this.bvy = -Math.abs(this.bvy) * 0.98;
+                }
+
+                // Paddle collisions
+                this.checkPaddleHit(this.pL, 30, 1);
+                this.checkPaddleHit(this.pR, W - 30, -1);
+
+                // Scoring
+                if (this.bx + BALL_RADIUS < 0) {
+                    this.scoreR++;
+                    return 'scoreR';
+                } else if (this.bx - BALL_RADIUS > W) {
+                    this.scoreL++;
+                    return 'scoreL';
+                }
+
+                return null;
+            }
+
+            checkPaddleHit(py, px, dir) {
+                const now = Date.now();
+                const cooldown = (dir === 1) ? this.lastHitTimeL : this.lastHitTimeR;
+                if (now - cooldown < 80) return;
+
+                const movingToward = (dir === 1 && this.bvx < 0) || (dir === -1 && this.bvx > 0);
+                if (!movingToward) return;
+
+                const closestX = Math.max(px - PADDLE_WIDTH/2, Math.min(this.bx, px + PADDLE_WIDTH/2));
+                const closestY = Math.max(py - PADDLE_HEIGHT/2, Math.min(this.by, py + PADDLE_HEIGHT/2));
+                const distSq = (this.bx - closestX) ** 2 + (this.by - closestY) ** 2;
+
+                if (distSq <= BALL_RADIUS ** 2) {
+                    if (dir === 1) this.lastHitTimeL = now;
+                    else this.lastHitTimeR = now;
+
+                    let newSpeed = Math.min(Math.abs(this.bvx) * BALL_ACCEL_FACTOR, BALL_MAX_SPEED);
+                    this.bvx = newSpeed * dir;
+
+                    const relativePos = (this.by - py) / (PADDLE_HEIGHT/2);
+                    this.bvy = relativePos * newSpeed * 0.45;
+                    this.bvy = Math.max(-newSpeed * 0.55, Math.min(newSpeed * 0.55, this.bvy));
+
+                    const pushout = Math.max(BALL_RADIUS + PADDLE_WIDTH/2 + 5, Math.abs(this.bvx) * 0.03);
+                    this.bx = (dir === 1) ? (px + pushout) : (px - pushout);
+                    this.bx = Math.max(BALL_RADIUS + 5, Math.min(W - BALL_RADIUS - 5, this.bx));
+                }
+            }
+
+            getState() {
+                return {
+                    bx: this.bx,
+                    by: this.by,
+                    bvx: this.bvx,
+                    bvy: this.bvy,
+                    pL: this.pL,
+                    pR: this.pR,
+                    scoreL: this.scoreL,
+                    scoreR: this.scoreR
+                };
+            }
+
+            setState(state) {
+                this.bx = state.bx;
+                this.by = state.by;
+                this.bvx = state.bvx;
+                this.bvy = state.bvy;
+                this.pL = state.pL;
+                this.pR = state.pR;
+                this.scoreL = state.scoreL;
+                this.scoreR = state.scoreR;
+            }
+        }
+
+        // Client-Side Prediction for Guest
+        class PredictionEngine {
+            constructor() {
+                this.bx = W / 2;
+                this.by = H / 2;
+                this.bvx = 0;
+                this.bvy = 0;
+                this.targetBx = W / 2;
+                this.targetBy = H / 2;
+                this.targetVx = 0;
+                this.targetVy = 0;
+                this.lerpFactor = 0.4; // Increased for faster correction
+            }
+
+            predict(dt) {
+                // Predict ball movement
+                this.bx += this.bvx * dt;
+                this.by += this.bvy * dt;
+
+                // Wall bounces (same as physics)
+                if (this.by - BALL_RADIUS < 0) {
+                    this.by = BALL_RADIUS;
+                    this.bvy = Math.abs(this.bvy) * 0.98;
+                } else if (this.by + BALL_RADIUS > H) {
+                    this.by = H - BALL_RADIUS;
+                    this.bvy = -Math.abs(this.bvy) * 0.98;
+                }
+
+                // Smooth interpolation to server state
+                this.bx += (this.targetBx - this.bx) * this.lerpFactor;
+                this.by += (this.targetBy - this.by) * this.lerpFactor;
+                this.bvx += (this.targetVx - this.bvx) * this.lerpFactor;
+                this.bvy += (this.targetVy - this.bvy) * this.lerpFactor;
+            }
+
+            updateTarget(bx, by, vx, vy) {
+                this.targetBx = bx;
+                this.targetBy = by;
+                this.targetVx = vx;
+                this.targetVy = vy;
+            }
+
+            hardSet(bx, by, vx, vy) {
+                this.bx = this.targetBx = bx;
+                this.by = this.targetBy = by;
+                this.bvx = this.targetVx = vx;
+                this.bvy = this.targetVy = vy;
+            }
+        }
+
+        // WebRTC Manager
+        class WebRTCManager {
+            constructor(isHost, onMessage, onConnectionChange) {
+                this.isHost = isHost;
+                this.onMessage = onMessage;
+                this.onConnectionChange = onConnectionChange;
+                this.pc = null;
+                this.dataChannel = null;
+                this.connected = false;
+                this.signalRef = null;
+                this.signalListener = null;
+                
+                // Latency tracking
+                this.lastPingTime = 0;
+                this.rtt = 0; // Round-trip time in ms
+                this.pingInterval = null;
+            }
+
+            async init(roomCode) {
+                this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+                // ICE candidate handling
+                this.pc.onicecandidate = (event) => {
+                    if (event.candidate) {
+                        const path = this.isHost ? 'hostIce' : 'guestIce';
+                        update(ref(db, `rooms/${roomCode}/${path}`), {
+                            [Date.now()]: JSON.stringify(event.candidate.toJSON())
+                        }).catch(console.error);
+                    }
+                };
+
+                // Connection state monitoring
+                this.pc.onconnectionstatechange = () => {
+                    console.log('Connection state:', this.pc.connectionState);
+                    this.onConnectionChange(this.pc.connectionState);
+                    
+                    if (this.pc.connectionState === 'connected') {
+                        this.connected = true;
+                        this.startPingMonitoring();
+                    } else if (this.pc.connectionState === 'disconnected' || 
+                               this.pc.connectionState === 'failed') {
+                        this.connected = false;
+                        this.stopPingMonitoring();
+                    }
+                };
+
+                if (this.isHost) {
+                    // Host creates data channel
+                    this.dataChannel = this.pc.createDataChannel('gameData', {
+                        ordered: false,      // Allow out-of-order delivery
+                        maxRetransmits: 0    // No retransmission for lowest latency
+                    });
+                    this.setupDataChannel();
+
+                    // Create offer
+                    const offer = await this.pc.createOffer();
+                    await this.pc.setLocalDescription(offer);
+                    await set(ref(db, `rooms/${roomCode}/offer`), JSON.stringify(offer));
+
+                    // Listen for answer
+                    this.signalRef = ref(db, `rooms/${roomCode}/answer`);
+                    this.signalListener = onValue(this.signalRef, async (snap) => {
+                        const answer = snap.val();
+                        if (answer && this.pc.remoteDescription === null) {
+                            await this.pc.setRemoteDescription(JSON.parse(answer));
+                        }
+                    });
+                } else {
+                    // Guest receives data channel
+                    this.pc.ondatachannel = (event) => {
+                        this.dataChannel = event.channel;
+                        this.setupDataChannel();
+                    };
+
+                    // Wait for offer
+                    this.signalRef = ref(db, `rooms/${roomCode}/offer`);
+                    this.signalListener = onValue(this.signalRef, async (snap) => {
+                        const offer = snap.val();
+                        if (offer && this.pc.remoteDescription === null) {
+                            await this.pc.setRemoteDescription(JSON.parse(offer));
+                            const answer = await this.pc.createAnswer();
+                            await this.pc.setLocalDescription(answer);
+                            await set(ref(db, `rooms/${roomCode}/answer`), JSON.stringify(answer));
+                        }
+                    });
+                }
+
+                // Listen for ICE candidates
+                const icePath = this.isHost ? 'guestIce' : 'hostIce';
+                const iceRef = ref(db, `rooms/${roomCode}/${icePath}`);
+                onValue(iceRef, (snap) => {
+                    const candidates = snap.val();
+                    if (candidates) {
+                        Object.values(candidates).forEach(async (cand) => {
+                            try {
+                                await this.pc.addIceCandidate(JSON.parse(cand));
+                            } catch (e) {
+                                console.error('Error adding ICE candidate:', e);
+                            }
+                        });
+                    }
+                });
+            }
+
+            setupDataChannel() {
+                this.dataChannel.onopen = () => {
+                    console.log('Data channel open');
+                    this.connected = true;
+                    this.onConnectionChange('connected');
+                };
+
+                this.dataChannel.onclose = () => {
+                    console.log('Data channel closed');
+                    this.connected = false;
+                    this.onConnectionChange('disconnected');
+                };
+
+                this.dataChannel.onerror = (error) => {
+                    console.error('Data channel error:', error);
+                };
+
+                this.dataChannel.onmessage = (event) => {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        // Handle ping/pong for latency measurement
+                        if (data.type === 'ping') {
+                            this.send({ type: 'pong', timestamp: data.timestamp });
+                            return;
+                        } else if (data.type === 'pong') {
+                            this.rtt = Date.now() - data.timestamp;
+                            return;
+                        }
+                        
+                        this.onMessage(data);
+                    } catch (e) {
+                        console.error('Error parsing message:', e);
+                    }
+                };
+            }
+
+            send(data) {
+                if (this.dataChannel && this.dataChannel.readyState === 'open') {
+                    try {
+                        this.dataChannel.send(JSON.stringify(data));
+                    } catch (e) {
+                        console.error('Send error:', e);
+                    }
+                }
+            }
+
+            startPingMonitoring() {
+                this.pingInterval = setInterval(() => {
+                    if (this.connected) {
+                        this.send({ type: 'ping', timestamp: Date.now() });
+                    }
+                }, 1000); // Ping every second
+            }
+
+            stopPingMonitoring() {
+                if (this.pingInterval) {
+                    clearInterval(this.pingInterval);
+                    this.pingInterval = null;
+                }
+            }
+
+            async cleanup() {
+                this.stopPingMonitoring();
+                
+                if (this.signalListener && this.signalRef) {
+                    off(this.signalRef);
+                }
+                
+                if (this.dataChannel) {
+                    this.dataChannel.close();
+                }
+                
+                if (this.pc) {
+                    this.pc.close();
+                }
+                
+                this.connected = false;
+            }
+        }
+
+        // Main Game Class
         class PongGame {
             constructor() {
                 const oldCanvas = document.querySelector('canvas');
@@ -209,35 +584,38 @@
                 document.body.appendChild(this.app.view);
                 
                 this.state = {
-                    playing: false, mode: '', role: '', room: null,
-                    score: {L:0, R:0}, pL: H/2, pR: H/2,
-                    bx: W/2, by: H/2, bvx: 0, bvy: 0,
-                    playerName: '', opponentName: ''
+                    playing: false, 
+                    mode: '', 
+                    role: '', 
+                    room: null,
+                    playerName: '', 
+                    opponentName: ''
                 };
                 
                 this.inputY = H/2;
                 this.scaleFactor = 1;
-                this.lastNet = 0;
-                this.roomListener = null;
-                this.roomRef = null;
-                this.isCleaningUp = false;
-                this.gameStopped = false;
-                this.lastHitTimeL = 0;
-                this.lastHitTimeR = 0;
-                this.lastScoreUpdate = 0;
-                this.lastServerUpdate = Date.now();
-                this.lastHeartbeat = Date.now();
                 this.eventCleanup = [];
                 this.authReady = false;
                 this.currentUser = null;
+                this.gameStopped = false;
+                this.isCleaningUp = false;
 
-                // Improved interpolation for smoother guest experience
-                this.ballInterpolation = {
-                    targetX: W/2,
-                    targetY: H/2,
-                    targetVX: 0,
-                    targetVY: 0,
-                    lerpFactor: 0.3
+                // Physics engines
+                this.physics = new PhysicsEngine();
+                this.prediction = new PredictionEngine();
+                
+                // WebRTC
+                this.webrtc = null;
+                this.lastNetworkUpdate = 0;
+
+                // Rendering state
+                this.renderState = {
+                    pL: H/2,
+                    pR: H/2,
+                    bx: W/2,
+                    by: H/2,
+                    scoreL: 0,
+                    scoreR: 0
                 };
 
                 this.initGFX();
@@ -250,15 +628,10 @@
                 window.addEventListener('resize', resizeHandler);
                 this.eventCleanup.push(() => window.removeEventListener('resize', resizeHandler));
                 
-                window.addEventListener('beforeunload', () => {
-                    if (this.state.room) navigator.sendBeacon && this.beaconCleanup();
-                });
-                
-                this.app.ticker.add((d) => this.loop(d));
+                this.app.ticker.add((delta) => this.loop(delta));
             }
 
             initAuth() {
-                // Wait for Firebase Auth to be ready
                 onAuthStateChanged(auth, (user) => {
                     this.currentUser = user;
                     this.authReady = true;
@@ -267,14 +640,6 @@
                         console.warn('No user logged in - username will default to "Player"');
                     }
                 });
-            }
-
-            beaconCleanup() {
-                if(!this.state.room) return;
-                const url = this.state.role === 'host' 
-                    ? `${firebaseConfig.databaseURL}/rooms/${this.state.room}.json`
-                    : `${firebaseConfig.databaseURL}/rooms/${this.state.room}/g.json`;
-                navigator.sendBeacon(url, JSON.stringify(null));
             }
 
             resize() {
@@ -449,14 +814,20 @@
 
             async startAI() {
                 this.state.playerName = await this.getPlayerName();
-                this.state = {...this.state, mode: 'ai', playing: true, score: {L:0, R:0}};
+                this.state = {...this.state, mode: 'ai', playing: true};
                 this.gameStopped = false;
+                
+                this.physics.scoreL = 0;
+                this.physics.scoreR = 0;
+                this.physics.reset();
+                
                 this.updateScoreDisplay();
                 this.updatePlayerLabels();
-                this.resetBall();
+                
                 document.getElementById('menuScreen').classList.add('hidden');
                 document.getElementById('gameHud').classList.remove('hidden');
                 document.getElementById('connectionStatus').style.display = 'none';
+                document.getElementById('latencyDisplay').style.display = 'none';
             }
 
             async manualExit() {
@@ -478,20 +849,17 @@
                 this.eventCleanup.forEach(fn => fn());
                 this.eventCleanup = [];
 
-                if(this.roomRef) {
-                    try { off(this.roomRef); } catch(e) {}
-                    this.roomListener = null;
-                    this.roomRef = null;
+                if (this.webrtc) {
+                    await this.webrtc.cleanup();
+                    this.webrtc = null;
                 }
 
                 if(this.state.room) {
-                    const room = this.state.room, role = this.state.role;
+                    const room = this.state.room;
                     this.state.room = null;
-                    this.state.role = '';
                     
                     try {
-                        if(role === 'host') await remove(ref(db, 'rooms/' + room));
-                        else if(role === 'guest') await update(ref(db, 'rooms/' + room), { g: null, gName: null });
+                        await remove(ref(db, 'rooms/' + room));
                     } catch(e) {}
                 }
                 
@@ -503,202 +871,186 @@
                 this.gameStopped = true;
                 this.state.playing = false;
                 
-                this.app.ticker.stop();
-                
                 this.ballTrail.clear();
                 document.getElementById('gameHud').classList.add('hidden');
                 document.getElementById('winMsg').innerText = reason || "GAME OVER";
                 document.getElementById('overScreen').classList.remove('hidden');
                 document.getElementById('connectionStatus').style.display = 'none';
+                document.getElementById('latencyDisplay').style.display = 'none';
             }
 
-            updateConnectionStatus(connected) {
-                const status = document.getElementById('connectionStatus');
+            updateConnectionStatus(status) {
+                const statusEl = document.getElementById('connectionStatus');
+                const latencyEl = document.getElementById('latencyDisplay');
+                
                 if(this.state.mode === 'online' && this.state.playing) {
-                    status.style.display = 'block';
-                    status.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
-                    status.textContent = connected ? 'CONNECTED' : 'RECONNECTING...';
+                    statusEl.style.display = 'block';
+                    statusEl.className = 'connection-status';
+                    
+                    if (status === 'connected') {
+                        statusEl.classList.add('connected');
+                        statusEl.textContent = 'CONNECTED';
+                        latencyEl.style.display = 'block';
+                    } else if (status === 'connecting') {
+                        statusEl.classList.add('connecting');
+                        statusEl.textContent = 'CONNECTING...';
+                        latencyEl.style.display = 'none';
+                    } else {
+                        statusEl.classList.add('disconnected');
+                        statusEl.textContent = 'DISCONNECTED';
+                        latencyEl.style.display = 'none';
+                    }
                 } else {
-                    status.style.display = 'none';
+                    statusEl.style.display = 'none';
+                    latencyEl.style.display = 'none';
+                }
+            }
+
+            updateLatencyDisplay() {
+                if (this.webrtc && this.webrtc.rtt > 0) {
+                    document.getElementById('latencyDisplay').textContent = `RTT: ${this.webrtc.rtt}ms`;
                 }
             }
 
             updateScoreDisplay() {
-                document.getElementById('scoreL').innerText = this.state.score.L;
-                document.getElementById('scoreR').innerText = this.state.score.R;
+                document.getElementById('scoreL').innerText = this.renderState.scoreL;
+                document.getElementById('scoreR').innerText = this.renderState.scoreR;
             }
 
             loop(delta) {
                 if(!this.state.playing) return;
-                const dt = Math.min(delta / 60, 0.033);
-                const s = this.state;
+                
+                const dt = this.app.ticker.elapsedMS;
 
-                if(s.mode === 'ai') {
-                    s.pL = this.inputY;
-                    const aiBaseSpeed = 320;
-                    const aiSpeedBoost = Math.abs(s.bvx) * 0.22;
-                    const aiSpeed = Math.min(500, aiBaseSpeed + aiSpeedBoost);
-                    const target = s.bx > W / 2 ? s.by : H / 2;
-                    const diff = target - s.pR;
-                    const maxMove = aiSpeed * dt;
-                    s.pR = Math.abs(diff) <= maxMove ? target : s.pR + Math.sign(diff) * maxMove;
-                    s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
-                } else if(s.mode === 'online') {
-                    if(s.role === 'host') {
-                        s.pL = this.inputY;
-                    } else {
-                        s.pR = this.inputY;
+                if(this.state.mode === 'ai') {
+                    this.updateAI(dt);
+                } else if(this.state.mode === 'online') {
+                    this.updateOnline(dt);
+                }
+
+                this.render();
+            }
+
+            updateAI(dt) {
+                // Update input
+                this.physics.pL = this.inputY;
+
+                // AI logic
+                const aiBaseSpeed = 320;
+                const aiSpeedBoost = Math.abs(this.physics.bvx) * 0.22;
+                const aiSpeed = Math.min(500, aiBaseSpeed + aiSpeedBoost);
+                const target = this.physics.bx > W / 2 ? this.physics.by : H / 2;
+                const diff = target - this.physics.pR;
+                const maxMove = aiSpeed * (dt / 1000);
+                this.physics.pR = Math.abs(diff) <= maxMove ? target : this.physics.pR + Math.sign(diff) * maxMove;
+                this.physics.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, this.physics.pR));
+
+                // Update physics
+                const result = this.physics.update(dt);
+                
+                if (result) {
+                    this.physics.reset(result === 'scoreL' ? -1 : 1);
+                    
+                    if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
+                        const winner = this.physics.scoreL > this.physics.scoreR ? "YOU WIN!" : "YOU LOST!";
+                        this.stopGame(winner);
                     }
                 }
 
-                s.pL = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pL));
-                s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
+                // Update render state
+                this.renderState.pL = this.physics.pL;
+                this.renderState.pR = this.physics.pR;
+                this.renderState.bx = this.physics.bx;
+                this.renderState.by = this.physics.by;
+                this.renderState.scoreL = this.physics.scoreL;
+                this.renderState.scoreR = this.physics.scoreR;
+            }
 
-                const oldX = s.bx, oldY = s.by;
+            updateOnline(dt) {
+                const now = Date.now();
 
-                // Improved ball movement for guests
-                if(s.mode === 'online' && s.role === 'guest') {
-                    // Smooth interpolation to server position
-                    const interp = this.ballInterpolation;
-                    s.bx += (interp.targetX - s.bx) * interp.lerpFactor;
-                    s.by += (interp.targetY - s.by) * interp.lerpFactor;
-                    s.bvx += (interp.targetVX - s.bvx) * interp.lerpFactor;
-                    s.bvy += (interp.targetVY - s.bvy) * interp.lerpFactor;
+                if (this.state.role === 'host') {
+                    // Host: Run authoritative physics
+                    this.physics.pL = this.inputY;
                     
-                    // Add predicted movement for smoothness
-                    s.bx += s.bvx * dt * 0.5;
-                    s.by += s.bvy * dt * 0.5;
+                    const result = this.physics.update(dt);
+                    
+                    if (result) {
+                        this.physics.reset(result === 'scoreL' ? -1 : 1);
+                        
+                        if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
+                            const winner = "YOU " + (this.physics.scoreL > this.physics.scoreR ? "WIN!" : "LOST!");
+                            this.stopGame(winner);
+                            if (this.webrtc) {
+                                this.webrtc.send({
+                                    type: 'gameOver',
+                                    winner: this.physics.scoreL > this.physics.scoreR ? 'host' : 'guest'
+                                });
+                            }
+                            return;
+                        }
+                    }
+
+                    // Send state to guest at high frequency
+                    if (now - this.lastNetworkUpdate >= NETWORK_DT && this.webrtc) {
+                        const state = this.physics.getState();
+                        this.webrtc.send({
+                            type: 'state',
+                            ...state,
+                            timestamp: now
+                        });
+                        this.lastNetworkUpdate = now;
+                    }
+
+                    // Update render state
+                    this.renderState.pL = this.physics.pL;
+                    this.renderState.pR = this.physics.pR;
+                    this.renderState.bx = this.physics.bx;
+                    this.renderState.by = this.physics.by;
+                    this.renderState.scoreL = this.physics.scoreL;
+                    this.renderState.scoreR = this.physics.scoreR;
+
                 } else {
-                    // Normal physics for host and AI
-                    s.bx += s.bvx * dt;
-                    s.by += s.bvy * dt;
+                    // Guest: Use prediction + server reconciliation
+                    this.prediction.predict(dt / 1000);
+                    
+                    // Send paddle position
+                    if (now - this.lastNetworkUpdate >= NETWORK_DT && this.webrtc) {
+                        this.webrtc.send({
+                            type: 'paddle',
+                            y: this.inputY
+                        });
+                        this.lastNetworkUpdate = now;
+                    }
+
+                    // Update render state
+                    this.renderState.pR = this.inputY;
+                    this.renderState.bx = this.prediction.bx;
+                    this.renderState.by = this.prediction.by;
                 }
 
-                if(s.by - BALL_RADIUS < 0) {
-                    s.by = BALL_RADIUS;
-                    s.bvy = Math.abs(s.bvy) * 0.98;
-                } else if(s.by + BALL_RADIUS > H) {
-                    s.by = H - BALL_RADIUS;
-                    s.bvy = -Math.abs(s.bvy) * 0.98;
-                }
+                this.updateLatencyDisplay();
+            }
 
+            render() {
+                // Update paddle positions
+                this.gfxL.y = this.renderState.pL;
+                this.gfxR.y = this.renderState.pR;
+
+                // Update ball position with trail
+                const oldX = this.ball.x;
+                const oldY = this.ball.y;
+                this.ball.x = this.renderState.bx;
+                this.ball.y = this.renderState.by;
+
+                // Draw trail
                 this.ballTrail.clear();
                 this.ballTrail.lineStyle(BALL_RADIUS * 1.5, 0xffffff, 0.15);
                 this.ballTrail.moveTo(oldX, oldY);
-                this.ballTrail.lineTo(s.bx, s.by);
+                this.ballTrail.lineTo(this.ball.x, this.ball.y);
 
-                if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
-                    this.checkHit(s.pL, 30, 1);
-                    this.checkHit(s.pR, W - 30, -1);
-
-                    const now = Date.now();
-                    if(now - this.lastScoreUpdate > 300) {
-                        if(s.bx + BALL_RADIUS < 0) {
-                            s.score.R++;
-                            this.lastScoreUpdate = now;
-                            this.resetBall(1);
-                        } else if(s.bx - BALL_RADIUS > W) {
-                            s.score.L++;
-                            this.lastScoreUpdate = now;
-                            this.resetBall(-1);
-                        }
-                    }
-                } else if(s.mode === 'online' && s.role === 'guest') {
-                    // Guest still checks collisions for prediction
-                    this.checkHit(s.pL, 30, 1);
-                    this.checkHit(s.pR, W - 30, -1);
-                }
-
-                this.gfxL.y = s.pL;
-                this.gfxR.y = s.pR;
-                this.ball.x = s.bx;
-                this.ball.y = s.by;
-
-                if(s.mode === 'online' && s.playing && this.roomRef && !this.isCleaningUp) {
-                    const now = Date.now();
-                    // High-frequency sync for both host and guest
-                    const syncInterval = 16; // ~60Hz
-                    if(now - this.lastNet > syncInterval) {
-                        this.netSync();
-                        this.lastNet = now;
-                    }
-                    
-                    const timeSinceUpdate = now - this.lastServerUpdate;
-                    const timeSinceHeartbeat = now - this.lastHeartbeat;
-                    this.updateConnectionStatus(timeSinceUpdate < 2000 || timeSinceHeartbeat < 2000);
-                }
-            }
-
-            checkHit(py, px, dir) {
-                const s = this.state, now = Date.now();
-                const cooldown = (dir === 1) ? this.lastHitTimeL : this.lastHitTimeR;
-                if(now - cooldown < COLLISION_COOLDOWN) return;
-                
-                const movingToward = (dir === 1 && s.bvx < 0) || (dir === -1 && s.bvx > 0);
-                if(!movingToward) return;
-
-                const closestX = Math.max(px - PADDLE_WIDTH/2, Math.min(s.bx, px + PADDLE_WIDTH/2));
-                const closestY = Math.max(py - PADDLE_HEIGHT/2, Math.min(s.by, py + PADDLE_HEIGHT/2));
-                const distSq = (s.bx - closestX) ** 2 + (s.by - closestY) ** 2;
-                
-                if(distSq <= BALL_RADIUS ** 2) {
-                    if(dir === 1) this.lastHitTimeL = now;
-                    else this.lastHitTimeR = now;
-                    
-                    let newSpeed = Math.min(Math.abs(s.bvx) * BALL_ACCEL_FACTOR, BALL_MAX_SPEED);
-                    s.bvx = newSpeed * dir;
-                    
-                    const relativePos = (s.by - py) / (PADDLE_HEIGHT/2);
-                    s.bvy = relativePos * newSpeed * 0.45;
-                    s.bvy = Math.max(-newSpeed * 0.55, Math.min(newSpeed * 0.55, s.bvy));
-
-                    const pushout = Math.max(BALL_RADIUS + PADDLE_WIDTH/2 + 5, Math.abs(s.bvx) * 0.03);
-                    s.bx = (dir === 1) ? (px + pushout) : (px - pushout);
-                    s.bx = Math.max(BALL_RADIUS + 5, Math.min(W - BALL_RADIUS - 5, s.bx));
-                }
-            }
-
-            resetBall(dir) {
-                const s = this.state;
-                s.bx = W / 2;
-                s.by = H / 2;
-                const d = dir || (Math.random() > 0.5 ? 1 : -1);
-                s.bvx = d * BALL_BASE_SPEED_X;
-                s.bvy = (Math.random() * 70 + 70) * (Math.random() > 0.5 ? 1 : -1);
-
+                // Update score
                 this.updateScoreDisplay();
-
-                if(s.score.L >= WIN_SCORE || s.score.R >= WIN_SCORE) {
-                    let winner;
-                    if(s.mode === 'ai') {
-                        winner = s.score.L > s.score.R ? "YOU WIN!" : "YOU LOST!";
-                    } else if(s.mode === 'online') {
-                        const youWon = (s.role === 'host' && s.score.L > s.score.R) || 
-                                      (s.role === 'guest' && s.score.R > s.score.L);
-                        winner = youWon ? "YOU WIN!" : "YOU LOST!";
-                    }
-
-                    if(s.room && s.role === 'host') {
-                        const room = s.room;
-                        update(ref(db, 'rooms/' + room), { 
-                            gameOver: true, 
-                            winner,
-                            ballReset: { bx: s.bx, by: s.by, bvx: 0, bvy: 0 }
-                        }).then(() => {
-                            this.stopGame(winner);
-                            setTimeout(() => this.cleanup(), 1500);
-                        }).catch(() => {
-                            this.stopGame(winner);
-                            this.cleanup();
-                        });
-                    } else {
-                        this.stopGame(winner);
-                    }
-                } else if(s.mode === 'online' && s.role === 'host' && s.room) {
-                    update(ref(db, 'rooms/' + s.room), {
-                        ballReset: { bx: s.bx, by: s.by, bvx: s.bvx, bvy: s.bvy }
-                    }).catch(() => {});
-                }
             }
 
             async host() {
@@ -723,72 +1075,40 @@
                     return;
                 }
 
-                this.state = {...this.state, room: code, role: 'host', score: {L:0, R:0}};
-                this.gameStopped = false;
+                this.state.room = code;
+                this.state.role = 'host';
                 
                 document.getElementById('lobbyMain').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.remove('hidden');
                 document.getElementById('codeDisp').innerText = code;
 
                 try {
-                    this.roomRef = ref(db, 'rooms/' + code);
-                    await set(this.roomRef, { 
-                        h: true, 
-                        hName: this.state.playerName,
-                        status: 'waiting', 
-                        created: Date.now() 
+                    // Create room in Firebase (for signaling only)
+                    await set(ref(db, 'rooms/' + code), { 
+                        host: this.state.playerName,
+                        status: 'waiting',
+                        created: Date.now()
                     });
-                    onDisconnect(this.roomRef).remove();
 
-                    this.roomListener = onValue(this.roomRef, (snap) => {
-                        if(this.isCleaningUp || this.gameStopped) return;
-                        const d = snap.val();
-                        if(!d) return;
+                    // Initialize WebRTC
+                    this.webrtc = new WebRTCManager(
+                        true,
+                        (data) => this.onWebRTCMessage(data),
+                        (status) => this.updateConnectionStatus(status)
+                    );
+                    
+                    await this.webrtc.init(code);
 
-                        if(d.g && !this.state.playing && d.status === 'waiting') {
-                            this.state.mode = 'online';
-                            this.state.playing = true;
-                            this.state.opponentName = d.gName || 'Guest';
-                            this.lastServerUpdate = Date.now();
-                            this.lastHeartbeat = Date.now();
-                            this.updateScoreDisplay();
-                            this.updatePlayerLabels();
-                            this.resetBall();
-                            
-                            update(this.roomRef, { status: 'playing' }).catch(() => {});
-                            
-                            document.getElementById('lobbyScreen').classList.add('hidden');
-                            document.getElementById('gameHud').classList.remove('hidden');
-                            this.updateConnectionStatus(true);
-                        }
-
-                        if(d.gameOver && d.winner && this.state.playing) {
-                            const youWon = this.state.score.L > this.state.score.R;
-                            const winMsg = youWon ? "YOU WIN!" : "YOU LOST!";
-                            this.stopGame(winMsg);
-                            setTimeout(() => this.cleanup(), 1500);
-                            return;
-                        }
-
-                        if(this.state.playing && !d.g && !d.gameOver) {
-                            this.stopGame("OPPONENT LEFT");
-                            this.cleanup();
-                        }
-
-                        if(typeof d.gy === 'number' && !isNaN(d.gy) && this.state.playing) {
-                            const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.gy));
-                            this.state.pR = validY;
-                            this.lastServerUpdate = Date.now();
-                        }
-                        
-                        if(d.gLastUpdate) this.lastHeartbeat = Date.now();
-                    }, (error) => {
-                        if(!this.gameStopped) {
-                            console.error('Host error:', error);
-                            this.showError('Connection lost');
-                            this.cleanup();
+                    // Wait for guest to join
+                    const guestRef = ref(db, `rooms/${code}/guest`);
+                    onValue(guestRef, (snap) => {
+                        const guest = snap.val();
+                        if (guest && !this.state.playing) {
+                            this.state.opponentName = guest;
+                            this.startOnlineGame();
                         }
                     });
+
                 } catch(error) {
                     console.error('Host error:', error);
                     this.showError('Failed to create room');
@@ -812,15 +1132,9 @@
                 btn.disabled = true;
                 fb.textContent = 'Connecting...';
 
-                const timeoutId = setTimeout(() => {
-                    fb.textContent = 'Connection timeout';
-                    btn.disabled = false;
-                }, 10000);
-
                 try {
-                    this.roomRef = ref(db, 'rooms/' + code);
-                    const snap = await get(this.roomRef);
-                    clearTimeout(timeoutId);
+                    const roomRef = ref(db, 'rooms/' + code);
+                    const snap = await get(roomRef);
 
                     if(!snap.exists()) {
                         fb.textContent = 'Room not found';
@@ -830,57 +1144,34 @@
 
                     const roomData = snap.val();
                     
-                    if(roomData.g || roomData.status === 'playing') {
+                    if(roomData.guest || roomData.status !== 'waiting') {
                         fb.textContent = 'Room is full';
-                        btn.disabled = false;
-                        return;
-                    }
-
-                    if(roomData.gameOver) {
-                        fb.textContent = 'Game already ended';
                         btn.disabled = false;
                         return;
                     }
 
                     this.state.room = code;
                     this.state.role = 'guest';
-                    this.state.score = {L:0, R:0};
-                    this.state.mode = 'online';
-                    this.state.playing = true;
-                    this.state.opponentName = roomData.hName || 'Host';
-                    this.gameStopped = false;
-                    this.lastServerUpdate = Date.now();
-                    this.lastHeartbeat = Date.now();
+                    this.state.opponentName = roomData.host || 'Host';
+
+                    // Join room
+                    await update(roomRef, { 
+                        guest: this.state.playerName,
+                        status: 'playing'
+                    });
+
+                    // Initialize WebRTC
+                    this.webrtc = new WebRTCManager(
+                        false,
+                        (data) => this.onWebRTCMessage(data),
+                        (status) => this.updateConnectionStatus(status)
+                    );
                     
-                    await update(this.roomRef, { 
-                        g: true,
-                        gName: this.state.playerName
-                    });
-                    onDisconnect(ref(db, 'rooms/' + code + '/g')).remove();
-                    onDisconnect(ref(db, 'rooms/' + code + '/gName')).remove();
+                    await this.webrtc.init(code);
 
-                    this.updateScoreDisplay();
-                    this.updatePlayerLabels();
-                    document.getElementById('lobbyScreen').classList.add('hidden');
-                    document.getElementById('gameHud').classList.remove('hidden');
-                    this.updateConnectionStatus(true);
+                    this.startOnlineGame();
 
-                    this.roomListener = onValue(this.roomRef, (s) => {
-                        if(this.isCleaningUp || this.gameStopped) return;
-                        const d = s.val();
-                        if(!d) {
-                            if(!this.gameStopped) this.stopGame("HOST DISCONNECTED");
-                            return;
-                        }
-                        this.onServer(d);
-                    }, (error) => {
-                        if(!this.gameStopped) {
-                            console.error('Guest error:', error);
-                            this.stopGame("CONNECTION LOST");
-                        }
-                    });
                 } catch(error) {
-                    clearTimeout(timeoutId);
                     console.error('Join error:', error);
                     fb.textContent = 'Connection failed';
                     btn.disabled = false;
@@ -888,82 +1179,47 @@
                 }
             }
 
-            netSync() {
-                if(!this.state.room || !this.state.playing || this.isCleaningUp) return;
+            startOnlineGame() {
+                this.state.mode = 'online';
+                this.state.playing = true;
+                this.gameStopped = false;
                 
-                try {
-                    const r = ref(db, 'rooms/' + this.state.room);
-                    const s = this.state;
-                    const now = Date.now();
-
-                    if(s.role === 'host') {
-                        update(r, {
-                            bx: Math.round(s.bx), 
-                            by: Math.round(s.by),
-                            bvx: Math.round(s.bvx), 
-                            bvy: Math.round(s.bvy),
-                            hy: Math.round(s.pL), 
-                            sc: s.score,
-                            hostHeartbeat: now
-                        }).catch(() => {});
-                    } else {
-                        update(r, { 
-                            gy: Math.round(s.pR),
-                            gLastUpdate: now
-                        }).catch(() => {});
-                    }
-                } catch(e) {}
+                this.physics.scoreL = 0;
+                this.physics.scoreR = 0;
+                this.physics.reset();
+                
+                if (this.state.role === 'guest') {
+                    const state = this.physics.getState();
+                    this.prediction.hardSet(state.bx, state.by, state.bvx, state.bvy);
+                }
+                
+                this.updateScoreDisplay();
+                this.updatePlayerLabels();
+                this.updateConnectionStatus('connecting');
+                
+                document.getElementById('lobbyScreen').classList.add('hidden');
+                document.getElementById('lobbyWait').classList.add('hidden');
+                document.getElementById('gameHud').classList.remove('hidden');
             }
 
-            onServer(d) {
-                if(!d || !this.state.playing || this.state.role !== 'guest' || this.isCleaningUp || this.gameStopped) return;
-                const s = this.state;
-
-                if(d.gameOver && d.winner) {
-                    const youWon = s.score.R > s.score.L;
-                    const winMsg = youWon ? "YOU WIN!" : "YOU LOST!";
-                    this.stopGame(winMsg);
-                    return;
-                }
-
-                if(d.ballReset) {
-                    if(typeof d.ballReset.bx === 'number' && !isNaN(d.ballReset.bx)) {
-                        s.bx = d.ballReset.bx;
-                        s.by = d.ballReset.by;
-                        s.bvx = d.ballReset.bvx;
-                        s.bvy = d.ballReset.bvy;
-                        
-                        // Reset interpolation targets
-                        this.ballInterpolation.targetX = s.bx;
-                        this.ballInterpolation.targetY = s.by;
-                        this.ballInterpolation.targetVX = s.bvx;
-                        this.ballInterpolation.targetVY = s.bvy;
+            onWebRTCMessage(data) {
+                if (this.state.role === 'host') {
+                    // Host receives paddle position from guest
+                    if (data.type === 'paddle') {
+                        this.physics.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, data.y));
+                    }
+                } else {
+                    // Guest receives game state from host
+                    if (data.type === 'state') {
+                        this.prediction.updateTarget(data.bx, data.by, data.bvx, data.bvy);
+                        this.renderState.pL = data.pL;
+                        this.renderState.scoreL = data.scoreL;
+                        this.renderState.scoreR = data.scoreR;
+                    } else if (data.type === 'gameOver') {
+                        const winner = data.winner === 'guest' ? "YOU WIN!" : "YOU LOST!";
+                        this.stopGame(winner);
                     }
                 }
-
-                if(typeof d.hy === 'number' && !isNaN(d.hy)) {
-                    const validY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, d.hy));
-                    s.pL = validY;
-                }
-
-                if(d.sc && typeof d.sc.L === 'number' && typeof d.sc.R === 'number') {
-                    s.score = d.sc;
-                    this.updateScoreDisplay();
-                }
-
-                if(typeof d.bx === 'number' && !isNaN(d.bx) && 
-                   typeof d.bvx === 'number' && !isNaN(d.bvx)) {
-                    
-                    // Update interpolation targets for smooth movement
-                    this.ballInterpolation.targetX = d.bx;
-                    this.ballInterpolation.targetY = d.by;
-                    this.ballInterpolation.targetVX = d.bvx;
-                    this.ballInterpolation.targetVY = d.bvy;
-                    
-                    this.lastServerUpdate = Date.now();
-                }
-                
-                if(d.hostHeartbeat) this.lastHeartbeat = Date.now();
             }
 
             showError(message) {
