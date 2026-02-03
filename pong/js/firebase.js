@@ -2,14 +2,14 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebas
 import { getDatabase } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-    authDomain: "webarcade-d4c3d.firebaseapp.com",
-    databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com/",
-    projectId: "webarcade-d4c3d",
-    storageBucket: "webarcade-d4c3d.appspot.com",
-    messagingSenderId: "918209461327",
-    appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+  apiKey: "YOUR_KEY",
+  authDomain: "YOUR_DOMAIN",
+  databaseURL: "YOUR_DB_URL",
+  projectId: "YOUR_PROJECT_ID",
+  appId: "YOUR_APP_ID"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
+
+console.log("Firebase loaded");
