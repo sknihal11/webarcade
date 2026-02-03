@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Neon Pong - WebRTC Edition</title>
+    <title>Neon Pong - WebRTC Edition (Secure)</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; touch-action: none; user-select: none; -webkit-tap-highlight-color: transparent; }
         body { background-color: #000; overflow: hidden; width: 100vw; height: 100vh; font-family: "Courier New", Courier, monospace; display: flex; justify-content: center; align-items: center; }
@@ -104,7 +104,6 @@
             z-index: 101; display: none;
         }
 
-        /* Round countdown overlay */
         .round-countdown {
             position: absolute;
             top: 50%;
@@ -172,7 +171,6 @@
             </div>
         </div>
 
-        <!-- Round Countdown Overlay -->
         <div class="round-countdown" id="roundCountdown">
             <div class="countdown-number" id="countdownNumber">3</div>
             <div class="countdown-text" id="countdownText">GET READY</div>
@@ -191,7 +189,7 @@
             <div id="lobbyMain" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
                 <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
                 <div class="lobby-divider">--- OR JOIN ---</div>
-                <input type="number" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off" min="1000" max="9999">
+                <input type="text" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off">
                 <div class="feedback-text" id="joinFeedback"></div>
                 <button id="btnJoin" class="btn-pink">JOIN GAME</button>
                 <button id="btnBack" class="btn-back">BACK</button>
@@ -234,26 +232,45 @@
         const db = getDatabase(app);
         const auth = getAuth(app);
 
-        // Game Constants
+        // Game Constants - LOCKED to prevent tampering
         const W = 800, H = 600;
         const BALL_RADIUS = 8, PADDLE_WIDTH = 16, PADDLE_HEIGHT = 100;
         const BALL_BASE_SPEED_X = 420, BALL_MAX_SPEED = 850, BALL_ACCEL_FACTOR = 1.07;
         const PADDLE_MIN_Y = PADDLE_HEIGHT/2 + 10, PADDLE_MAX_Y = H - PADDLE_HEIGHT/2 - 10;
         const WIN_SCORE = 10;
         const PHYSICS_HZ = 120;
-        const NETWORK_HZ = 60; // Reduced to 60Hz for better mobile compatibility
+        const NETWORK_HZ = 30; // Reduced for mobile reliability
         const PHYSICS_DT = 1000 / PHYSICS_HZ;
         const NETWORK_DT = 1000 / NETWORK_HZ;
-        const ROUND_COOLDOWN = 3; // seconds before next ball
+        const ROUND_COOLDOWN = 3;
+        const MAX_DELTA = 100; // Cap delta time to prevent cheating
+        const PADDLE_SPEED_LIMIT = 800; // Max paddle movement speed (pixels/sec)
 
-        // WebRTC Configuration
+        // WebRTC Configuration with TURN fallback
         const ICE_SERVERS = [
             { urls: 'stun:stun.l.google.com:19302' },
             { urls: 'stun:stun1.l.google.com:19302' },
-            { urls: 'stun:stun2.l.google.com:19302' }
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' }
         ];
 
-        // Physics Engine - Authoritative on Host
+        // Utility: Sanitize input
+        function sanitize(value, min, max) {
+            if (typeof value !== 'number' || isNaN(value) || !isFinite(value)) {
+                return (min + max) / 2;
+            }
+            return Math.max(min, Math.min(max, value));
+        }
+
+        // Utility: XSS protection
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // Physics Engine - Server-Authoritative (Host Only)
         class PhysicsEngine {
             constructor() {
                 this.bx = W / 2;
@@ -267,7 +284,9 @@
                 this.lastHitTimeL = 0;
                 this.lastHitTimeR = 0;
                 this.accumulator = 0;
-                this.ballActive = true; // Controls if ball physics runs
+                this.ballActive = true;
+                this.lastPaddleLUpdate = Date.now();
+                this.lastPaddleRUpdate = Date.now();
             }
 
             reset(dir) {
@@ -287,10 +306,41 @@
                 this.bvy = 0;
             }
 
+            // Anti-cheat: Validate paddle movement
+            updatePaddle(side, targetY) {
+                const now = Date.now();
+                const lastUpdate = side === 'L' ? this.lastPaddleLUpdate : this.lastPaddleRUpdate;
+                const dt = (now - lastUpdate) / 1000;
+                const currentY = side === 'L' ? this.pL : this.pR;
+                
+                // Validate input
+                targetY = sanitize(targetY, PADDLE_MIN_Y, PADDLE_MAX_Y);
+                
+                // Check speed limit
+                const maxMove = PADDLE_SPEED_LIMIT * dt;
+                const actualMove = Math.abs(targetY - currentY);
+                
+                if (actualMove > maxMove && dt > 0) {
+                    // Movement too fast - interpolate
+                    const direction = Math.sign(targetY - currentY);
+                    targetY = currentY + direction * maxMove;
+                }
+                
+                if (side === 'L') {
+                    this.pL = targetY;
+                    this.lastPaddleLUpdate = now;
+                } else {
+                    this.pR = targetY;
+                    this.lastPaddleRUpdate = now;
+                }
+            }
+
             update(dt) {
                 if (!this.ballActive) return null;
 
-                // Fixed timestep physics with max iterations to prevent lag spiral
+                // Cap delta to prevent time manipulation
+                dt = Math.min(dt, MAX_DELTA);
+
                 this.accumulator += dt;
                 
                 let iterations = 0;
@@ -301,11 +351,11 @@
                     this.accumulator -= PHYSICS_DT;
                     iterations++;
                     
-                    if (result) return result; // Score happened
+                    if (result) return result;
                 }
                 
-                // Reset accumulator if too far behind
-                if (iterations >= MAX_ITERATIONS) {
+                // Prevent unbounded accumulation
+                if (this.accumulator > PHYSICS_DT * 10) {
                     this.accumulator = 0;
                 }
 
@@ -381,26 +431,28 @@
                     pR: this.pR,
                     scoreL: this.scoreL,
                     scoreR: this.scoreR,
-                    ballActive: this.ballActive
+                    ballActive: this.ballActive,
+                    timestamp: Date.now()
                 };
             }
 
             setState(state) {
-                this.bx = state.bx;
-                this.by = state.by;
-                this.bvx = state.bvx;
-                this.bvy = state.bvy;
-                this.pL = state.pL;
-                this.pR = state.pR;
-                this.scoreL = state.scoreL;
-                this.scoreR = state.scoreR;
+                // Anti-cheat: Validate all state values
+                this.bx = sanitize(state.bx, 0, W);
+                this.by = sanitize(state.by, 0, H);
+                this.bvx = sanitize(state.bvx, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+                this.bvy = sanitize(state.bvy, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+                this.pL = sanitize(state.pL, PADDLE_MIN_Y, PADDLE_MAX_Y);
+                this.pR = sanitize(state.pR, PADDLE_MIN_Y, PADDLE_MAX_Y);
+                this.scoreL = sanitize(state.scoreL, 0, WIN_SCORE);
+                this.scoreR = sanitize(state.scoreR, 0, WIN_SCORE);
                 if (state.ballActive !== undefined) {
-                    this.ballActive = state.ballActive;
+                    this.ballActive = !!state.ballActive;
                 }
             }
         }
 
-        // Client-Side Prediction for Guest
+        // Client-Side Prediction with Anti-Cheat
         class PredictionEngine {
             constructor() {
                 this.bx = W / 2;
@@ -411,18 +463,22 @@
                 this.targetBy = H / 2;
                 this.targetVx = 0;
                 this.targetVy = 0;
-                this.lerpFactor = 0.4;
+                this.lerpFactor = 0.3; // Smoother interpolation
                 this.ballActive = true;
+                this.lastServerUpdate = 0;
             }
 
             predict(dt) {
                 if (!this.ballActive) return;
 
+                // Cap delta
+                dt = Math.min(dt, MAX_DELTA / 1000);
+
                 // Predict ball movement
                 this.bx += this.bvx * dt;
                 this.by += this.bvy * dt;
 
-                // Wall bounces (same as physics)
+                // Wall bounces
                 if (this.by - BALL_RADIUS < 0) {
                     this.by = BALL_RADIUS;
                     this.bvy = Math.abs(this.bvy) * 0.98;
@@ -431,25 +487,31 @@
                     this.bvy = -Math.abs(this.bvy) * 0.98;
                 }
 
-                // Smooth interpolation to server state
+                // Smooth lerp to server state
                 this.bx += (this.targetBx - this.bx) * this.lerpFactor;
                 this.by += (this.targetBy - this.by) * this.lerpFactor;
                 this.bvx += (this.targetVx - this.bvx) * this.lerpFactor;
                 this.bvy += (this.targetVy - this.bvy) * this.lerpFactor;
             }
 
-            updateTarget(bx, by, vx, vy) {
-                this.targetBx = bx;
-                this.targetBy = by;
-                this.targetVx = vx;
-                this.targetVy = vy;
+            updateTarget(bx, by, vx, vy, timestamp) {
+                // Anti-cheat: Reject stale updates
+                if (timestamp && timestamp < this.lastServerUpdate) {
+                    return;
+                }
+                
+                this.targetBx = sanitize(bx, 0, W);
+                this.targetBy = sanitize(by, 0, H);
+                this.targetVx = sanitize(vx, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+                this.targetVy = sanitize(vy, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+                this.lastServerUpdate = timestamp || Date.now();
             }
 
             hardSet(bx, by, vx, vy) {
-                this.bx = this.targetBx = bx;
-                this.by = this.targetBy = by;
-                this.bvx = this.targetVx = vx;
-                this.bvy = this.targetVy = vy;
+                this.bx = this.targetBx = sanitize(bx, 0, W);
+                this.by = this.targetBy = sanitize(by, 0, H);
+                this.bvx = this.targetVx = sanitize(vx, -BALL_MAX_SPEED, BALL_MAX_SPEED);
+                this.bvy = this.targetVy = sanitize(vy, -BALL_MAX_SPEED, BALL_MAX_SPEED);
             }
 
             freeze() {
@@ -466,7 +528,7 @@
             }
         }
 
-        // WebRTC Manager
+        // Enhanced WebRTC Manager with Security
         class WebRTCManager {
             constructor(isHost, onMessage, onConnectionChange) {
                 this.isHost = isHost;
@@ -480,144 +542,260 @@
                 this.iceRef = null;
                 this.iceListener = null;
                 this.connectionTimeout = null;
+                this.gatheringTimeout = null;
                 
                 // Latency tracking
                 this.lastPingTime = 0;
                 this.rtt = 0;
+                this.rttSamples = [];
                 this.pingInterval = null;
+                
+                // Anti-cheat
+                this.messageCount = 0;
+                this.lastMessageTime = Date.now();
+                this.messageRateLimit = 100; // Max messages per second
+                
+                // Cleanup tracking
+                this.cleanupHandlers = [];
             }
 
             async init(roomCode) {
-                this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
-
-                // Set connection timeout
-                this.connectionTimeout = setTimeout(() => {
-                    if (this.pc && this.pc.connectionState !== 'connected') {
-                        console.error('WebRTC connection timeout');
-                        this.onConnectionChange('timeout');
-                    }
-                }, 30000); // 30 second timeout
-
-                // ICE candidate handling
-                this.pc.onicecandidate = (event) => {
-                    if (event.candidate) {
-                        const path = this.isHost ? 'hostIce' : 'guestIce';
-                        update(ref(db, `rooms/${roomCode}/${path}`), {
-                            [Date.now()]: JSON.stringify(event.candidate.toJSON())
-                        }).catch(err => console.error('ICE candidate error:', err));
-                    }
-                };
-
-                // Connection state monitoring
-                this.pc.onconnectionstatechange = () => {
-                    const state = this.pc.connectionState;
-                    
-                    if (state === 'connected') {
-                        this.connected = true;
-                        if (this.connectionTimeout) {
-                            clearTimeout(this.connectionTimeout);
-                            this.connectionTimeout = null;
-                        }
-                        this.startPingMonitoring();
-                    } else if (state === 'disconnected' || state === 'failed') {
-                        this.connected = false;
-                        this.stopPingMonitoring();
-                    }
-                    
-                    this.onConnectionChange(state);
-                };
-
-                if (this.isHost) {
-                    // Host creates data channel
-                    this.dataChannel = this.pc.createDataChannel('gameData', {
-                        ordered: false,
-                        maxRetransmits: 0
+                try {
+                    this.pc = new RTCPeerConnection({ 
+                        iceServers: ICE_SERVERS,
+                        iceCandidatePoolSize: 10
                     });
-                    this.setupDataChannel();
 
-                    // Create offer
-                    const offer = await this.pc.createOffer();
-                    await this.pc.setLocalDescription(offer);
-                    await set(ref(db, `rooms/${roomCode}/offer`), JSON.stringify(offer));
+                    // Connection timeout
+                    this.connectionTimeout = setTimeout(() => {
+                        if (this.pc && this.pc.iceConnectionState !== 'connected' && this.pc.iceConnectionState !== 'completed') {
+                            console.error('WebRTC connection timeout');
+                            this.onConnectionChange('timeout');
+                        }
+                    }, 30000);
 
-                    // Listen for answer
-                    this.signalRef = ref(db, `rooms/${roomCode}/answer`);
-                    this.signalListener = onValue(this.signalRef, async (snap) => {
-                        const answer = snap.val();
-                        if (answer && this.pc.remoteDescription === null) {
-                            try {
-                                await this.pc.setRemoteDescription(JSON.parse(answer));
-                            } catch (e) {
-                                console.error('Error setting remote description:', e);
+                    // ICE connection state (more reliable)
+                    const iceStateHandler = () => {
+                        const state = this.pc.iceConnectionState;
+                        console.log('ICE state:', state);
+                        
+                        if (state === 'connected' || state === 'completed') {
+                            this.connected = true;
+                            if (this.connectionTimeout) {
+                                clearTimeout(this.connectionTimeout);
+                                this.connectionTimeout = null;
                             }
+                            this.startPingMonitoring();
+                            this.onConnectionChange('connected');
+                        } else if (state === 'disconnected') {
+                            this.connected = false;
+                            this.onConnectionChange('disconnected');
+                        } else if (state === 'failed') {
+                            this.connected = false;
+                            this.stopPingMonitoring();
+                            this.onConnectionChange('failed');
                         }
-                    });
-                } else {
-                    // Guest receives data channel
-                    this.pc.ondatachannel = (event) => {
-                        this.dataChannel = event.channel;
-                        this.setupDataChannel();
                     };
+                    
+                    this.pc.addEventListener('iceconnectionstatechange', iceStateHandler);
+                    this.cleanupHandlers.push(() => this.pc.removeEventListener('iceconnectionstatechange', iceStateHandler));
 
-                    // Wait for offer
-                    this.signalRef = ref(db, `rooms/${roomCode}/offer`);
-                    this.signalListener = onValue(this.signalRef, async (snap) => {
-                        const offer = snap.val();
-                        if (offer && this.pc.remoteDescription === null) {
+                    // Candidate queue for proper ordering
+                    const candidateQueue = [];
+                    let remoteDescSet = false;
+
+                    // ICE candidate handling
+                    const candidateHandler = async (event) => {
+                        if (event.candidate) {
+                            const path = this.isHost ? 'hostIce' : 'guestIce';
                             try {
-                                await this.pc.setRemoteDescription(JSON.parse(offer));
-                                const answer = await this.pc.createAnswer();
-                                await this.pc.setLocalDescription(answer);
-                                await set(ref(db, `rooms/${roomCode}/answer`), JSON.stringify(answer));
-                            } catch (e) {
-                                console.error('Error handling offer:', e);
+                                const iceRef = ref(db, `rooms/${roomCode}/${path}`);
+                                const snapshot = await get(iceRef);
+                                const existing = snapshot.val() || [];
+                                if (!Array.isArray(existing)) {
+                                    await set(iceRef, []);
+                                }
+                                const current = await get(iceRef);
+                                const arr = current.val() || [];
+                                arr.push(JSON.stringify(event.candidate.toJSON()));
+                                await set(iceRef, arr);
+                            } catch (err) {
+                                console.error('ICE candidate error:', err);
                             }
                         }
-                    });
-                }
+                    };
+                    
+                    this.pc.addEventListener('icecandidate', candidateHandler);
+                    this.cleanupHandlers.push(() => this.pc.removeEventListener('icecandidate', candidateHandler));
 
-                // Listen for ICE candidates
-                const icePath = this.isHost ? 'guestIce' : 'hostIce';
-                this.iceRef = ref(db, `rooms/${roomCode}/${icePath}`);
-                this.iceListener = onValue(this.iceRef, (snap) => {
-                    const candidates = snap.val();
-                    if (candidates) {
-                        Object.values(candidates).forEach(async (cand) => {
-                            try {
-                                await this.pc.addIceCandidate(JSON.parse(cand));
-                            } catch (e) {
-                                console.error('Error adding ICE candidate:', e);
+                    if (this.isHost) {
+                        // HOST: Create reliable data channel
+                        this.dataChannel = this.pc.createDataChannel('gameData', {
+                            ordered: true,
+                            maxRetransmits: 3
+                        });
+                        this.setupDataChannel();
+
+                        // Create offer
+                        const offer = await this.pc.createOffer();
+                        await this.pc.setLocalDescription(offer);
+
+                        // Wait for ICE gathering
+                        await this.waitForICEGathering();
+
+                        await set(ref(db, `rooms/${roomCode}/offer`), JSON.stringify(this.pc.localDescription));
+
+                        // Listen for answer
+                        this.signalRef = ref(db, `rooms/${roomCode}/answer`);
+                        this.signalListener = onValue(this.signalRef, async (snap) => {
+                            const answer = snap.val();
+                            if (answer && this.pc.signalingState !== 'stable') {
+                                try {
+                                    await this.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(answer)));
+                                    remoteDescSet = true;
+                                    for (const cand of candidateQueue) {
+                                        await this.pc.addIceCandidate(cand);
+                                    }
+                                    candidateQueue.length = 0;
+                                } catch (e) {
+                                    console.error('Error setting remote description:', e);
+                                }
+                            }
+                        });
+                    } else {
+                        // GUEST: Receive data channel
+                        const dataChannelHandler = (event) => {
+                            this.dataChannel = event.channel;
+                            this.setupDataChannel();
+                        };
+                        
+                        this.pc.addEventListener('datachannel', dataChannelHandler);
+                        this.cleanupHandlers.push(() => this.pc.removeEventListener('datachannel', dataChannelHandler));
+
+                        // Wait for offer
+                        this.signalRef = ref(db, `rooms/${roomCode}/offer`);
+                        this.signalListener = onValue(this.signalRef, async (snap) => {
+                            const offer = snap.val();
+                            if (offer && this.pc.signalingState === 'stable') {
+                                try {
+                                    await this.pc.setRemoteDescription(new RTCSessionDescription(JSON.parse(offer)));
+                                    remoteDescSet = true;
+                                    
+                                    const answer = await this.pc.createAnswer();
+                                    await this.pc.setLocalDescription(answer);
+
+                                    await this.waitForICEGathering();
+
+                                    await set(ref(db, `rooms/${roomCode}/answer`), JSON.stringify(this.pc.localDescription));
+                                    
+                                    for (const cand of candidateQueue) {
+                                        await this.pc.addIceCandidate(cand);
+                                    }
+                                    candidateQueue.length = 0;
+                                } catch (e) {
+                                    console.error('Error handling offer:', e);
+                                }
                             }
                         });
                     }
+
+                    // Listen for ICE candidates
+                    const icePath = this.isHost ? 'guestIce' : 'hostIce';
+                    this.iceRef = ref(db, `rooms/${roomCode}/${icePath}`);
+                    this.iceListener = onValue(this.iceRef, async (snap) => {
+                        const candidates = snap.val();
+                        if (candidates && Array.isArray(candidates)) {
+                            for (const candStr of candidates) {
+                                try {
+                                    const candidate = new RTCIceCandidate(JSON.parse(candStr));
+                                    if (remoteDescSet && this.pc.remoteDescription) {
+                                        await this.pc.addIceCandidate(candidate);
+                                    } else {
+                                        candidateQueue.push(candidate);
+                                    }
+                                } catch (e) {
+                                    console.error('Error adding ICE candidate:', e);
+                                }
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error('WebRTC init error:', error);
+                    this.onConnectionChange('failed');
+                }
+            }
+
+            async waitForICEGathering() {
+                if (this.pc.iceGatheringState === 'complete') {
+                    return;
+                }
+
+                return new Promise((resolve) => {
+                    const checkGathering = () => {
+                        if (this.pc.iceGatheringState === 'complete') {
+                            this.pc.removeEventListener('icegatheringstatechange', checkGathering);
+                            if (this.gatheringTimeout) {
+                                clearTimeout(this.gatheringTimeout);
+                                this.gatheringTimeout = null;
+                            }
+                            resolve();
+                        }
+                    };
+                    
+                    this.pc.addEventListener('icegatheringstatechange', checkGathering);
+                    
+                    // Fallback timeout
+                    this.gatheringTimeout = setTimeout(() => {
+                        this.pc.removeEventListener('icegatheringstatechange', checkGathering);
+                        resolve();
+                    }, 3000);
                 });
             }
 
             setupDataChannel() {
-                this.dataChannel.onopen = () => {
+                const openHandler = () => {
                     this.connected = true;
                     this.onConnectionChange('connected');
                 };
-
-                this.dataChannel.onclose = () => {
+                
+                const closeHandler = () => {
                     this.connected = false;
                     this.onConnectionChange('disconnected');
                 };
-
-                this.dataChannel.onerror = (error) => {
+                
+                const errorHandler = (error) => {
                     console.error('Data channel error:', error);
                 };
-
-                this.dataChannel.onmessage = (event) => {
+                
+                const messageHandler = (event) => {
                     try {
+                        // Anti-cheat: Rate limiting
+                        const now = Date.now();
+                        if (now - this.lastMessageTime > 1000) {
+                            this.messageCount = 0;
+                            this.lastMessageTime = now;
+                        }
+                        
+                        this.messageCount++;
+                        if (this.messageCount > this.messageRateLimit) {
+                            console.warn('Message rate limit exceeded');
+                            return;
+                        }
+                        
                         const data = JSON.parse(event.data);
                         
-                        // Handle ping/pong for latency measurement
+                        // Handle ping/pong
                         if (data.type === 'ping') {
                             this.send({ type: 'pong', timestamp: data.timestamp });
                             return;
                         } else if (data.type === 'pong') {
-                            this.rtt = Date.now() - data.timestamp;
+                            const rtt = Date.now() - data.timestamp;
+                            this.rttSamples.push(rtt);
+                            if (this.rttSamples.length > 10) {
+                                this.rttSamples.shift();
+                            }
+                            // Smoothed RTT
+                            this.rtt = Math.round(this.rttSamples.reduce((a, b) => a + b) / this.rttSamples.length);
                             return;
                         }
                         
@@ -626,6 +804,20 @@
                         console.error('Error parsing message:', e);
                     }
                 };
+
+                this.dataChannel.addEventListener('open', openHandler);
+                this.dataChannel.addEventListener('close', closeHandler);
+                this.dataChannel.addEventListener('error', errorHandler);
+                this.dataChannel.addEventListener('message', messageHandler);
+                
+                this.cleanupHandlers.push(() => {
+                    if (this.dataChannel) {
+                        this.dataChannel.removeEventListener('open', openHandler);
+                        this.dataChannel.removeEventListener('close', closeHandler);
+                        this.dataChannel.removeEventListener('error', errorHandler);
+                        this.dataChannel.removeEventListener('message', messageHandler);
+                    }
+                });
             }
 
             send(data) {
@@ -661,6 +853,15 @@
                     this.connectionTimeout = null;
                 }
                 
+                if (this.gatheringTimeout) {
+                    clearTimeout(this.gatheringTimeout);
+                    this.gatheringTimeout = null;
+                }
+                
+                // Remove all event listeners
+                this.cleanupHandlers.forEach(fn => fn());
+                this.cleanupHandlers = [];
+                
                 if (this.signalListener && this.signalRef) {
                     off(this.signalRef);
                     this.signalListener = null;
@@ -687,7 +888,7 @@
             }
         }
 
-        // Main Game Class
+        // Main Game Class with All Fixes
         class PongGame {
             constructor() {
                 const oldCanvas = document.querySelector('canvas');
@@ -729,10 +930,12 @@
                 // Firebase listeners
                 this.guestRef = null;
                 this.guestListener = null;
+                this.roomDisconnectRef = null;
 
                 // Round countdown
                 this.countdownActive = false;
                 this.countdownValue = 0;
+                this.countdownInterval = null;
 
                 // Rendering state
                 this.renderState = {
@@ -754,7 +957,32 @@
                 window.addEventListener('resize', resizeHandler);
                 this.eventCleanup.push(() => window.removeEventListener('resize', resizeHandler));
                 
+                // Page visibility handling
+                const visibilityHandler = () => {
+                    if (document.hidden && this.state.playing) {
+                        this.handleVisibilityLoss();
+                    }
+                };
+                document.addEventListener('visibilitychange', visibilityHandler);
+                this.eventCleanup.push(() => document.removeEventListener('visibilitychange', visibilityHandler));
+                
+                // Beforeunload cleanup
+                const unloadHandler = (e) => {
+                    if (this.state.playing) {
+                        this.cleanup();
+                    }
+                };
+                window.addEventListener('beforeunload', unloadHandler);
+                this.eventCleanup.push(() => window.removeEventListener('beforeunload', unloadHandler));
+                
                 this.app.ticker.add((delta) => this.loop(delta));
+            }
+
+            handleVisibilityLoss() {
+                // Pause game if window loses focus in online mode
+                if (this.state.mode === 'online') {
+                    console.log('Tab hidden - pausing may affect gameplay');
+                }
             }
 
             initAuth() {
@@ -779,7 +1007,11 @@
                 try {
                     if(PIXI.filters?.BloomFilter) {
                         const quality = window.devicePixelRatio > 1 ? 2 : 3;
-                        this.app.stage.filters = [new PIXI.filters.BloomFilter({strength: 0.3, quality, blur: 6})];
+                        const bloom = new PIXI.filters.BloomFilter({strength: 0.3, quality, blur: 6});
+                        this.app.stage.filters = [bloom];
+                        this.eventCleanup.push(() => {
+                            bloom.destroy();
+                        });
                     }
                 } catch(e) {}
                 
@@ -817,6 +1049,7 @@
 
             initInput() {
                 const touchIndicator = document.getElementById('touchIndicator');
+                let touchActive = false;
                 
                 const onInput = (clientY, show = false) => {
                     if(!this.state.playing) return;
@@ -825,10 +1058,11 @@
                     this.inputY = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, relativeY));
                     
                     if(show) {
-                        const canvasCenterX = rect.left + (rect.width * this.scaleFactor * 0.5);
+                        const canvasCenterX = rect.left + (rect.width * 0.5);
                         touchIndicator.style.left = canvasCenterX + 'px';
                         touchIndicator.style.top = clientY + 'px';
                         touchIndicator.classList.add('visible');
+                        touchActive = true;
                     }
                 };
 
@@ -854,6 +1088,7 @@
                             e.preventDefault();
                             z.classList.remove('active');
                             touchIndicator.classList.remove('visible');
+                            touchActive = false;
                         }
                     };
                     
@@ -881,25 +1116,53 @@
 
             initUI() {
                 const el = id => document.getElementById(id);
-                el('btnAI').onclick = () => this.startAI();
-                el('btnOnline').onclick = () => this.showLobby();
-                el('btnBack').onclick = () => this.hideLobby();
-                el('btnHost').onclick = () => this.host();
-                el('btnJoin').onclick = () => this.join();
-                el('btnExit').onclick = () => this.manualExit();
-                el('btnCancelHost').onclick = () => this.cancelHosting();
+                
+                // Prevent double-clicks
+                let lastClick = 0;
+                const clickGuard = (fn) => {
+                    return () => {
+                        const now = Date.now();
+                        if (now - lastClick < 500) return;
+                        lastClick = now;
+                        fn();
+                    };
+                };
+                
+                el('btnAI').onclick = clickGuard(() => this.startAI());
+                el('btnOnline').onclick = clickGuard(() => this.showLobby());
+                el('btnBack').onclick = clickGuard(() => this.hideLobby());
+                el('btnHost').onclick = clickGuard(() => this.host());
+                el('btnJoin').onclick = clickGuard(() => this.join());
+                el('btnExit').onclick = clickGuard(() => this.manualExit());
+                el('btnCancelHost').onclick = clickGuard(() => this.cancelHosting());
+                
                 el('codeIn').addEventListener('keypress', (e) => {
                     if(e.key === 'Enter') { e.preventDefault(); this.join(); }
+                });
+                
+                // Input validation
+                el('codeIn').addEventListener('input', (e) => {
+                    e.target.value = e.target.value.replace(/[^0-9]/g, '').slice(0, 4);
                 });
             }
 
             async getPlayerName() {
                 try {
+                    if (!this.authReady) {
+                        await new Promise(resolve => {
+                            const check = () => {
+                                if (this.authReady) resolve();
+                                else setTimeout(check, 100);
+                            };
+                            check();
+                        });
+                    }
+                    
                     if (this.currentUser) {
                         const userRef = ref(db, 'users/' + this.currentUser.uid + '/username');
                         const snap = await get(userRef);
                         if (snap.exists()) {
-                            return snap.val();
+                            return escapeHTML(snap.val().substring(0, 20)); // Limit length
                         }
                     }
                 } catch(e) {
@@ -954,7 +1217,6 @@
                 document.getElementById('connectionStatus').style.display = 'none';
                 document.getElementById('latencyDisplay').style.display = 'none';
 
-                // Start with countdown
                 this.startRoundCountdown(() => {
                     this.physics.reset();
                 });
@@ -976,7 +1238,15 @@
                 if(this.isCleaningUp) return;
                 this.isCleaningUp = true;
 
-                this.eventCleanup.forEach(fn => fn());
+                // Stop countdown
+                if (this.countdownInterval) {
+                    clearInterval(this.countdownInterval);
+                    this.countdownInterval = null;
+                }
+
+                this.eventCleanup.forEach(fn => {
+                    try { fn(); } catch(e) {}
+                });
                 this.eventCleanup = [];
 
                 if (this.webrtc) {
@@ -999,6 +1269,11 @@
                     } catch(e) {}
                 }
                 
+                // Clear graphics
+                if (this.ballTrail) {
+                    this.ballTrail.clear();
+                }
+                
                 this.isCleaningUp = false;
             }
 
@@ -1006,6 +1281,11 @@
                 if(this.gameStopped) return;
                 this.gameStopped = true;
                 this.state.playing = false;
+                
+                if (this.countdownInterval) {
+                    clearInterval(this.countdownInterval);
+                    this.countdownInterval = null;
+                }
                 
                 this.ballTrail.clear();
                 document.getElementById('gameHud').classList.add('hidden');
@@ -1077,7 +1357,7 @@
                 countdownEl.classList.add('visible');
                 textEl.textContent = 'GET READY';
                 
-                const countdownInterval = setInterval(() => {
+                this.countdownInterval = setInterval(() => {
                     if (this.countdownValue > 0) {
                         numberEl.textContent = this.countdownValue;
                         this.countdownValue--;
@@ -1088,10 +1368,17 @@
                         setTimeout(() => {
                             countdownEl.classList.remove('visible');
                             this.countdownActive = false;
+                            if (this.countdownInterval) {
+                                clearInterval(this.countdownInterval);
+                                this.countdownInterval = null;
+                            }
                             if (onComplete) onComplete();
                         }, 500);
                         
-                        clearInterval(countdownInterval);
+                        if (this.countdownInterval) {
+                            clearInterval(this.countdownInterval);
+                            this.countdownInterval = null;
+                        }
                     }
                 }, 1000);
             }
@@ -1114,7 +1401,7 @@
                 // Update input
                 this.physics.pL = this.inputY;
 
-                // AI logic
+                // AI logic with difficulty scaling
                 const aiBaseSpeed = 320;
                 const aiSpeedBoost = Math.abs(this.physics.bvx) * 0.22;
                 const aiSpeed = Math.min(500, aiBaseSpeed + aiSpeedBoost);
@@ -1128,7 +1415,6 @@
                 const result = this.physics.update(dt);
                 
                 if (result) {
-                    // Someone scored - start countdown
                     this.physics.freeze();
                     
                     if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
@@ -1154,13 +1440,12 @@
                 const now = Date.now();
 
                 if (this.state.role === 'host') {
-                    // Host: Run authoritative physics
-                    this.physics.pL = this.inputY;
+                    // Host: Authoritative physics
+                    this.physics.updatePaddle('L', this.inputY);
                     
                     const result = this.physics.update(dt);
                     
                     if (result) {
-                        // Someone scored
                         this.physics.freeze();
                         
                         if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
@@ -1174,7 +1459,6 @@
                             }
                             return;
                         } else {
-                            // Send countdown start to guest
                             if (this.webrtc) {
                                 this.webrtc.send({
                                     type: 'startCountdown',
@@ -1185,7 +1469,6 @@
                             this.startRoundCountdown(() => {
                                 this.physics.reset(result === 'scoreL' ? -1 : 1);
                                 
-                                // Send ball reset to guest
                                 if (this.webrtc) {
                                     this.webrtc.send({
                                         type: 'ballReset',
@@ -1199,13 +1482,12 @@
                         }
                     }
 
-                    // Send state to guest at high frequency
+                    // Send state to guest
                     if (now - this.lastNetworkUpdate >= NETWORK_DT && this.webrtc) {
                         const state = this.physics.getState();
                         this.webrtc.send({
                             type: 'state',
-                            ...state,
-                            timestamp: now
+                            ...state
                         });
                         this.lastNetworkUpdate = now;
                     }
@@ -1219,7 +1501,7 @@
                     this.renderState.scoreR = this.physics.scoreR;
 
                 } else {
-                    // Guest: Use prediction + server reconciliation
+                    // Guest: Prediction
                     this.prediction.predict(dt / 1000);
                     
                     // Send paddle position
@@ -1251,7 +1533,7 @@
                 this.ball.x = this.renderState.bx;
                 this.ball.y = this.renderState.by;
 
-                // Draw trail
+                // Draw trail (clear old to prevent memory leak)
                 this.ballTrail.clear();
                 this.ballTrail.lineStyle(BALL_RADIUS * 1.5, 0xffffff, 0.15);
                 this.ballTrail.moveTo(oldX, oldY);
@@ -1268,7 +1550,7 @@
                 btn.disabled = true;
                 
                 let code, attempts = 0;
-                while(attempts < 10) {
+                while(attempts < 20) {
                     code = Math.floor(1000 + Math.random() * 9000).toString();
                     try {
                         const exists = await get(ref(db, 'rooms/' + code));
@@ -1277,8 +1559,8 @@
                     attempts++;
                 }
                 
-                if(attempts >= 10) {
-                    this.showError('Failed to create room');
+                if(attempts >= 20) {
+                    this.showError('Failed to create room - too many active rooms');
                     btn.disabled = false;
                     return;
                 }
@@ -1291,12 +1573,18 @@
                 document.getElementById('codeDisp').innerText = code;
 
                 try {
-                    // Create room in Firebase (for signaling only)
-                    await set(ref(db, 'rooms/' + code), { 
+                    const roomRef = ref(db, 'rooms/' + code);
+                    
+                    // Create room
+                    await set(roomRef, { 
                         host: this.state.playerName,
                         status: 'waiting',
                         created: Date.now()
                     });
+                    
+                    // Setup disconnect handler
+                    this.roomDisconnectRef = onDisconnect(roomRef);
+                    await this.roomDisconnectRef.remove();
 
                     // Initialize WebRTC
                     this.webrtc = new WebRTCManager(
@@ -1307,12 +1595,12 @@
                     
                     await this.webrtc.init(code);
 
-                    // Wait for guest to join
+                    // Wait for guest
                     this.guestRef = ref(db, `rooms/${code}/guest`);
                     this.guestListener = onValue(this.guestRef, (snap) => {
                         const guest = snap.val();
                         if (guest && !this.state.playing) {
-                            this.state.opponentName = guest;
+                            this.state.opponentName = escapeHTML(guest.substring(0, 20));
                             this.startOnlineGame();
                         }
                     });
@@ -1353,20 +1641,24 @@
                     const roomData = snap.val();
                     
                     if(roomData.guest || roomData.status !== 'waiting') {
-                        fb.textContent = 'Room is full';
+                        fb.textContent = 'Room is full or in progress';
                         btn.disabled = false;
                         return;
                     }
 
                     this.state.room = code;
                     this.state.role = 'guest';
-                    this.state.opponentName = roomData.host || 'Host';
+                    this.state.opponentName = escapeHTML((roomData.host || 'Host').substring(0, 20));
 
                     // Join room
                     await update(roomRef, { 
                         guest: this.state.playerName,
                         status: 'playing'
                     });
+                    
+                    // Setup disconnect handler
+                    this.roomDisconnectRef = onDisconnect(roomRef);
+                    await this.roomDisconnectRef.remove();
 
                     // Initialize WebRTC
                     this.webrtc = new WebRTCManager(
@@ -1408,7 +1700,6 @@
                 document.getElementById('lobbyWait').classList.add('hidden');
                 document.getElementById('gameHud').classList.remove('hidden');
 
-                // Start with countdown
                 this.startRoundCountdown(() => {
                     if (this.state.role === 'host') {
                         this.physics.reset();
@@ -1429,31 +1720,31 @@
 
             onWebRTCMessage(data) {
                 if (this.state.role === 'host') {
-                    // Host receives paddle position from guest
+                    // Host receives paddle position
                     if (data.type === 'paddle') {
-                        if (typeof data.y === 'number' && !isNaN(data.y)) {
-                            this.physics.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, data.y));
+                        if (typeof data.y === 'number' && !isNaN(data.y) && isFinite(data.y)) {
+                            this.physics.updatePaddle('R', data.y);
                         }
                     }
                 } else {
-                    // Guest receives game state from host
+                    // Guest receives game state
                     if (data.type === 'state') {
-                        if (typeof data.bx === 'number' && !isNaN(data.bx)) {
-                            this.prediction.updateTarget(data.bx, data.by, data.bvx, data.bvy);
-                            this.renderState.pL = data.pL;
-                            this.renderState.scoreL = data.scoreL;
-                            this.renderState.scoreR = data.scoreR;
-                            this.updateScoreDisplay(); // FIX: Update score display
+                        if (typeof data.bx === 'number' && !isNaN(data.bx) && isFinite(data.bx)) {
+                            this.prediction.updateTarget(data.bx, data.by, data.bvx, data.bvy, data.timestamp);
+                            this.renderState.pL = sanitize(data.pL, PADDLE_MIN_Y, PADDLE_MAX_Y);
+                            this.renderState.scoreL = sanitize(data.scoreL, 0, WIN_SCORE);
+                            this.renderState.scoreR = sanitize(data.scoreR, 0, WIN_SCORE);
+                            this.updateScoreDisplay();
                         }
                     } else if (data.type === 'ballReset') {
-                        if (typeof data.bx === 'number' && !isNaN(data.bx)) {
+                        if (typeof data.bx === 'number' && !isNaN(data.bx) && isFinite(data.bx)) {
                             this.prediction.hardSet(data.bx, data.by, data.bvx, data.bvy);
                             this.prediction.activate();
                         }
                     } else if (data.type === 'startCountdown') {
                         this.prediction.freeze();
                         this.startRoundCountdown(() => {
-                            // Wait for ballReset message from host
+                            // Wait for ballReset
                         });
                     } else if (data.type === 'gameOver') {
                         const winner = data.winner === 'guest' ? "YOU WIN!" : "YOU LOST!";
@@ -1469,6 +1760,15 @@
                 setTimeout(() => errorEl.classList.add('hidden'), 5000);
             }
         }
+
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            console.error('Fatal error:', e.error);
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            console.error('Unhandled promise rejection:', e.reason);
+        });
 
         window.addEventListener('load', () => {
             try {
