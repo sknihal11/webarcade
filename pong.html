@@ -452,8 +452,12 @@
                     s.pR = Math.abs(diff) <= maxMove ? target : s.pR + Math.sign(diff) * maxMove;
                     s.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pR));
                 } else if(s.mode === 'online') {
-                    if(s.role === 'host') s.pL = this.inputY;
-                    else s.pR = this.inputY;
+                    if(s.role === 'host') {
+                        s.pL = this.inputY;
+                    } else {
+                        // Guest controls their paddle with immediate response
+                        s.pR = this.inputY;
+                    }
                 }
 
                 s.pL = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, s.pL));
@@ -476,8 +480,9 @@
                 this.ballTrail.moveTo(oldX, oldY);
                 this.ballTrail.lineTo(s.bx, s.by);
 
-                // Only host runs authoritative game logic
+                // Game physics - run on both host and guest
                 if(s.mode === 'ai' || (s.mode === 'online' && s.role === 'host')) {
+                    // Host runs full authoritative physics
                     this.checkHit(s.pL, 30, 1);
                     this.checkHit(s.pR, W - 30, -1);
 
@@ -494,6 +499,11 @@
                             this.resetBall(-1);
                         }
                     }
+                } else if(s.mode === 'online' && s.role === 'guest') {
+                    // Guest runs local prediction for smooth visuals
+                    // Server will send corrections if needed
+                    this.checkHit(s.pL, 30, 1);
+                    this.checkHit(s.pR, W - 30, -1);
                 }
 
                 this.gfxL.y = s.pL;
@@ -501,10 +511,11 @@
                 this.ball.x = s.bx;
                 this.ball.y = s.by;
 
-                // Network sync
+                // Network sync - guest now syncs at same rate as host for smoother ball
                 if(s.mode === 'online' && s.playing && this.roomRef && !this.isCleaningUp) {
                     const now = Date.now();
-                    const syncInterval = s.role === 'host' ? 16 : 33;
+                    // Both sync at 60Hz for best smoothness
+                    const syncInterval = 16;
                     if(now - this.lastNet > syncInterval) {
                         this.netSync();
                         this.lastNet = now;
@@ -823,17 +834,29 @@
 
                 if(typeof d.bx === 'number' && !isNaN(d.bx) && 
                    typeof d.bvx === 'number' && !isNaN(d.bvx)) {
+                    
+                    // Always update velocities immediately for accurate local prediction
                     s.bvx = d.bvx;
                     s.bvy = d.bvy;
 
+                    // Smart position reconciliation with tighter thresholds
                     const dist = Math.abs(s.bx - d.bx) + Math.abs(s.by - d.by);
                     
-                    if(dist < 40) {
-                        // Trust local prediction
-                    } else if(dist < 120) {
-                        s.bx += (d.bx - s.bx) * 0.4;
-                        s.by += (d.by - s.by) * 0.4;
+                    if(dist < 30) {
+                        // Very close - trust local prediction completely
+                        // This keeps motion smooth during normal play
+                    } else if(dist < 80) {
+                        // Small desync - gentle correction (20% blend)
+                        // Slow enough to be imperceptible
+                        s.bx += (d.bx - s.bx) * 0.2;
+                        s.by += (d.by - s.by) * 0.2;
+                    } else if(dist < 150) {
+                        // Medium desync - stronger correction (50% blend)
+                        s.bx += (d.bx - s.bx) * 0.5;
+                        s.by += (d.by - s.by) * 0.5;
                     } else {
+                        // Large desync - snap to server
+                        // Likely due to packet loss or significant lag spike
                         s.bx = d.bx;
                         s.by = d.by;
                     }
