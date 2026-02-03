@@ -1,0 +1,24 @@
+* { margin:0; padding:0; box-sizing:border-box; user-select:none; touch-action:none; }
+body { background:#000; width:100vw; height:100vh; display:flex; justify-content:center; align-items:center; font-family:"Courier New", monospace; overflow:hidden; }
+canvas { display:block; background:#050505; box-shadow:0 0 50px rgba(0,255,255,0.2); }
+
+.touch-zone { position:absolute; top:0; bottom:0; width:50%; z-index:5; pointer-events:auto; transition:background 0.3s; }
+.touch-zone.active { background: rgba(255,255,255,0.05); }
+#leftZone { left:0; } #rightZone { right:0; }
+
+.touch-indicator { position:absolute; width:60px; height:60px; border:3px solid rgba(255,255,255,0.6); border-radius:50%; pointer-events:none; transform:translate(-50%,-50%); opacity:0; transition:opacity 0.2s; z-index:6; }
+.touch-indicator.visible { opacity:1; }
+
+.ui-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:20; display:flex; flex-direction:column; align-items:center; }
+.interactive { pointer-events:auto; }
+
+.screen { position:absolute; inset:0; background: rgba(0,0,0,0.95); backdrop-filter: blur(4px); display:flex; flex-direction:column; align-items:center; justify-content:center; transition:opacity 0.3s; padding:20px; pointer-events:auto; }
+.hidden { opacity:0; pointer-events:none; }
+h1 { color:#fff; font-size:clamp(24px,7vw,50px); margin-bottom:clamp(12px,3vh,30px); letter-spacing:clamp(2px,1vw,5px); text-transform:uppercase; text-align:center; text-shadow:0 0 20px #00f3ff; }
+
+button { cursor:pointer; background: rgba(0,0,0,0.6); border:2px solid #fff; color:#fff; padding:8px 16px; margin:4px; font-weight:bold; text-transform:uppercase; transition:all 0.2s; }
+button:active { transform:scale(0.95); background:#222; }
+
+.btn-cyan { border-color:#00f3ff; color:#00f3ff; text-shadow:0 0 5px #00f3ff; }
+.btn-pink { border-color:#ff0055; color:#ff0055; text-shadow:0 0 5px #ff0055; }
+.btn-back { border-color:#555; color:#aaa; margin-top:6px; }
