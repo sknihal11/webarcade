@@ -104,6 +104,36 @@
             z-index: 101; display: none;
         }
 
+        /* Round countdown overlay */
+        .round-countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 3px solid #00f3ff;
+            border-radius: 15px;
+            padding: 30px 50px;
+            text-align: center;
+            z-index: 50;
+            display: none;
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.5);
+        }
+        .round-countdown.visible { display: block; }
+        .round-countdown .countdown-number {
+            font-size: clamp(60px, 15vw, 100px);
+            color: #00f3ff;
+            text-shadow: 0 0 20px #00f3ff;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .round-countdown .countdown-text {
+            font-size: clamp(16px, 4vw, 24px);
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
         .loading-spinner {
             border: 3px solid rgba(0, 243, 255, 0.2);
             border-top: 3px solid #00f3ff;
@@ -140,6 +170,12 @@
                 <span class="label-l" id="labelL">PLAYER 1</span>
                 <span class="label-r" id="labelR">PLAYER 2</span>
             </div>
+        </div>
+
+        <!-- Round Countdown Overlay -->
+        <div class="round-countdown" id="roundCountdown">
+            <div class="countdown-number" id="countdownNumber">3</div>
+            <div class="countdown-text" id="countdownText">GET READY</div>
         </div>
 
         <div id="menuScreen" class="screen interactive">
@@ -204,10 +240,11 @@
         const BALL_BASE_SPEED_X = 420, BALL_MAX_SPEED = 850, BALL_ACCEL_FACTOR = 1.07;
         const PADDLE_MIN_Y = PADDLE_HEIGHT/2 + 10, PADDLE_MAX_Y = H - PADDLE_HEIGHT/2 - 10;
         const WIN_SCORE = 10;
-        const PHYSICS_HZ = 120; // Fixed physics timestep
-        const NETWORK_HZ = 120; // Network update rate
+        const PHYSICS_HZ = 120;
+        const NETWORK_HZ = 60; // Reduced to 60Hz for better mobile compatibility
         const PHYSICS_DT = 1000 / PHYSICS_HZ;
         const NETWORK_DT = 1000 / NETWORK_HZ;
+        const ROUND_COOLDOWN = 3; // seconds before next ball
 
         // WebRTC Configuration
         const ICE_SERVERS = [
@@ -230,6 +267,7 @@
                 this.lastHitTimeL = 0;
                 this.lastHitTimeR = 0;
                 this.accumulator = 0;
+                this.ballActive = true; // Controls if ball physics runs
             }
 
             reset(dir) {
@@ -238,16 +276,40 @@
                 const d = dir || (Math.random() > 0.5 ? 1 : -1);
                 this.bvx = d * BALL_BASE_SPEED_X;
                 this.bvy = (Math.random() * 70 + 70) * (Math.random() > 0.5 ? 1 : -1);
+                this.ballActive = true;
+            }
+
+            freeze() {
+                this.ballActive = false;
+                this.bx = W / 2;
+                this.by = H / 2;
+                this.bvx = 0;
+                this.bvy = 0;
             }
 
             update(dt) {
-                // Fixed timestep physics
+                if (!this.ballActive) return null;
+
+                // Fixed timestep physics with max iterations to prevent lag spiral
                 this.accumulator += dt;
                 
-                while (this.accumulator >= PHYSICS_DT) {
-                    this.step(PHYSICS_DT / 1000); // Convert to seconds
+                let iterations = 0;
+                const MAX_ITERATIONS = 5;
+                
+                while (this.accumulator >= PHYSICS_DT && iterations < MAX_ITERATIONS) {
+                    const result = this.step(PHYSICS_DT / 1000);
                     this.accumulator -= PHYSICS_DT;
+                    iterations++;
+                    
+                    if (result) return result; // Score happened
                 }
+                
+                // Reset accumulator if too far behind
+                if (iterations >= MAX_ITERATIONS) {
+                    this.accumulator = 0;
+                }
+
+                return null;
             }
 
             step(dt) {
@@ -318,7 +380,8 @@
                     pL: this.pL,
                     pR: this.pR,
                     scoreL: this.scoreL,
-                    scoreR: this.scoreR
+                    scoreR: this.scoreR,
+                    ballActive: this.ballActive
                 };
             }
 
@@ -331,6 +394,9 @@
                 this.pR = state.pR;
                 this.scoreL = state.scoreL;
                 this.scoreR = state.scoreR;
+                if (state.ballActive !== undefined) {
+                    this.ballActive = state.ballActive;
+                }
             }
         }
 
@@ -345,10 +411,13 @@
                 this.targetBy = H / 2;
                 this.targetVx = 0;
                 this.targetVy = 0;
-                this.lerpFactor = 0.4; // Increased for faster correction
+                this.lerpFactor = 0.4;
+                this.ballActive = true;
             }
 
             predict(dt) {
+                if (!this.ballActive) return;
+
                 // Predict ball movement
                 this.bx += this.bvx * dt;
                 this.by += this.bvy * dt;
@@ -382,6 +451,19 @@
                 this.bvx = this.targetVx = vx;
                 this.bvy = this.targetVy = vy;
             }
+
+            freeze() {
+                this.ballActive = false;
+                this.bx = W / 2;
+                this.by = H / 2;
+                this.bvx = 0;
+                this.bvy = 0;
+                this.hardSet(W / 2, H / 2, 0, 0);
+            }
+
+            activate() {
+                this.ballActive = true;
+            }
         }
 
         // WebRTC Manager
@@ -395,15 +477,26 @@
                 this.connected = false;
                 this.signalRef = null;
                 this.signalListener = null;
+                this.iceRef = null;
+                this.iceListener = null;
+                this.connectionTimeout = null;
                 
                 // Latency tracking
                 this.lastPingTime = 0;
-                this.rtt = 0; // Round-trip time in ms
+                this.rtt = 0;
                 this.pingInterval = null;
             }
 
             async init(roomCode) {
                 this.pc = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+
+                // Set connection timeout
+                this.connectionTimeout = setTimeout(() => {
+                    if (this.pc && this.pc.connectionState !== 'connected') {
+                        console.error('WebRTC connection timeout');
+                        this.onConnectionChange('timeout');
+                    }
+                }, 30000); // 30 second timeout
 
                 // ICE candidate handling
                 this.pc.onicecandidate = (event) => {
@@ -411,30 +504,34 @@
                         const path = this.isHost ? 'hostIce' : 'guestIce';
                         update(ref(db, `rooms/${roomCode}/${path}`), {
                             [Date.now()]: JSON.stringify(event.candidate.toJSON())
-                        }).catch(console.error);
+                        }).catch(err => console.error('ICE candidate error:', err));
                     }
                 };
 
                 // Connection state monitoring
                 this.pc.onconnectionstatechange = () => {
-                    console.log('Connection state:', this.pc.connectionState);
-                    this.onConnectionChange(this.pc.connectionState);
+                    const state = this.pc.connectionState;
                     
-                    if (this.pc.connectionState === 'connected') {
+                    if (state === 'connected') {
                         this.connected = true;
+                        if (this.connectionTimeout) {
+                            clearTimeout(this.connectionTimeout);
+                            this.connectionTimeout = null;
+                        }
                         this.startPingMonitoring();
-                    } else if (this.pc.connectionState === 'disconnected' || 
-                               this.pc.connectionState === 'failed') {
+                    } else if (state === 'disconnected' || state === 'failed') {
                         this.connected = false;
                         this.stopPingMonitoring();
                     }
+                    
+                    this.onConnectionChange(state);
                 };
 
                 if (this.isHost) {
                     // Host creates data channel
                     this.dataChannel = this.pc.createDataChannel('gameData', {
-                        ordered: false,      // Allow out-of-order delivery
-                        maxRetransmits: 0    // No retransmission for lowest latency
+                        ordered: false,
+                        maxRetransmits: 0
                     });
                     this.setupDataChannel();
 
@@ -448,7 +545,11 @@
                     this.signalListener = onValue(this.signalRef, async (snap) => {
                         const answer = snap.val();
                         if (answer && this.pc.remoteDescription === null) {
-                            await this.pc.setRemoteDescription(JSON.parse(answer));
+                            try {
+                                await this.pc.setRemoteDescription(JSON.parse(answer));
+                            } catch (e) {
+                                console.error('Error setting remote description:', e);
+                            }
                         }
                     });
                 } else {
@@ -463,18 +564,22 @@
                     this.signalListener = onValue(this.signalRef, async (snap) => {
                         const offer = snap.val();
                         if (offer && this.pc.remoteDescription === null) {
-                            await this.pc.setRemoteDescription(JSON.parse(offer));
-                            const answer = await this.pc.createAnswer();
-                            await this.pc.setLocalDescription(answer);
-                            await set(ref(db, `rooms/${roomCode}/answer`), JSON.stringify(answer));
+                            try {
+                                await this.pc.setRemoteDescription(JSON.parse(offer));
+                                const answer = await this.pc.createAnswer();
+                                await this.pc.setLocalDescription(answer);
+                                await set(ref(db, `rooms/${roomCode}/answer`), JSON.stringify(answer));
+                            } catch (e) {
+                                console.error('Error handling offer:', e);
+                            }
                         }
                     });
                 }
 
                 // Listen for ICE candidates
                 const icePath = this.isHost ? 'guestIce' : 'hostIce';
-                const iceRef = ref(db, `rooms/${roomCode}/${icePath}`);
-                onValue(iceRef, (snap) => {
+                this.iceRef = ref(db, `rooms/${roomCode}/${icePath}`);
+                this.iceListener = onValue(this.iceRef, (snap) => {
                     const candidates = snap.val();
                     if (candidates) {
                         Object.values(candidates).forEach(async (cand) => {
@@ -490,13 +595,11 @@
 
             setupDataChannel() {
                 this.dataChannel.onopen = () => {
-                    console.log('Data channel open');
                     this.connected = true;
                     this.onConnectionChange('connected');
                 };
 
                 this.dataChannel.onclose = () => {
-                    console.log('Data channel closed');
                     this.connected = false;
                     this.onConnectionChange('disconnected');
                 };
@@ -540,7 +643,7 @@
                     if (this.connected) {
                         this.send({ type: 'ping', timestamp: Date.now() });
                     }
-                }, 1000); // Ping every second
+                }, 1000);
             }
 
             stopPingMonitoring() {
@@ -553,16 +656,31 @@
             async cleanup() {
                 this.stopPingMonitoring();
                 
+                if (this.connectionTimeout) {
+                    clearTimeout(this.connectionTimeout);
+                    this.connectionTimeout = null;
+                }
+                
                 if (this.signalListener && this.signalRef) {
                     off(this.signalRef);
+                    this.signalListener = null;
+                    this.signalRef = null;
+                }
+                
+                if (this.iceListener && this.iceRef) {
+                    off(this.iceRef);
+                    this.iceListener = null;
+                    this.iceRef = null;
                 }
                 
                 if (this.dataChannel) {
                     this.dataChannel.close();
+                    this.dataChannel = null;
                 }
                 
                 if (this.pc) {
                     this.pc.close();
+                    this.pc = null;
                 }
                 
                 this.connected = false;
@@ -607,6 +725,14 @@
                 // WebRTC
                 this.webrtc = null;
                 this.lastNetworkUpdate = 0;
+
+                // Firebase listeners
+                this.guestRef = null;
+                this.guestListener = null;
+
+                // Round countdown
+                this.countdownActive = false;
+                this.countdownValue = 0;
 
                 // Rendering state
                 this.renderState = {
@@ -819,7 +945,6 @@
                 
                 this.physics.scoreL = 0;
                 this.physics.scoreR = 0;
-                this.physics.reset();
                 
                 this.updateScoreDisplay();
                 this.updatePlayerLabels();
@@ -828,6 +953,11 @@
                 document.getElementById('gameHud').classList.remove('hidden');
                 document.getElementById('connectionStatus').style.display = 'none';
                 document.getElementById('latencyDisplay').style.display = 'none';
+
+                // Start with countdown
+                this.startRoundCountdown(() => {
+                    this.physics.reset();
+                });
             }
 
             async manualExit() {
@@ -854,6 +984,12 @@
                     this.webrtc = null;
                 }
 
+                if (this.guestListener && this.guestRef) {
+                    off(this.guestRef);
+                    this.guestListener = null;
+                    this.guestRef = null;
+                }
+
                 if(this.state.room) {
                     const room = this.state.room;
                     this.state.room = null;
@@ -873,6 +1009,7 @@
                 
                 this.ballTrail.clear();
                 document.getElementById('gameHud').classList.add('hidden');
+                document.getElementById('roundCountdown').classList.remove('visible');
                 document.getElementById('winMsg').innerText = reason || "GAME OVER";
                 document.getElementById('overScreen').classList.remove('hidden');
                 document.getElementById('connectionStatus').style.display = 'none';
@@ -895,10 +1032,20 @@
                         statusEl.classList.add('connecting');
                         statusEl.textContent = 'CONNECTING...';
                         latencyEl.style.display = 'none';
+                    } else if (status === 'timeout') {
+                        this.stopGame('CONNECTION TIMEOUT');
+                        this.cleanup();
                     } else {
                         statusEl.classList.add('disconnected');
                         statusEl.textContent = 'DISCONNECTED';
                         latencyEl.style.display = 'none';
+                        
+                        if (status === 'failed') {
+                            setTimeout(() => {
+                                this.stopGame('CONNECTION LOST');
+                                this.cleanup();
+                            }, 2000);
+                        }
                     }
                 } else {
                     statusEl.style.display = 'none';
@@ -917,8 +1064,40 @@
                 document.getElementById('scoreR').innerText = this.renderState.scoreR;
             }
 
+            startRoundCountdown(onComplete) {
+                if (this.countdownActive) return;
+                
+                this.countdownActive = true;
+                this.countdownValue = ROUND_COOLDOWN;
+                
+                const countdownEl = document.getElementById('roundCountdown');
+                const numberEl = document.getElementById('countdownNumber');
+                const textEl = document.getElementById('countdownText');
+                
+                countdownEl.classList.add('visible');
+                textEl.textContent = 'GET READY';
+                
+                const countdownInterval = setInterval(() => {
+                    if (this.countdownValue > 0) {
+                        numberEl.textContent = this.countdownValue;
+                        this.countdownValue--;
+                    } else {
+                        numberEl.textContent = 'GO!';
+                        textEl.textContent = '';
+                        
+                        setTimeout(() => {
+                            countdownEl.classList.remove('visible');
+                            this.countdownActive = false;
+                            if (onComplete) onComplete();
+                        }, 500);
+                        
+                        clearInterval(countdownInterval);
+                    }
+                }, 1000);
+            }
+
             loop(delta) {
-                if(!this.state.playing) return;
+                if(!this.state.playing || this.countdownActive) return;
                 
                 const dt = this.app.ticker.elapsedMS;
 
@@ -949,11 +1128,16 @@
                 const result = this.physics.update(dt);
                 
                 if (result) {
-                    this.physics.reset(result === 'scoreL' ? -1 : 1);
+                    // Someone scored - start countdown
+                    this.physics.freeze();
                     
                     if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
                         const winner = this.physics.scoreL > this.physics.scoreR ? "YOU WIN!" : "YOU LOST!";
                         this.stopGame(winner);
+                    } else {
+                        this.startRoundCountdown(() => {
+                            this.physics.reset(result === 'scoreL' ? -1 : 1);
+                        });
                     }
                 }
 
@@ -976,7 +1160,8 @@
                     const result = this.physics.update(dt);
                     
                     if (result) {
-                        this.physics.reset(result === 'scoreL' ? -1 : 1);
+                        // Someone scored
+                        this.physics.freeze();
                         
                         if (this.physics.scoreL >= WIN_SCORE || this.physics.scoreR >= WIN_SCORE) {
                             const winner = "YOU " + (this.physics.scoreL > this.physics.scoreR ? "WIN!" : "LOST!");
@@ -988,6 +1173,29 @@
                                 });
                             }
                             return;
+                        } else {
+                            // Send countdown start to guest
+                            if (this.webrtc) {
+                                this.webrtc.send({
+                                    type: 'startCountdown',
+                                    direction: result === 'scoreL' ? -1 : 1
+                                });
+                            }
+                            
+                            this.startRoundCountdown(() => {
+                                this.physics.reset(result === 'scoreL' ? -1 : 1);
+                                
+                                // Send ball reset to guest
+                                if (this.webrtc) {
+                                    this.webrtc.send({
+                                        type: 'ballReset',
+                                        bx: this.physics.bx,
+                                        by: this.physics.by,
+                                        bvx: this.physics.bvx,
+                                        bvy: this.physics.bvy
+                                    });
+                                }
+                            });
                         }
                     }
 
@@ -1100,8 +1308,8 @@
                     await this.webrtc.init(code);
 
                     // Wait for guest to join
-                    const guestRef = ref(db, `rooms/${code}/guest`);
-                    onValue(guestRef, (snap) => {
+                    this.guestRef = ref(db, `rooms/${code}/guest`);
+                    this.guestListener = onValue(this.guestRef, (snap) => {
                         const guest = snap.val();
                         if (guest && !this.state.playing) {
                             this.state.opponentName = guest;
@@ -1186,7 +1394,6 @@
                 
                 this.physics.scoreL = 0;
                 this.physics.scoreR = 0;
-                this.physics.reset();
                 
                 if (this.state.role === 'guest') {
                     const state = this.physics.getState();
@@ -1200,21 +1407,54 @@
                 document.getElementById('lobbyScreen').classList.add('hidden');
                 document.getElementById('lobbyWait').classList.add('hidden');
                 document.getElementById('gameHud').classList.remove('hidden');
+
+                // Start with countdown
+                this.startRoundCountdown(() => {
+                    if (this.state.role === 'host') {
+                        this.physics.reset();
+                        if (this.webrtc) {
+                            this.webrtc.send({
+                                type: 'ballReset',
+                                bx: this.physics.bx,
+                                by: this.physics.by,
+                                bvx: this.physics.bvx,
+                                bvy: this.physics.bvy
+                            });
+                        }
+                    } else {
+                        this.prediction.activate();
+                    }
+                });
             }
 
             onWebRTCMessage(data) {
                 if (this.state.role === 'host') {
                     // Host receives paddle position from guest
                     if (data.type === 'paddle') {
-                        this.physics.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, data.y));
+                        if (typeof data.y === 'number' && !isNaN(data.y)) {
+                            this.physics.pR = Math.max(PADDLE_MIN_Y, Math.min(PADDLE_MAX_Y, data.y));
+                        }
                     }
                 } else {
                     // Guest receives game state from host
                     if (data.type === 'state') {
-                        this.prediction.updateTarget(data.bx, data.by, data.bvx, data.bvy);
-                        this.renderState.pL = data.pL;
-                        this.renderState.scoreL = data.scoreL;
-                        this.renderState.scoreR = data.scoreR;
+                        if (typeof data.bx === 'number' && !isNaN(data.bx)) {
+                            this.prediction.updateTarget(data.bx, data.by, data.bvx, data.bvy);
+                            this.renderState.pL = data.pL;
+                            this.renderState.scoreL = data.scoreL;
+                            this.renderState.scoreR = data.scoreR;
+                            this.updateScoreDisplay(); // FIX: Update score display
+                        }
+                    } else if (data.type === 'ballReset') {
+                        if (typeof data.bx === 'number' && !isNaN(data.bx)) {
+                            this.prediction.hardSet(data.bx, data.by, data.bvx, data.bvy);
+                            this.prediction.activate();
+                        }
+                    } else if (data.type === 'startCountdown') {
+                        this.prediction.freeze();
+                        this.startRoundCountdown(() => {
+                            // Wait for ballReset message from host
+                        });
                     } else if (data.type === 'gameOver') {
                         const winner = data.winner === 'guest' ? "YOU WIN!" : "YOU LOST!";
                         this.stopGame(winner);
