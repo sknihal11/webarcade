@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Neon Pong</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Touch zones for mobile input -->
+    <div id="leftZone" class="touch-zone"></div>
+    <div id="rightZone" class="touch-zone"></div>
+    <div id="touchIndicator" class="touch-indicator"></div>
+
+    <!-- UI Layer -->
+    <div class="ui-layer">
+        <!-- Game HUD -->
+        <div class="hud hidden" id="gameHud">
+            <button class="btn-exit interactive" id="btnExit">EXIT</button>
+            <a href="blog.html" class="back-btn-link">← DASH</a>
+            <div id="connectionStatus" class="connection-status"></div>
+            <div class="score-row">
+                <div class="score-box">
+                    <div style="color:#ff0055" id="scoreL">0</div>
+                    <div style="color:#00f3ff" id="scoreR">0</div>
+                </div>
+            </div>
+            <div class="player-info">
+                <span class="label-l">PLAYER 1</span>
+                <span class="label-r">PLAYER 2</span>
+            </div>
+        </div>
+
+        <!-- Main Menu Screen -->
+        <div id="menuScreen" class="screen interactive">
+            <h1>NEON PONG</h1>
+            <button class="btn-cyan" id="btnAI">SINGLE PLAYER</button>
+            <button class="btn-pink" id="btnOnline">MULTIPLAYER</button>
+            <a href="blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">← DASHBOARD</a>
+            <div id="connectionError" class="error-notice hidden"></div>
+        </div>
+
+        <!-- Lobby Screen -->
+        <div id="lobbyScreen" class="screen hidden interactive">
+            <h1>LOBBY</h1>
+            <div id="lobbyMain" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+                <button id="btnHost" class="btn-cyan">CREATE ROOM</button>
+                <div class="lobby-divider">--- OR JOIN ---</div>
+                <input type="number" id="codeIn" placeholder="CODE" inputmode="numeric" maxlength="4" pattern="[0-9]*" autocomplete="off" min="1000" max="9999">
+                <div class="feedback-text" id="joinFeedback"></div>
+                <button id="btnJoin" class="btn-pink">JOIN GAME</button>
+                <button id="btnBack" class="btn-back">BACK</button>
+            </div>
+            
+            <div id="lobbyWait" class="hidden" style="text-align:center; display:flex; flex-direction:column; align-items:center;">
+                <p class="room-code-label">ROOM CODE:</p>
+                <h2 class="room-code-display" id="codeDisp">----</h2>
+                <p class="waiting-text">Waiting for opponent...</p>
+                <button id="btnCancelHost" class="btn-back" style="margin-top: 20px;">CANCEL</button>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="overScreen" class="screen hidden interactive">
+            <h1 id="winMsg">WINNER</h1>
+            <button class="btn-cyan" onclick="window.location.reload()">PLAY AGAIN</button>
+            <a href="blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">← DASHBOARD</a>
+        </div>
+    </div>
+
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="lib/firebase.js"></script>
+
+    <!-- Game Modules -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
