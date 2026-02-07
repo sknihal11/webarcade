@@ -51,10 +51,9 @@
   --radius-xl: 24px;
   --radius-full: 9999px;
   
-  --transition-fast: 200ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --transition-base: 400ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --transition-slow: 600ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  --transition-smooth: 800ms cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Light Mode */
@@ -98,7 +97,6 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  scroll-padding-top: 80px;
 }
 
 body {
@@ -109,7 +107,6 @@ body {
   overflow-x: hidden;
   min-height: 100vh;
   position: relative;
-  -webkit-overflow-scrolling: touch;
 }
 
 /* ============================================
@@ -124,13 +121,11 @@ body {
     radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
     radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
   animation: cosmicDrift 20s ease-in-out infinite alternate;
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 @keyframes cosmicDrift {
-  0% { transform: translate3d(0, 0, 0) scale(1); }
-  100% { transform: translate3d(30px, 20px, 0) scale(1.05); }
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(30px, 20px) scale(1.05); }
 }
 
 .grid-overlay {
@@ -161,8 +156,6 @@ body {
   border-radius: 50%;
   opacity: 0.3;
   animation: float-particle 15s infinite ease-in-out;
-  will-change: transform, opacity;
-  transform: translateZ(0);
 }
 
 .particle:nth-child(1) { left: 10%; animation-delay: 0s; animation-duration: 12s; }
@@ -172,9 +165,9 @@ body {
 .particle:nth-child(5) { left: 90%; animation-delay: 3s; animation-duration: 16s; }
 
 @keyframes float-particle {
-  0%, 100% { transform: translate3d(0, 100vh, 0); opacity: 0; }
+  0%, 100% { transform: translateY(100vh) translateX(0); opacity: 0; }
   10% { opacity: 0.3; }
-  50% { transform: translate3d(20px, -10vh, 0); opacity: 0.5; }
+  50% { transform: translateY(-10vh) translateX(20px); opacity: 0.5; }
   90% { opacity: 0.3; }
 }
 
@@ -188,9 +181,7 @@ header {
   background: var(--bg-glass);
   backdrop-filter: blur(20px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);
-  transition: all var(--transition-base), box-shadow var(--transition-slow);
-  will-change: background, box-shadow;
-  transform: translateZ(0);
+  transition: all var(--transition-base);
 }
 
 header.scrolled {
@@ -215,24 +206,22 @@ header.scrolled {
   font-weight: 800;
   text-decoration: none;
   color: var(--text-primary);
-  transition: transform var(--transition-base);
-  will-change: transform;
+  transition: transform var(--transition-fast);
 }
 
 .logo:hover {
-  transform: scale(1.05) translateZ(0);
+  transform: scale(1.05);
 }
 
 .logo-icon {
   font-size: 2rem;
   filter: drop-shadow(0 0 10px var(--accent-glow));
   animation: pulse-glow 3s ease-in-out infinite;
-  will-change: filter;
 }
 
 @keyframes pulse-glow {
   0%, 100% { filter: drop-shadow(0 0 10px var(--accent-glow)); }
-  50% { filter: drop-shadow(0 0 20px var(--accent-glow)) brightness(1.2); }
+  50% { filter: drop-shadow(0 0 20px var(--accent-glow)); }
 }
 
 .header-actions {
@@ -277,8 +266,6 @@ header.scrolled {
   cursor: pointer;
   transition: all var(--transition-base);
   position: relative;
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 .user-profile::before {
@@ -297,13 +284,7 @@ header.scrolled {
 }
 
 .user-profile:hover {
-  transform: translateY(-3px) translateZ(0);
-  box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-}
-
-.user-profile:active {
-  transform: translateY(-1px) translateZ(0);
-  transition: transform var(--transition-fast);
+  transform: translateY(-2px);
 }
 
 .user-avatar {
@@ -326,12 +307,11 @@ header.scrolled {
 .chevron {
   font-size: 0.75rem;
   color: var(--text-muted);
-  transition: transform var(--transition-smooth);
-  will-change: transform;
+  transition: transform var(--transition-base);
 }
 
 .user-profile:hover .chevron {
-  transform: rotate(180deg) translateZ(0);
+  transform: rotate(180deg);
 }
 
 /* ============================================
@@ -400,13 +380,11 @@ header.scrolled {
   height: 200%;
   background: radial-gradient(circle, rgba(99, 102, 241, 0.1) 0%, transparent 70%);
   animation: rotate 20s linear infinite;
-  will-change: transform;
-  transform: translateZ(0);
 }
 
 @keyframes rotate {
-  from { transform: rotate(0deg) translateZ(0); }
-  to { transform: rotate(360deg) translateZ(0); }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 .welcome-content {
@@ -449,8 +427,6 @@ header.scrolled {
   transition: all var(--transition-base);
   position: relative;
   overflow: hidden;
-  will-change: transform, box-shadow;
-  transform: translateZ(0);
 }
 
 .stat-card::before {
@@ -461,24 +437,18 @@ header.scrolled {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-  transform: scaleX(0) translateZ(0);
-  transition: transform var(--transition-smooth);
-  will-change: transform;
+  transform: scaleX(0);
+  transition: transform var(--transition-base);
 }
 
 .stat-card:hover::before {
-  transform: scaleX(1) translateZ(0);
+  transform: scaleX(1);
 }
 
 .stat-card:hover {
-  transform: translateY(-8px) translateZ(0);
-  box-shadow: var(--shadow-lg), 0 0 40px var(--accent-glow);
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-lg);
   border-color: var(--accent-primary);
-}
-
-.stat-card:active {
-  transform: translateY(-5px) translateZ(0);
-  transition: transform var(--transition-fast);
 }
 
 .stat-header {
@@ -677,8 +647,6 @@ header.scrolled {
   display: flex;
   flex-direction: column;
   cursor: pointer;
-  will-change: transform, box-shadow;
-  transform: translateZ(0);
 }
 
 .game-card::before {
@@ -689,25 +657,18 @@ header.scrolled {
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
-  transform: scaleX(0) translateZ(0);
-  transition: transform var(--transition-smooth);
-  transform-origin: left;
-  will-change: transform;
+  transform: scaleX(0);
+  transition: transform var(--transition-base);
 }
 
 .game-card:hover::before {
-  transform: scaleX(1) translateZ(0);
+  transform: scaleX(1);
 }
 
 .game-card:hover {
-  transform: translateY(-10px) scale(1.02) translateZ(0);
-  box-shadow: var(--shadow-xl), 0 0 50px var(--accent-glow);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-xl);
   border-color: var(--accent-primary);
-}
-
-.game-card:active {
-  transform: translateY(-8px) scale(1.01) translateZ(0);
-  transition: transform var(--transition-fast);
 }
 
 .game-card.multiplayer {
@@ -729,13 +690,11 @@ header.scrolled {
   height: 100%;
   object-fit: cover;
   background: var(--bg-secondary);
-  transition: transform var(--transition-smooth);
-  will-change: transform;
-  transform: translateZ(0);
+  transition: transform var(--transition-slow);
 }
 
 .game-card:hover .game-thumbnail {
-  transform: scale(1.15) translateZ(0);
+  transform: scale(1.1);
 }
 
 .game-overlay {
@@ -747,7 +706,6 @@ header.scrolled {
   display: flex;
   align-items: center;
   justify-content: center;
-  will-change: opacity;
 }
 
 .game-card:hover .game-overlay {
@@ -766,18 +724,12 @@ header.scrolled {
   align-items: center;
   justify-content: center;
   box-shadow: 0 8px 25px var(--accent-glow);
-  transform: scale(0.7) translateZ(0);
-  transition: all var(--transition-smooth);
-  will-change: transform;
+  transform: scale(0.8);
+  transition: all var(--transition-base);
 }
 
 .game-card:hover .play-overlay-btn {
-  transform: scale(1) translateZ(0);
-}
-
-.play-overlay-btn:hover {
-  transform: scale(1.1) translateZ(0);
-  box-shadow: 0 12px 35px var(--accent-glow);
+  transform: scale(1);
 }
 
 .game-info {
@@ -870,8 +822,6 @@ header.scrolled {
   box-shadow: 0 4px 15px var(--accent-glow);
   position: relative;
   overflow: hidden;
-  will-change: transform, box-shadow;
-  transform: translateZ(0);
 }
 
 .play-btn::before {
@@ -888,13 +838,12 @@ header.scrolled {
 }
 
 .play-btn:hover:not(:disabled) {
-  transform: translateY(-3px) translateZ(0);
-  box-shadow: 0 8px 25px var(--accent-glow);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow);
 }
 
 .play-btn:active {
-  transform: translateY(-1px) scale(0.98) translateZ(0);
-  transition: transform var(--transition-fast);
+  transform: translateY(0);
 }
 
 .play-btn.mp {
@@ -945,11 +894,9 @@ header.scrolled {
   padding: 1.25rem 1.5rem;
   align-items: center;
   border-bottom: 1px solid var(--border-subtle);
-  transition: all var(--transition-smooth);
+  transition: all var(--transition-base);
   animation: fadeInUp 0.5s ease-out backwards;
   position: relative;
-  will-change: transform, background;
-  transform: translateZ(0);
 }
 
 .leaderboard-row::before {
@@ -960,13 +907,12 @@ header.scrolled {
   bottom: 0;
   width: 3px;
   background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary));
-  transform: scaleY(0) translateZ(0);
-  transition: transform var(--transition-smooth);
-  will-change: transform;
+  transform: scaleY(0);
+  transition: transform var(--transition-base);
 }
 
 .leaderboard-row:hover::before {
-  transform: scaleY(1) translateZ(0);
+  transform: scaleY(1);
 }
 
 .leaderboard-row:nth-child(1) { animation-delay: 0.1s; }
@@ -978,11 +924,11 @@ header.scrolled {
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px) translateZ(0);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
-    transform: translateY(0) translateZ(0);
+    transform: translateY(0);
   }
 }
 
@@ -992,12 +938,7 @@ header.scrolled {
 
 .leaderboard-row:hover {
   background: rgba(99, 102, 241, 0.05);
-  transform: translateX(8px) translateZ(0);
-}
-
-.leaderboard-row:active {
-  transform: translateX(5px) translateZ(0);
-  transition: transform var(--transition-fast);
+  transform: translateX(5px);
 }
 
 .rank-badge {
@@ -1069,8 +1010,7 @@ header.scrolled {
   z-index: 200;
   opacity: 0;
   pointer-events: none;
-  transition: opacity var(--transition-slow), backdrop-filter var(--transition-slow);
-  will-change: opacity;
+  transition: opacity var(--transition-base);
 }
 
 .drawer-overlay.active {
@@ -1089,14 +1029,13 @@ header.scrolled {
   border-left: 1px solid var(--border-medium);
   box-shadow: var(--shadow-xl);
   z-index: 201;
-  transform: translateX(100%) translateZ(0);
-  transition: transform var(--transition-smooth) cubic-bezier(0.22, 1, 0.36, 1);
+  transform: translateX(100%);
+  transition: transform var(--transition-base) cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
-  will-change: transform;
 }
 
 .drawer.open {
-  transform: translateX(0) translateZ(0);
+  transform: translateX(0);
 }
 
 .drawer-header {
@@ -1223,8 +1162,6 @@ header.scrolled {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  will-change: transform, box-shadow;
-  transform: translateZ(0);
 }
 
 .btn-primary {
@@ -1234,13 +1171,8 @@ header.scrolled {
 }
 
 .btn-primary:hover {
-  transform: translateY(-3px) translateZ(0);
-  box-shadow: 0 8px 25px var(--accent-glow);
-}
-
-.btn-primary:active {
-  transform: translateY(-1px) scale(0.98) translateZ(0);
-  transition: transform var(--transition-fast);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px var(--accent-glow);
 }
 
 .btn-secondary {
@@ -1252,12 +1184,6 @@ header.scrolled {
 .btn-secondary:hover {
   background: var(--bg-card);
   border-color: var(--accent-primary);
-  transform: translateY(-2px) translateZ(0);
-}
-
-.btn-secondary:active {
-  transform: translateY(0) translateZ(0);
-  transition: transform var(--transition-fast);
 }
 
 .btn-danger {
@@ -1266,13 +1192,12 @@ header.scrolled {
 }
 
 .btn-danger:hover {
-  transform: translateY(-3px) translateZ(0);
-  box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
 }
 
-.btn-danger:active {
-  transform: translateY(-1px) scale(0.98) translateZ(0);
-  transition: transform var(--transition-fast);
+.btn:active {
+  transform: translateY(0) scale(0.98);
 }
 
 .danger-zone {
@@ -1382,7 +1307,6 @@ footer {
 ::-webkit-scrollbar-thumb {
   background: var(--bg-tertiary);
   border-radius: 5px;
-  transition: background var(--transition-base);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -1400,29 +1324,10 @@ footer {
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto;
-  will-change: transform;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg) translateZ(0); }
-}
-
-/* ============================================
-   PERFORMANCE OPTIMIZATIONS
-   ============================================ */
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-img {
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
-}
-
-button {
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
+  to { transform: rotate(360deg); }
 }
 </style>
 </head>
@@ -1670,7 +1575,7 @@ button {
     <div class="drawer-user-info">
       <img id="drawerAvatar" class="drawer-avatar" src="https://i.imgur.com/8Km9tLL.png" alt="Avatar">
       <div class="drawer-user-name" id="drawerName">Player</div>
-      <div class="drawer-user-email" id="drawerEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="71011d10081403311409101c011d145f121e1c">[email&#160;protected]</a></div>
+      <div class="drawer-user-email" id="drawerEmail">player@example.com</div>
     </div>
     
     <!-- Profile Settings -->
@@ -1719,7 +1624,7 @@ button {
   </div>
 </div>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script type="module">
+<script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import { 
   getAuth, 
@@ -2297,4 +2202,15 @@ window.deleteAccount = async () => {
 
 // ============================================
 // SCROLL HEADER EFFECT
-// =============================
+// ============================================
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 50) {
+    elements.header.classList.add('scrolled');
+  } else {
+    elements.header.classList.remove('scrolled');
+  }
+});
+</script>
+
+</body>
+</html>
