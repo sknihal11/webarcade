@@ -1901,7 +1901,6 @@ async function syncAnnouncement() {
 function updateUserStats(score2048, scoreFlappy, globalRank = null) {
   const totalRating = ((score2048 || 0) * 0.01) + ((scoreFlappy || 0) * 0.1);
   
-  // Update all score displays
   elements.statScore2048.textContent = score2048 || 0;
   elements.statScoreFlappy.textContent = scoreFlappy || 0;
   elements.gameScore2048.textContent = score2048 || 0;
@@ -1983,14 +1982,21 @@ async function loadLeaderboard() {
     const usersSnapshot = await getDocs(collection(db, "users"));
     const players = [];
     
-    usersSnapshot.forEach(doc => {
-      const data = doc.data();
+    usersSnapshot.forEach(docSnap => {
+      const data = docSnap.data();
       const totalRating = ((data.best2048 || 0) * 0.01) + ((data.bestFlappy || 0) * 0.1);
       
       if (totalRating > 0) {
+        // ---- FIX: use all available name fields as fallbacks ----
+        const displayName =
+          data.username ||
+          data.displayName ||
+          data.name ||
+          "Unknown";
+
         players.push({
-          uid: doc.id,
-          name: data.username || "Unknown",
+          uid: docSnap.id,
+          name: displayName,
           rating: totalRating.toFixed(2),
           best2048: data.best2048 || 0,
           bestFlappy: data.bestFlappy || 0
