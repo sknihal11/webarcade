@@ -2,885 +2,578 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="theme-color" content="#04050f">
 <title>WebArcade</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
 
 <style>
 :root {
-  --black: #030507;
-  --black-2: #0a0f0d;
-  --green: #00ff87;
-  --green-dim: #00c96a;
-  --green-glow: rgba(0, 255, 135, 0.25);
-  --green-glow-strong: rgba(0, 255, 135, 0.5);
-  --glass: rgba(0, 255, 135, 0.04);
-  --glass-border: rgba(0, 255, 135, 0.12);
-  --text: #e8fff5;
-  --text-muted: rgba(232, 255, 245, 0.45);
-  --font-display: 'Orbitron', sans-serif;
-  --font-mono: 'Share Tech Mono', monospace;
-  --font-body: 'Inter', sans-serif;
+  --bg: #04050f;
+  --neon: #00f0ff;
+  --neon2: #ff00c8;
+  --neon3: #7b2fff;
+  --glow-c: rgba(0,240,255,0.35);
+  --glow-m: rgba(255,0,200,0.35);
+  --text: #e8f4ff;
+  --muted: #5a7a9a;
+  --border: rgba(0,240,255,0.15);
+  --input-bg: rgba(0,10,30,0.7);
+  --success: #00ff88;
+  --danger: #ff3860;
+  --warn: #ffb300;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { scroll-behavior: smooth; }
+html { -webkit-text-size-adjust: 100%; }
 
 body {
-  font-family: var(--font-body);
-  background: var(--black);
+  font-family: 'Rajdhani', sans-serif;
+  background: var(--bg);
   color: var(--text);
   min-height: 100vh;
+  min-height: 100dvh;
   overflow-x: hidden;
   cursor: crosshair;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ── ANIMATED BACKGROUND ── */
-.bg-canvas {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  overflow: hidden;
+/* ── STARFIELD ── */
+#starfield {
+  position: fixed; inset: 0;
+  z-index: 0; pointer-events: none;
+  width: 100%; height: 100%;
 }
 
-.bg-canvas::before {
+/* ── SCANLINES ── */
+body::before {
   content: '';
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0, 255, 135, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse 40% 40% at 80% 80%, rgba(0, 255, 135, 0.04) 0%, transparent 60%);
-}
-
-/* Scanlines */
-.bg-canvas::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 255, 135, 0.015) 2px,
-    rgba(0, 255, 135, 0.015) 4px
-  );
-  animation: scanSlide 8s linear infinite;
+  position: fixed; inset: 0; z-index: 1;
+  background: repeating-linear-gradient(0deg,rgba(0,0,0,.06) 0px,rgba(0,0,0,.06) 1px,transparent 1px,transparent 3px);
   pointer-events: none;
+  animation: scanShift 8s linear infinite;
 }
+@keyframes scanShift { 0%{background-position:0 0} 100%{background-position:0 100px} }
 
-@keyframes scanSlide {
-  0% { transform: translateY(0); }
-  100% { transform: translateY(40px); }
-}
-
-/* Grid */
-.grid-overlay {
+/* ── CORNER DECO ── */
+.corner {
   position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(0,255,135,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,135,0.04) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
+  width: clamp(28px,5vw,58px); height: clamp(28px,5vw,58px);
+  z-index: 2; pointer-events: none;
 }
-
-/* Animated particles */
-.particle {
-  position: fixed;
-  width: 2px;
-  height: 2px;
-  border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 6px var(--green);
-  pointer-events: none;
-  z-index: 0;
-  animation: floatParticle linear infinite;
-  opacity: 0;
+.corner::before,.corner::after {
+  content: ''; position: absolute;
+  background: var(--neon);
+  box-shadow: 0 0 8px var(--neon),0 0 18px var(--glow-c);
 }
-
-@keyframes floatParticle {
-  0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
-  10%  { opacity: 0.8; }
-  90%  { opacity: 0.4; }
-  100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
-}
-
-/* Corner HUD decorations */
-.hud-corner {
-  position: fixed;
-  width: 60px;
-  height: 60px;
-  z-index: 1;
-  pointer-events: none;
-}
-.hud-corner.tl { top: 16px; left: 16px; border-top: 1px solid var(--green); border-left: 1px solid var(--green); }
-.hud-corner.tr { top: 16px; right: 16px; border-top: 1px solid var(--green); border-right: 1px solid var(--green); }
-.hud-corner.bl { bottom: 16px; left: 16px; border-bottom: 1px solid var(--green); border-left: 1px solid var(--green); }
-.hud-corner.br { bottom: 16px; right: 16px; border-bottom: 1px solid var(--green); border-right: 1px solid var(--green); }
+.corner::before { width:100%; height:2px; }
+.corner::after  { width:2px; height:100%; }
+.corner.tl { top:clamp(10px,2vw,20px); left:clamp(10px,2vw,20px); }
+.corner.tr { top:clamp(10px,2vw,20px); right:clamp(10px,2vw,20px); transform:scaleX(-1); }
+.corner.bl { bottom:clamp(10px,2vw,20px); left:clamp(10px,2vw,20px); transform:scaleY(-1); }
+.corner.br { bottom:clamp(10px,2vw,20px); right:clamp(10px,2vw,20px); transform:scale(-1); }
+@media (max-width:400px) { .corner { display:none; } }
 
 /* ── HEADER ── */
 header {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 20px 5%;
-  background: rgba(3, 5, 7, 0.6);
+  position: sticky; top: 0; z-index: 10;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: clamp(12px,2.5vw,18px) clamp(14px,5vw,5%);
+  background: rgba(4,5,15,.88);
   backdrop-filter: blur(20px);
-  border-bottom: 1px solid var(--glass-border);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+  gap: 10px; min-height: 54px;
 }
+header::after {
+  content: ''; position: absolute; bottom:0; left:0; right:0; height:1px;
+  background: linear-gradient(90deg,transparent,var(--neon),var(--neon2),transparent);
+  animation: headerLine 3s ease-in-out infinite;
+}
+@keyframes headerLine { 0%,100%{opacity:.4} 50%{opacity:1} }
 
 .logo {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(1rem, 2.5vw, 1.3rem);
-  letter-spacing: 0.15em;
-  color: var(--green);
-  text-shadow: 0 0 20px var(--green-glow-strong), 0 0 40px rgba(0,255,135,0.2);
-  text-decoration: none;
-  position: relative;
+  font-family: 'Orbitron', sans-serif; font-weight: 900;
+  font-size: clamp(.95rem,3.5vw,1.85rem);
+  letter-spacing: .06em;
+  background: linear-gradient(135deg,var(--neon),var(--neon2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 10px var(--glow-c));
+  animation: logoPulse 4s ease-in-out infinite;
+  white-space: nowrap; flex-shrink: 0;
 }
-
-.logo::after {
-  content: '▮';
-  margin-left: 6px;
-  animation: blink 1s step-end infinite;
-  font-size: 0.7em;
-  opacity: 0.8;
+@keyframes logoPulse {
+  0%,100%{filter:drop-shadow(0 0 8px var(--glow-c))}
+  50%{filter:drop-shadow(0 0 20px var(--glow-c)) drop-shadow(0 0 40px var(--glow-m))}
 }
+.logo-icon { animation: spin 10s linear infinite; display:inline-block; }
+@keyframes spin { 100%{transform:rotate(360deg)} }
 
-@keyframes blink {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 0; }
+#headerActions { display:flex; align-items:center; gap:clamp(6px,2vw,10px); flex-shrink:0; }
+
+#loginBtn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(9px,2vw,12px); letter-spacing:.1em; font-weight:700;
+  padding: clamp(7px,1.5vw,10px) clamp(10px,2.5vw,22px);
+  border: 1px solid var(--neon); border-radius:4px;
+  background: transparent; color:var(--neon);
+  cursor: pointer; position:relative; overflow:hidden;
+  transition: color .3s; white-space:nowrap;
+  touch-action: manipulation; min-height:38px;
 }
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+#loginBtn::before {
+  content:''; position:absolute; inset:0;
+  background:var(--neon); transform:translateX(-105%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1); z-index:-1;
 }
+#loginBtn:hover,#loginBtn:focus-visible { color:var(--bg); box-shadow:0 0 25px var(--glow-c); outline:none; }
+#loginBtn:hover::before,#loginBtn:focus-visible::before { transform:translateX(0); }
 
-.nav-status {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
+.user-info { display:none; align-items:center; gap:clamp(6px,2vw,14px); flex-wrap:wrap; }
+.user-info.visible { display:flex; }
+
+.username {
+  font-family:'Orbitron',sans-serif; font-size:clamp(9px,2vw,12px);
+  letter-spacing:.08em; color:var(--neon); text-shadow:0 0 10px var(--glow-c);
+  max-width:clamp(70px,15vw,120px); overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
 }
-
-.btn {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.1em;
-  padding: 10px 28px;
-  border: 1px solid var(--green);
-  border-radius: 2px;
-  background: transparent;
-  color: var(--green);
-  cursor: pointer;
-  position: relative;
-  overflow: hidden;
-  transition: color 0.3s, box-shadow 0.3s;
-  text-transform: uppercase;
+.session-badge {
+  font-size:clamp(8px,1.5vw,10px); font-family:'Orbitron',sans-serif;
+  letter-spacing:.06em; padding:3px 8px;
+  background:rgba(0,255,136,.1); color:var(--success);
+  border:1px solid rgba(0,255,136,.3); border-radius:2px;
+  animation:blink 2s step-end infinite; white-space:nowrap;
 }
+@keyframes blink { 50%{opacity:.5} }
+@media (max-width:380px) { .session-badge{display:none;} }
 
-.btn::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: var(--green);
-  transform: translateX(-101%);
-  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: -1;
+.logout-btn {
+  font-family:'Orbitron',sans-serif; font-size:clamp(9px,2vw,11px);
+  letter-spacing:.08em; padding:clamp(6px,1.5vw,8px) clamp(9px,2vw,16px);
+  border:1px solid var(--danger); border-radius:4px;
+  background:transparent; color:var(--danger);
+  cursor:pointer; transition:all .3s; white-space:nowrap;
+  touch-action:manipulation; min-height:36px;
 }
+.logout-btn:hover { background:var(--danger); color:white; box-shadow:0 0 20px rgba(255,56,96,.4); }
 
-.btn:hover { color: var(--black); box-shadow: 0 0 20px var(--green-glow-strong); }
-.btn:hover::before { transform: translateX(0); }
-
-.btn-danger {
-  border-color: rgba(255, 60, 60, 0.6);
-  color: rgba(255, 100, 100, 0.9);
+/* ── TICKER ── */
+.ticker {
+  position:relative; z-index:2; overflow:hidden;
+  border-top:1px solid var(--border);
+  padding:clamp(6px,1.5vw,10px) 0;
+  background:rgba(0,240,255,.03);
 }
-.btn-danger::before { background: rgba(255, 60, 60, 0.8); }
-.btn-danger:hover { color: white; box-shadow: 0 0 20px rgba(255,60,60,0.4); }
-
-.user-info { display: none; align-items: center; gap: 14px; }
-.user-info.visible { display: flex; }
-
-.username-badge {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--green);
-  letter-spacing: 0.05em;
+.ticker-inner {
+  display:flex; gap:clamp(28px,5vw,60px); white-space:nowrap;
+  animation:ticker 25s linear infinite;
+  font-family:'Orbitron',sans-serif; font-size:clamp(8px,1.8vw,11px);
+  letter-spacing:.14em; color:rgba(0,240,255,.4);
 }
-.username-badge::before { content: '> '; opacity: 0.5; }
-
-.online-dot {
-  width: 7px; height: 7px; border-radius: 50%;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green);
-  animation: pulse 2s ease-in-out infinite;
-}
-@keyframes pulse { 0%,100%{ box-shadow: 0 0 8px var(--green); } 50%{ box-shadow: 0 0 16px var(--green), 0 0 30px var(--green-glow); } }
+@keyframes ticker { from{transform:translateX(0)} to{transform:translateX(-50%)} }
 
 /* ── HERO ── */
 .hero {
-  position: relative;
-  z-index: 1;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding: 120px 8% 80px;
+  position:relative; z-index:2;
+  min-height: clamp(55vh,78vh,88vh);
+  display:flex; flex-direction:column;
+  justify-content:center; align-items:center;
+  text-align:center;
+  padding: clamp(40px,8vh,80px) clamp(16px,6vw,60px) clamp(28px,5vh,60px);
 }
-
-.hero-content {
-  max-width: 780px;
+.hero-eyebrow {
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(8px,1.8vw,11px); letter-spacing:.22em;
+  color:var(--neon2); text-shadow:0 0 10px var(--glow-m);
+  margin-bottom:clamp(14px,3vh,24px);
+  animation:fadeSlideUp 1s ease both .1s;
 }
-
-.hero-label {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 0.3em;
-  color: var(--green);
-  margin-bottom: 24px;
-  opacity: 0;
-  animation: fadeUp 0.8s 0.2s ease forwards;
-}
-
-.hero-label::before { content: '// '; opacity: 0.5; }
-
 .hero-title {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(3rem, 9vw, 7rem);
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  color: var(--text);
-  opacity: 0;
-  animation: fadeUp 0.8s 0.4s ease forwards;
+  font-family:'Orbitron',sans-serif; font-weight:900;
+  font-size:clamp(2.3rem,11vw,7.5rem);
+  line-height:.95; letter-spacing:-.02em;
+  margin-bottom:clamp(18px,3.5vh,30px);
 }
+.hero-title .line { display:block; overflow:hidden; }
+.hero-title .line span {
+  display:inline-block;
+  animation:slideReveal .9s cubic-bezier(.16,1,.3,1) both;
+}
+.hero-title .line:nth-child(1) span { animation-delay:.2s; color:var(--text); }
+.hero-title .line:nth-child(2) span {
+  animation-delay:.35s;
+  background:linear-gradient(135deg,var(--neon),var(--neon3));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 20px var(--glow-c));
+}
+.hero-title .line:nth-child(3) span { animation-delay:.5s; color:var(--text); }
 
-.hero-title .accent {
-  color: var(--green);
-  text-shadow: 0 0 30px var(--green-glow-strong), 0 0 60px rgba(0,255,135,0.15);
-  display: block;
+@keyframes slideReveal { from{transform:translateY(110%);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes fadeSlideUp  { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+.hero-title:hover .line:nth-child(2) span { animation:glitch .5s steps(1) both; }
+@keyframes glitch {
+  0%  { text-shadow:2px 0 var(--neon2),-2px 0 var(--neon); transform:skewX(0); }
+  20% { text-shadow:-3px 0 var(--neon2),3px 0 var(--neon); transform:skewX(-3deg); }
+  40% { text-shadow:3px 0 var(--neon2),-3px 0 var(--neon); transform:skewX(3deg); }
+  60% { text-shadow:-2px 0 var(--neon2),2px 0 var(--neon); transform:skewX(0); }
+  100%{ text-shadow:none; transform:skewX(0); }
 }
 
 .hero-sub {
-  margin-top: 28px;
-  font-size: clamp(0.95rem, 1.8vw, 1.1rem);
-  color: var(--text-muted);
-  font-weight: 300;
-  line-height: 1.8;
-  max-width: 520px;
-  opacity: 0;
-  animation: fadeUp 0.8s 0.6s ease forwards;
+  font-size:clamp(.9rem,2.4vw,1.2rem); color:var(--muted);
+  max-width:min(520px,90vw); line-height:1.7;
+  letter-spacing:.04em; font-weight:300;
+  animation:fadeSlideUp 1s ease both .7s;
 }
-
-.hero-actions {
-  margin-top: 48px;
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
-  opacity: 0;
-  animation: fadeUp 0.8s 0.8s ease forwards;
+.hero-warning {
+  margin-top:clamp(12px,2.5vw,18px);
+  display:inline-flex; align-items:center; gap:8px;
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(7px,1.8vw,10px); letter-spacing:.12em;
+  color:var(--warn); border:1px solid rgba(255,179,0,.3);
+  padding:clamp(6px,1.5vw,8px) clamp(10px,2vw,16px);
+  border-radius:3px; text-align:center;
+  animation:fadeSlideUp 1s ease both .9s;
 }
+.hero-warning::before { content:'▲'; font-size:.9em; flex-shrink:0; }
 
-.btn-primary {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  letter-spacing: 0.15em;
-  padding: 16px 40px;
-  background: var(--green);
-  color: var(--black);
-  border: none;
-  border-radius: 2px;
-  cursor: pointer;
-  font-weight: 700;
-  text-transform: uppercase;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.3s, transform 0.2s;
-  box-shadow: 0 0 30px var(--green-glow), 0 4px 20px rgba(0,255,135,0.3);
+/* ── STATS BAR ── */
+.stats-bar {
+  position:relative; z-index:2;
+  display:flex; justify-content:center; align-items:center;
+  flex-wrap:wrap; gap:clamp(14px,4vw,48px);
+  padding:clamp(18px,4vw,28px) clamp(16px,5vw,5%);
+  border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  animation:fadeSlideUp 1s ease both 1.1s;
 }
-
-.btn-primary::after {
-  content: '';
-  position: absolute;
-  top: -50%; left: -50%;
-  width: 200%; height: 200%;
-  background: linear-gradient(transparent, rgba(255,255,255,0.15), transparent);
-  transform: rotate(30deg) translateX(-100%);
-  transition: transform 0.6s;
-}
-
-.btn-primary:hover { box-shadow: 0 0 50px var(--green-glow-strong), 0 8px 30px rgba(0,255,135,0.4); transform: translateY(-2px); }
-.btn-primary:hover::after { transform: rotate(30deg) translateX(100%); }
-
-.hero-stats {
-  position: absolute;
-  right: 8%;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  opacity: 0;
-  animation: fadeLeft 0.8s 1s ease forwards;
-}
-
-@media (max-width: 900px) {
-  .hero-stats { display: none; }
-}
-
-.stat-card {
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: 4px;
-  padding: 20px 28px;
-  backdrop-filter: blur(10px);
-  text-align: right;
-  min-width: 160px;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--green), transparent);
-}
-
+.stat { text-align:center; position:relative; flex:1 1 auto; min-width:72px; max-width:180px; }
 .stat-num {
-  font-family: var(--font-display);
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--green);
-  text-shadow: 0 0 20px var(--green-glow);
+  font-family:'Orbitron',sans-serif;
+  font-size:clamp(1.3rem,4.5vw,2.4rem); font-weight:900;
+  color:var(--neon); text-shadow:0 0 20px var(--glow-c); display:block;
 }
-
 .stat-label {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  color: var(--text-muted);
-  margin-top: 4px;
-  text-transform: uppercase;
+  font-size:clamp(8px,1.6vw,11px); letter-spacing:.16em;
+  color:var(--muted); text-transform:uppercase; margin-top:4px; display:block;
 }
+.stat::after {
+  content:''; position:absolute;
+  right:calc(-1 * clamp(7px,2vw,24px)); top:10%; height:80%;
+  width:1px; background:linear-gradient(transparent,var(--border),transparent);
+}
+.stat:last-child::after { display:none; }
+@media (max-width:360px) { .stat::after{display:none;} }
 
-/* ── FULL-SCREEN MODAL ── */
+/* ── MODAL BACKDROP ── */
 .modal-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: none;
-  opacity: 0;
-  transition: opacity 0.4s;
+  position:fixed; inset:0; z-index:100;
+  background:rgba(2,3,15,.88);
+  backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+  display:none; align-items:center; justify-content:center;
+  padding:clamp(10px,3vw,20px); overflow-y:auto;
 }
+.modal-backdrop.open { display:flex; }
 
-.modal-backdrop.open {
-  display: flex;
-  opacity: 1;
+/* ── MODAL ── */
+.modal {
+  position:relative; width:100%;
+  max-width:min(420px,96vw);
+  max-height:calc(100dvh - 32px);
+  overflow-y:auto; scrollbar-width:none;
+  padding:clamp(22px,5vw,40px) clamp(18px,5vw,36px);
+  background:rgba(4,8,24,.97);
+  border:1px solid var(--border); border-radius:8px;
+  box-shadow:0 0 0 1px rgba(0,240,255,.05),0 30px 80px rgba(0,0,0,.8),inset 0 1px 0 rgba(0,240,255,.1);
+  animation:modalIn .5s cubic-bezier(.16,1,.3,1) both;
+  margin:auto;
 }
+.modal::-webkit-scrollbar { display:none; }
+@keyframes modalIn { from{transform:translateY(30px) scale(.95);opacity:0} to{transform:translateY(0) scale(1);opacity:1} }
 
-.modal-bg {
-  position: absolute;
-  inset: 0;
-  background: rgba(3, 5, 7, 0.97);
-  backdrop-filter: blur(20px);
+.modal::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:3px;
+  background:linear-gradient(90deg,var(--neon3),var(--neon),var(--neon2));
+  border-radius:8px 8px 0 0; box-shadow:0 0 20px var(--glow-c);
 }
-
-.modal-panel {
-  position: relative;
-  z-index: 1;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: 100vh;
+.modal::after {
+  content:''; position:absolute; bottom:12px; right:12px;
+  width:18px; height:18px;
+  border-bottom:2px solid var(--neon); border-right:2px solid var(--neon); opacity:.4;
 }
-
-@media (max-width: 768px) {
-  .modal-panel { grid-template-columns: 1fr; }
-  .modal-left { display: none; }
-}
-
-/* Left decorative side */
-.modal-left {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px;
-  border-right: 1px solid var(--glass-border);
-  overflow: hidden;
-}
-
-.modal-left-bg {
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse 80% 60% at 50% 50%, rgba(0,255,135,0.06) 0%, transparent 70%);
-}
-
-.modal-left-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0,255,135,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,255,135,0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
-
-.modal-art {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-
-.modal-art-icon {
-  font-size: 80px;
-  animation: floatIcon 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 30px var(--green-glow-strong));
-  display: block;
-  margin-bottom: 32px;
-}
-
-@keyframes floatIcon {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-16px) rotate(2deg); }
-}
-
-.modal-art h2 {
-  font-family: var(--font-display);
-  font-size: 2.5rem;
-  font-weight: 900;
-  color: var(--green);
-  text-shadow: 0 0 30px var(--green-glow-strong);
-  margin-bottom: 16px;
-}
-
-.modal-art p {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  color: var(--text-muted);
-  line-height: 1.8;
-  letter-spacing: 0.05em;
-}
-
-.modal-feature-list {
-  margin-top: 40px;
-  list-style: none;
-  text-align: left;
-}
-
-.modal-feature-list li {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
-  padding: 8px 0;
-  letter-spacing: 0.05em;
-  border-bottom: 1px solid rgba(0,255,135,0.06);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.modal-feature-list li::before {
-  content: '✓';
-  color: var(--green);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-/* Right form side */
-.modal-right {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 60px 10%;
-  position: relative;
+.modal-corner-tl {
+  position:absolute; top:12px; left:12px; width:18px; height:18px;
+  border-top:2px solid var(--neon2); border-left:2px solid var(--neon2); opacity:.4;
 }
 
 .close-btn {
-  position: absolute;
-  top: 24px;
-  right: 32px;
-  background: none;
-  border: 1px solid var(--glass-border);
-  color: var(--text-muted);
-  width: 40px;
-  height: 40px;
-  border-radius: 2px;
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: border-color 0.2s, color 0.2s;
-  font-family: var(--font-mono);
+  position:absolute; top:12px; right:14px;
+  width:34px; height:34px; display:flex; align-items:center; justify-content:center;
+  background:none; border:1px solid rgba(255,255,255,.1); border-radius:4px;
+  color:var(--muted); font-size:18px; cursor:pointer; transition:all .2s;
+  touch-action:manipulation;
+}
+.close-btn:hover,.close-btn:focus-visible { border-color:var(--danger); color:var(--danger); box-shadow:0 0 10px rgba(255,56,96,.3); outline:none; }
+
+.modal-title {
+  font-family:'Orbitron',sans-serif; font-size:clamp(1.1rem,5vw,1.5rem);
+  font-weight:700; letter-spacing:.05em; text-align:center; color:var(--text);
+  margin-bottom:clamp(18px,4vw,32px); position:relative;
+}
+.modal-title::after {
+  content:''; display:block; width:40px; height:2px;
+  background:linear-gradient(90deg,var(--neon),var(--neon2));
+  margin:8px auto 0; box-shadow:0 0 10px var(--glow-c);
 }
 
-.close-btn:hover { border-color: var(--green); color: var(--green); }
-
-.form-wrap {
-  width: 100%;
-  max-width: 400px;
+/* ── FIELDS ── */
+.field { position:relative; margin-bottom:4px; }
+.field label {
+  display:block; font-family:'Orbitron',sans-serif;
+  font-size:clamp(8px,1.8vw,10px); letter-spacing:.17em;
+  color:var(--muted); margin-bottom:6px; text-transform:uppercase; transition:color .3s;
 }
-
-.form-tag {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  color: var(--green);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-  opacity: 0.7;
-}
-
-.form-title {
-  font-family: var(--font-display);
-  font-size: clamp(1.8rem, 4vw, 2.5rem);
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 40px;
-  letter-spacing: 0.02em;
-}
-
-.field-group {
-  margin-bottom: 20px;
-  position: relative;
-}
-
-.field-label {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  letter-spacing: 0.2em;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  display: block;
-  margin-bottom: 8px;
-}
+.field:focus-within label { color:var(--neon); }
 
 input {
-  width: 100%;
-  padding: 14px 16px;
-  background: rgba(0,255,135,0.03);
-  border: 1px solid rgba(0,255,135,0.15);
-  border-radius: 2px;
-  color: var(--text);
-  font-family: var(--font-mono);
-  font-size: 14px;
-  outline: none;
-  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
-  letter-spacing: 0.05em;
+  width:100%;
+  padding:clamp(10px,2.5vw,13px) clamp(12px,3vw,16px);
+  background:var(--input-bg);
+  border:1px solid rgba(0,240,255,.15); border-radius:4px;
+  color:var(--text); font-family:'Rajdhani',sans-serif;
+  font-size:max(14px,clamp(13px,3vw,15px)); /* min 14px prevents iOS auto-zoom */
+  font-weight:600; letter-spacing:.05em; outline:none;
+  transition:border-color .3s,box-shadow .3s,background .3s;
+  -webkit-appearance:none; touch-action:manipulation;
 }
-
-input::placeholder { color: rgba(232,255,245,0.2); }
-
+input::placeholder { color:rgba(90,122,154,.5); }
 input:focus {
-  border-color: var(--green);
-  background: rgba(0,255,135,0.06);
-  box-shadow: 0 0 0 3px rgba(0,255,135,0.1), inset 0 0 20px rgba(0,255,135,0.03);
+  border-color:var(--neon); background:rgba(0,30,60,.8);
+  box-shadow:0 0 0 3px rgba(0,240,255,.1),0 0 20px rgba(0,240,255,.05);
+}
+input.valid   { border-color:var(--success); }
+input.invalid { border-color:var(--danger); box-shadow:0 0 0 3px rgba(255,56,96,.1); }
+input.warning { border-color:var(--warn);   box-shadow:0 0 0 3px rgba(255,179,0,.1); }
+
+.hidden { display:none !important; }
+
+.error-msg,.warning-msg {
+  display:none; font-size:clamp(10px,2vw,11px);
+  letter-spacing:.04em; padding:5px 5px 8px; line-height:1.4;
+}
+.error-msg { color:var(--danger); }
+.warning-msg { color:var(--warn); }
+.error-msg.show,.warning-msg.show { display:block; }
+
+.strength-track {
+  height:3px; background:rgba(255,255,255,.06);
+  border-radius:2px; overflow:hidden; margin:6px 0 10px;
+}
+.strength-bar { height:100%; width:0; border-radius:2px; transition:width .4s,background .4s; }
+.strength-bar.weak   { width:33%; background:var(--danger); box-shadow:0 0 8px rgba(255,56,96,.5); }
+.strength-bar.medium { width:66%; background:var(--warn);   box-shadow:0 0 8px rgba(255,179,0,.5); }
+.strength-bar.strong { width:100%;background:var(--success);box-shadow:0 0 8px rgba(0,255,136,.5); }
+
+.info-text {
+  font-size:clamp(9px,2vw,10px); color:var(--muted);
+  letter-spacing:.04em; padding-left:4px; margin-bottom:10px; line-height:1.4;
 }
 
-input.valid { border-color: var(--green-dim); }
-input.invalid { border-color: rgba(255,80,80,0.7); background: rgba(255,80,80,0.03); }
-input.warning { border-color: rgba(255,200,0,0.7); }
-
-.field-error {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255,100,100,0.9);
-  margin-top: 6px;
-  letter-spacing: 0.05em;
-  display: none;
+/* ── MAIN BUTTON ── */
+.main-btn {
+  width:100%; padding:clamp(12px,2.5vw,15px);
+  margin-top:clamp(12px,3vw,16px); border:none; border-radius:4px;
+  background:linear-gradient(135deg,var(--neon3),var(--neon));
+  color:var(--bg); font-family:'Orbitron',sans-serif;
+  font-size:clamp(10px,2.4vw,13px); font-weight:700; letter-spacing:.17em;
+  cursor:pointer; position:relative; overflow:hidden;
+  transition:transform .2s,box-shadow .3s,filter .3s;
+  box-shadow:0 4px 24px var(--glow-c);
+  touch-action:manipulation; min-height:44px;
 }
-.field-error.show { display: block; }
-
-.field-warning {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: rgba(255,200,0,0.9);
-  margin-top: 6px;
-  letter-spacing: 0.05em;
-  display: none;
+.main-btn::before {
+  content:''; position:absolute; top:-50%; left:-75%;
+  width:50%; height:200%; background:rgba(255,255,255,.2);
+  transform:skewX(-15deg); transition:left .5s;
 }
-.field-warning.show { display: block; }
-
-.strength-bar {
-  height: 2px;
-  background: rgba(255,255,255,0.05);
-  margin-top: 8px;
-  border-radius: 1px;
-  overflow: hidden;
-  display: none;
+.main-btn:hover:not(:disabled)::before { left:150%; }
+.main-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 8px 35px var(--glow-c); filter:brightness(1.1); }
+.main-btn:active:not(:disabled) { transform:scale(.98); }
+.main-btn:disabled { opacity:.4; cursor:not-allowed; }
+.main-btn:focus-visible { outline:2px solid var(--neon); outline-offset:3px; }
+.main-btn.loading::after {
+  content:''; position:absolute; right:16px; top:50%; transform:translateY(-50%);
+  width:16px; height:16px; border:2px solid rgba(0,0,0,.3);
+  border-top-color:var(--bg); border-radius:50%; animation:spin .7s linear infinite;
 }
 
-.strength-bar.visible { display: block; }
-
-.strength-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 0.3s, background 0.3s;
+/* ── STATUS ── */
+.status {
+  margin-top:clamp(10px,2.5vw,14px); text-align:center;
+  font-size:clamp(11px,2.5vw,14px); letter-spacing:.05em;
+  min-height:1.4em; font-weight:600; line-height:1.4;
 }
-.strength-fill.weak   { width: 33%; background: rgba(255,80,80,0.8); }
-.strength-fill.medium { width: 66%; background: rgba(255,200,0,0.8); }
-.strength-fill.strong { width: 100%; background: var(--green); }
+.status.error   { color:var(--danger); }
+.status.success { color:var(--success); text-shadow:0 0 10px rgba(0,255,136,.4); }
 
-.hidden { display: none !important; }
-
-.submit-btn {
-  width: 100%;
-  padding: 16px;
-  background: var(--green);
-  color: var(--black);
-  border: none;
-  border-radius: 2px;
-  font-family: var(--font-display);
-  font-size: 14px;
-  font-weight: 700;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  cursor: pointer;
-  margin-top: 28px;
-  position: relative;
-  overflow: hidden;
-  transition: box-shadow 0.3s, transform 0.2s, opacity 0.2s;
-  box-shadow: 0 0 30px var(--green-glow);
+/* ── SWITCH ── */
+.switch {
+  margin-top:clamp(16px,4vw,22px); text-align:center;
+  font-size:clamp(11px,2.5vw,14px); letter-spacing:.05em;
+  color:var(--muted); cursor:pointer; user-select:none; line-height:1.6;
 }
-
-.submit-btn:hover:not(:disabled) {
-  box-shadow: 0 0 50px var(--green-glow-strong);
-  transform: translateY(-1px);
+.switch a {
+  color:var(--neon); text-decoration:none; font-weight:700;
+  border-bottom:1px solid rgba(0,240,255,.3); padding-bottom:1px;
+  transition:border-color .2s,text-shadow .2s;
 }
+.switch a:hover { border-color:var(--neon); text-shadow:0 0 10px var(--glow-c); }
 
-.submit-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
-.submit-btn .btn-shine {
-  position: absolute;
-  top: 0; left: -100%;
-  width: 60%; height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.6s;
+/* ── CURSOR TRAIL (desktop only) ── */
+#cursor-trail {
+  position:fixed; pointer-events:none; z-index:9999;
+  width:8px; height:8px; background:var(--neon); border-radius:50%;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 10px var(--neon),0 0 20px var(--glow-c);
+  mix-blend-mode:screen;
 }
-.submit-btn:hover:not(:disabled) .btn-shine { left: 150%; }
+@media (pointer:coarse) { #cursor-trail{display:none;} body{cursor:default;} }
 
-.status-msg {
-  margin-top: 16px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  min-height: 1.5em;
-  letter-spacing: 0.05em;
-}
-.status-msg.error { color: rgba(255,100,100,0.9); }
-.status-msg.success { color: var(--green); }
-
-.form-switch {
-  margin-top: 28px;
-  text-align: center;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-muted);
-  letter-spacing: 0.05em;
+/* ── BREAKPOINT TWEAKS ── */
+/* Large screens */
+@media (min-width:1400px) {
+  .hero-title { font-size:8.5rem; }
+  .hero-sub { max-width:600px; }
 }
 
-.form-switch a {
-  color: var(--green);
-  text-decoration: none;
-  cursor: pointer;
-  border-bottom: 1px solid rgba(0,255,135,0.3);
-  padding-bottom: 1px;
-  transition: border-color 0.2s;
+/* Tablet landscape */
+@media (min-width:768px) and (max-width:1024px) {
+  .hero { min-height:72vh; }
 }
 
-.form-switch a:hover { border-color: var(--green); }
-
-.info-hint {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 6px;
-  letter-spacing: 0.05em;
-  display: none;
-}
-.info-hint.visible { display: block; }
-
-/* ── KEYFRAMES ── */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(24px); }
-  to   { opacity: 1; transform: translateY(0); }
+/* Tablet portrait */
+@media (max-width:768px) {
+  .hero { min-height:68vh; padding-top:50px; }
+  .stats-bar { gap:16px; }
 }
 
-@keyframes fadeLeft {
-  from { opacity: 0; transform: translateX(24px); }
-  to   { opacity: 1; transform: translateX(0); }
+/* Small phones */
+@media (max-width:380px) {
+  .logo { font-size:.88rem; }
+  #loginBtn { font-size:9px; padding:7px 10px; }
+  .modal { padding:20px 14px; }
+  .hero-title { font-size:2.1rem; }
+  .hero-eyebrow { font-size:7px; letter-spacing:.18em; }
 }
 
-/* Modal entrance */
-.modal-backdrop.open .modal-panel {
-  animation: modalIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+/* Landscape phones */
+@media (max-height:500px) and (orientation:landscape) {
+  .hero { min-height:auto; padding:20px 5%; }
+  .hero-title { font-size:clamp(1.8rem,8vh,3.5rem); }
+  .modal-backdrop { align-items:flex-start; }
+  .modal { max-height:calc(100dvh - 16px); margin:8px auto; }
 }
 
-@keyframes modalIn {
-  from { opacity: 0; transform: scale(0.97); }
-  to   { opacity: 1; transform: scale(1); }
-}
-
-/* Typing cursor for status */
-.typing::after {
-  content: '_';
-  animation: blink 0.8s step-end infinite;
+/* Reduce motion */
+@media (prefers-reduced-motion:reduce) {
+  *,*::before,*::after {
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+  }
 }
 </style>
 </head>
+
 <body>
+<canvas id="starfield"></canvas>
+<div id="cursor-trail"></div>
 
-<!-- Background layers -->
-<div class="bg-canvas"></div>
-<div class="grid-overlay"></div>
-
-<!-- HUD corners -->
-<div class="hud-corner tl"></div>
-<div class="hud-corner tr"></div>
-<div class="hud-corner bl"></div>
-<div class="hud-corner br"></div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
 
 <!-- ── HEADER ── -->
 <header>
-  <span class="logo">WebArcade</span>
-  <div class="header-right">
-    <span class="nav-status" id="navStatus">SYS::ONLINE</span>
-    <div id="loginBtn">
-      <button class="btn" onclick="openModal()">ENTER ARCADE</button>
-    </div>
+  <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
+  <div id="headerActions">
+    <button id="loginBtn" onclick="openModal()">[ ENTER ]</button>
     <div class="user-info" id="userInfo">
-      <div class="online-dot"></div>
-      <span class="username-badge" id="usernameDisplay"></span>
-      <button class="btn btn-danger" onclick="logout()">LOGOUT</button>
+      <span class="username" id="usernameDisplay"></span>
+      <span class="session-badge">● ONLINE</span>
+      <button class="logout-btn" onclick="logout()">EXIT</button>
     </div>
   </div>
 </header>
 
+<!-- ── TICKER ── -->
+<div class="ticker">
+  <div class="ticker-inner" id="tickerInner"></div>
+</div>
+
 <!-- ── HERO ── -->
-<section class="hero">
-  <div class="hero-content">
-    <p class="hero-label">SYSTEM READY // v2.0.1</p>
-    <h1 class="hero-title">
-      PLAY.<br>COMPETE.<br>
-      <span class="accent">DOMINATE.</span>
-    </h1>
-    <p class="hero-sub">
-      A futuristic retro arcade dashboard — save scores, track rivals, and launch into games instantly. Your session. Your leaderboard.
-    </p>
-    <div class="hero-actions">
-      <button class="btn-primary" onclick="openModal()">
-        <span>LAUNCH ARCADE</span>
-      </button>
-      <button class="btn" style="padding: 16px 32px;">LEARN MORE</button>
-    </div>
-  </div>
+<div class="hero">
+  <p class="hero-eyebrow">// SYSTEM ONLINE — WELCOME PLAYER</p>
+  <h1 class="hero-title">
+    <span class="line"><span>PLAY.</span></span>
+    <span class="line"><span>COMPETE.</span></span>
+    <span class="line"><span>CONQUER.</span></span>
+  </h1>
+  <p class="hero-sub">Your personal retro arcade dashboard. Save scores, climb the leaderboard, and challenge friends across classic games.</p>
+  <div class="hero-warning">AUTHENTICATION REQUIRED TO ACCESS ARCADE</div>
+</div>
 
-  <div class="hero-stats">
-    <div class="stat-card">
-      <div class="stat-num" id="counter1">0</div>
-      <div class="stat-label">Players Online</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="counter2">0</div>
-      <div class="stat-label">Games Played</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-num" id="counter3">0</div>
-      <div class="stat-label">High Scores</div>
-    </div>
-  </div>
-</section>
+<!-- ── STATS BAR ── -->
+<div class="stats-bar">
+  <div class="stat"><span class="stat-num" id="cnt-players">0</span><span class="stat-label">Players</span></div>
+  <div class="stat"><span class="stat-num" id="cnt-games">0</span><span class="stat-label">Games Played</span></div>
+  <div class="stat"><span class="stat-num" id="cnt-scores">0</span><span class="stat-label">High Scores</span></div>
+</div>
 
-<!-- ── FULL-SCREEN MODAL ── -->
-<div class="modal-backdrop" id="modal">
-  <div class="modal-bg" onclick="closeModalOutside(event)"></div>
-  <div class="modal-panel">
+<!-- ── MODAL ── -->
+<div class="modal-backdrop" id="modal" onclick="closeModal(event)">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-corner-tl"></div>
+    <button class="close-btn" aria-label="Close dialog" onclick="closeModal()">✕</button>
+    <h2 class="modal-title" id="modalTitle">LOGIN</h2>
 
-    <!-- Left visual -->
-    <div class="modal-left">
-      <div class="modal-left-bg"></div>
-      <div class="modal-left-grid"></div>
-      <div class="modal-art">
-        <span class="modal-art-icon">🎮</span>
-        <h2>WEBARCADE</h2>
-        <p>Your retro-futuristic<br>gaming hub awaits.</p>
-        <ul class="modal-feature-list">
-          <li>Persistent score tracking</li>
-          <li>Cross-session leaderboards</li>
-          <li>Secure session management</li>
-          <li>Multi-device support</li>
-          <li>Breach-checked passwords</li>
-        </ul>
+    <div class="field hidden" id="usernameField">
+      <label for="username">Username</label>
+      <input id="username" type="text" placeholder="3–20 chars (letters, numbers, _)"
+             autocomplete="off" maxlength="20" autocapitalize="none" spellcheck="false">
+      <div class="error-msg" id="usernameError" role="alert"></div>
+    </div>
+
+    <div class="field">
+      <label for="email">Email Address</label>
+      <input id="email" type="email" placeholder="your@email.com"
+             autocomplete="email" inputmode="email">
+      <div class="error-msg" id="emailError" role="alert"></div>
+    </div>
+
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" type="password" placeholder="Min 8 characters"
+             autocomplete="current-password">
+      <div class="strength-track hidden" id="strengthContainer">
+        <div class="strength-bar" id="strengthBar"></div>
       </div>
+      <div class="error-msg" id="passwordError" role="alert"></div>
+      <div class="warning-msg" id="passwordWarning" role="alert"></div>
+      <div class="info-text hidden" id="breachInfo">🔒 Passwords checked against known data breaches</div>
     </div>
 
-    <!-- Right form -->
-    <div class="modal-right">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <div class="form-wrap">
-        <p class="form-tag" id="formTag">AUTHENTICATION</p>
-        <h3 class="form-title" id="modalTitle">Login</h3>
-
-        <!-- Username (signup only) -->
-        <div class="field-group" id="usernameGroup" style="display:none;">
-          <label class="field-label" for="username">Username</label>
-          <input id="username" type="text" placeholder="3–20 chars, letters, numbers, _" autocomplete="off" maxlength="20">
-          <div class="field-error" id="usernameError"></div>
-        </div>
-
-        <!-- Email -->
-        <div class="field-group">
-          <label class="field-label" for="email">Email Address</label>
-          <input id="email" type="email" placeholder="you@example.com" autocomplete="email">
-          <div class="field-error" id="emailError"></div>
-        </div>
-
-        <!-- Password -->
-        <div class="field-group">
-          <label class="field-label" for="password">Password</label>
-          <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
-          <div class="strength-bar" id="strengthBar">
-            <div class="strength-fill" id="strengthFill"></div>
-          </div>
-          <div class="field-error" id="passwordError"></div>
-          <div class="field-warning" id="passwordWarning"></div>
-          <div class="info-hint" id="breachInfo">⚡ Passwords checked against breach databases</div>
-        </div>
-
-        <button class="submit-btn" id="actionBtn" onclick="handleAction()">
-          <span class="btn-shine"></span>
-          <span id="btnText">LOGIN</span>
-        </button>
-
-        <div class="status-msg" id="status"></div>
-
-        <div class="form-switch">
-          <span id="switchText">New player? </span>
-          <a onclick="toggleMode()">Create account</a>
-        </div>
-      </div>
+    <button class="main-btn" id="actionBtn">ENTER ARCADE</button>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="switch" onclick="toggleMode()">
+      <span id="switchText">New player? <a>Create account →</a></span>
     </div>
-
   </div>
 </div>
 
+<!-- ── FIREBASE MODULE ── -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
 import {
@@ -904,70 +597,57 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-
 setPersistence(auth, browserLocalPersistence);
 
-let currentUser = null;
-let currentDeviceId = null;
-let isSigningUp = false;
+let currentUser = null, currentDeviceId = null, isSigningUp = false;
 
 function getDeviceId() {
   let id = localStorage.getItem('deviceId');
-  if (!id) {
-    id = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 15);
-    localStorage.setItem('deviceId', id);
-  }
+  if (!id) { id = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2,15); localStorage.setItem('deviceId', id); }
   return id;
 }
-
 async function registerSession(userId, deviceId) {
   const ref = doc(db, "users", userId);
   const snap = await getDoc(ref);
   if (snap.exists()) {
-    const data = snap.data();
-    const sessions = data.activeSessions || [];
-    const max = data.maxSessions || 2;
-    if (!sessions.includes(deviceId)) {
-      if (sessions.length >= max) throw new Error(`Session limit reached. Max ${max} devices. Logout from another device first.`);
+    const { activeSessions = [], maxSessions = 2 } = snap.data();
+    if (!activeSessions.includes(deviceId)) {
+      if (activeSessions.length >= maxSessions) throw new Error(`Session limit reached. Max ${maxSessions} devices allowed.`);
       await updateDoc(ref, { activeSessions: arrayUnion(deviceId), lastActivity: new Date() });
     } else {
       await updateDoc(ref, { lastActivity: new Date() });
     }
   }
 }
-
 async function unregisterSession(userId, deviceId) {
-  try {
-    await updateDoc(doc(db, "users", userId), { activeSessions: arrayRemove(deviceId), currentGameSession: null });
-  } catch (e) { console.error(e); }
+  try { await updateDoc(doc(db,"users",userId), { activeSessions: arrayRemove(deviceId), currentGameSession: null }); } catch(e) {}
 }
-
-async function checkPasswordBreach(password) {
+async function checkPasswordBreach(pw) {
   try {
-    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(password));
-    const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('').toUpperCase();
+    const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(pw));
+    const hex = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
     const res = await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0,5)}`);
-    const lines = (await res.text()).split('\n');
-    for (const line of lines) {
-      const [s, c] = line.split(':');
+    for (const line of (await res.text()).split('\n')) {
+      const [s,c] = line.split(':');
       if (s === hex.slice(5)) return parseInt(c);
     }
     return 0;
   } catch { return 0; }
 }
 
-onAuthStateChanged(auth, async (user) => {
+onAuthStateChanged(auth, async user => {
+  const loginBtn = document.getElementById('loginBtn');
+  const userInfo = document.getElementById('userInfo');
   if (user) {
     if (isSigningUp) return;
     try {
-      currentUser = user;
-      currentDeviceId = getDeviceId();
+      currentUser = user; currentDeviceId = getDeviceId();
       await registerSession(user.uid, currentDeviceId);
-      document.getElementById('loginBtn').style.display = 'none';
-      document.getElementById('userInfo').classList.add('visible');
-      const snap = await getDoc(doc(db, "users", user.uid));
+      loginBtn.style.display = 'none';
+      userInfo.classList.add('visible');
+      const snap = await getDoc(doc(db,"users",user.uid));
       document.getElementById('usernameDisplay').textContent =
-        snap.exists() ? (snap.data().username || user.displayName || 'PLAYER') : (user.displayName || 'PLAYER');
+        (snap.exists() ? snap.data().username : null) || user.displayName || 'PLAYER_1';
       window.location.href = "blog.html";
     } catch (err) {
       console.error(err);
@@ -975,18 +655,62 @@ onAuthStateChanged(auth, async (user) => {
     }
   } else {
     currentUser = null;
-    document.getElementById('loginBtn').style.display = 'block';
-    document.getElementById('userInfo').classList.remove('visible');
+    loginBtn.style.display = '';
+    userInfo.classList.remove('visible');
   }
 });
 
-window.logout = async () => {
+window.logout = async function() {
   if (currentUser && currentDeviceId) await unregisterSession(currentUser.uid, currentDeviceId);
-  await signOut(auth);
-  location.reload();
+  await signOut(auth); location.reload();
 };
 
-// ── FORM LOGIC ──
+// Validation
+const validateUsername = u => {
+  if (!u||u.length<3) return "Min 3 characters";
+  if (u.length>20) return "Max 20 characters";
+  if (!/^[a-zA-Z0-9_]+$/.test(u)) return "Letters, numbers, underscores only";
+  return null;
+};
+const validateEmail = e => {
+  if (!e) return "Email is required";
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "Invalid email format";
+  const blocked=['test.com','fake.com','example.com','tempmail.com','10minutemail.com','guerrillamail.com','mailinator.com','throwaway.email','temp-mail.org','fakeinbox.com','yopmail.com'];
+  if (blocked.includes(e.split('@')[1]?.toLowerCase())) return "Please use a real email";
+  for (const p of [/^test\d*@/i,/^fake\d*@/i,/^demo\d*@/i,/^admin@/i,/^sample@/i,/^user\d+@/i])
+    if (p.test(e)) return "Please use a real email";
+  return null;
+};
+const validatePassword = p => {
+  if (!p||p.length<8) return "Min 8 characters";
+  if (!/[a-zA-Z]/.test(p)) return "Must contain letters";
+  if (!/\d/.test(p)) return "Must contain a number";
+  return null;
+};
+const calcStrength = p => {
+  let s=0;
+  if(p.length>=8)s++; if(p.length>=12)s++;
+  if(/[a-z]/.test(p)&&/[A-Z]/.test(p))s++;
+  if(/\d/.test(p))s++; if(/[^a-zA-Z0-9]/.test(p))s++;
+  return s;
+};
+async function isUsernameTaken(u) {
+  try {
+    const q = query(collection(db,"users"),where("usernameLower","==",u.toLowerCase()));
+    return !(await getDocs(q)).empty;
+  } catch { return false; }
+}
+async function checkEmailExists(email) {
+  const domain = email.split('@')[1]; if(!domain) return false;
+  try {
+    const r = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
+    const d = await r.json(); if(d.Answer?.length) return true;
+    const r2 = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
+    return (await r2.json()).Answer?.length>0;
+  } catch { return true; }
+}
+
+// UI refs
 const inputs = {
   username: document.getElementById('username'),
   email: document.getElementById('email'),
@@ -997,234 +721,209 @@ const errs = {
   email: document.getElementById('emailError'),
   password: document.getElementById('passwordError')
 };
-const statusEl = document.getElementById('status');
-const actionBtn = document.getElementById('actionBtn');
-const btnText = document.getElementById('btnText');
 const passwordWarning = document.getElementById('passwordWarning');
 const strengthBar = document.getElementById('strengthBar');
-const strengthFill = document.getElementById('strengthFill');
-const breachInfo = document.getElementById('breachInfo');
-let mode = 'login';
+const strengthContainer = document.getElementById('strengthContainer');
+let mode = "login";
 
-const validateUsername = u => {
-  if (!u || u.length < 3) return "Username must be at least 3 characters";
-  if (u.length > 20) return "Username must be less than 20 characters";
-  if (!/^[a-zA-Z0-9_]+$/.test(u)) return "Letters, numbers, and underscores only";
-  return null;
-};
-const validateEmail = e => {
-  if (!e) return "Email is required";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "Invalid email format";
-  const blocked = ['test.com','fake.com','example.com','tempmail.com','10minutemail.com','guerrillamail.com','mailinator.com'];
-  if (blocked.includes(e.split('@')[1]?.toLowerCase())) return "Use a real email address";
-  return null;
-};
-const validatePassword = p => {
-  if (!p || p.length < 8) return "Minimum 8 characters required";
-  if (!/[a-zA-Z]/.test(p)) return "Must contain letters";
-  if (!/\d/.test(p)) return "Must contain at least one number";
-  return null;
-};
-const calcStrength = p => {
-  let s = 0;
-  if (p.length >= 8) s++;
-  if (p.length >= 12) s++;
-  if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
-  if (/\d/.test(p)) s++;
-  if (/[^a-zA-Z0-9]/.test(p)) s++;
-  return s;
-};
+const showError   = (f,m) => { inputs[f].classList.remove('valid','warning'); inputs[f].classList.add('invalid'); errs[f].textContent=m; errs[f].classList.add('show'); };
+const showWarning = (f,m) => { inputs[f].classList.remove('valid','invalid'); inputs[f].classList.add('warning'); if(f==='password'){passwordWarning.textContent=m;passwordWarning.classList.add('show');} };
+const clearError  = f => { inputs[f].classList.remove('invalid','warning'); inputs[f].classList.add('valid'); errs[f].classList.remove('show'); if(f==='password') passwordWarning.classList.remove('show'); };
+const clearAll    = () => { Object.keys(inputs).forEach(f=>{inputs[f].classList.remove('valid','invalid','warning'); errs[f].classList.remove('show');}); passwordWarning.classList.remove('show'); };
 
-function showError(f, m) { inputs[f].className = 'invalid'; errs[f].textContent = m; errs[f].classList.add('show'); }
-function clearErr(f) { inputs[f].className = 'valid'; errs[f].classList.remove('show'); if(f==='password') passwordWarning.classList.remove('show'); }
-function clearAll() { Object.keys(inputs).forEach(f => { inputs[f].className = ''; errs[f].classList.remove('show'); }); passwordWarning.classList.remove('show'); }
-
-let utimer, etimer, ptimer, lastBreachPw = '';
+let uTimer, eTimer, pTimer, lastBreachPw='';
 
 inputs.username.addEventListener('input', async e => {
-  if (mode !== 'signup') return;
-  const v = e.target.value.trim();
-  const err = validateUsername(v);
-  if (err) { showError('username', err); return; }
-  clearTimeout(utimer);
-  utimer = setTimeout(async () => {
-    const q = query(collection(db,"users"), where("usernameLower","==",v.toLowerCase()));
-    const s = await getDocs(q);
-    s.empty ? clearErr('username') : showError('username', 'Username already taken');
-  }, 500);
+  if(mode!=='signup') return;
+  const v=e.target.value.trim(); const err=validateUsername(v);
+  if(err){showError('username',err);return;}
+  clearTimeout(uTimer);
+  uTimer=setTimeout(async()=>{ (await isUsernameTaken(v))?showError('username','Username taken'):clearError('username'); },500);
 });
-
 inputs.email.addEventListener('input', e => {
-  if (mode !== 'signup') return;
-  const v = e.target.value.trim();
-  const err = validateEmail(v);
-  if (err) { showError('email', err); return; }
-  clearErr('email');
+  if(mode!=='signup') return;
+  const v=e.target.value.trim(); const err=validateEmail(v);
+  if(err){showError('email',err);return;} clearError('email');
+  clearTimeout(eTimer);
+  eTimer=setTimeout(async()=>{ if(!(await checkEmailExists(v))) showError('email','Email domain invalid'); },800);
+});
+inputs.password.addEventListener('input', async e => {
+  if(mode!=='signup') return;
+  const p=e.target.value; const s=calcStrength(p);
+  strengthBar.className='strength-bar';
+  if(s>=4)strengthBar.classList.add('strong');
+  else if(s>=2)strengthBar.classList.add('medium');
+  else if(p.length)strengthBar.classList.add('weak');
+  const err=validatePassword(p);
+  if(err){showError('password',err);passwordWarning.classList.remove('show');return;}
+  clearError('password');
+  clearTimeout(pTimer);
+  pTimer=setTimeout(async()=>{
+    if(p===lastBreachPw)return; lastBreachPw=p;
+    const cnt=await checkPasswordBreach(p);
+    cnt>0?showWarning('password',`⚠ Found in ${cnt.toLocaleString()} breaches — choose another`):passwordWarning.classList.remove('show');
+  },1000);
 });
 
-inputs.password.addEventListener('input', async e => {
-  if (mode !== 'signup') return;
-  const p = e.target.value;
-  const err = validatePassword(p);
-  const s = calcStrength(p);
-  strengthFill.className = 'strength-fill';
-  if (s >= 4) strengthFill.classList.add('strong');
-  else if (s >= 2) strengthFill.classList.add('medium');
-  else if (p.length > 0) strengthFill.classList.add('weak');
-  if (err) { showError('password', err); return; }
-  clearErr('password');
-  clearTimeout(ptimer);
-  ptimer = setTimeout(async () => {
-    if (p === lastBreachPw) return;
-    lastBreachPw = p;
-    const count = await checkPasswordBreach(p);
-    if (count > 0) {
-      inputs.password.className = 'warning';
-      passwordWarning.textContent = `⚠ Found in ${count.toLocaleString()} breaches — choose another`;
-      passwordWarning.classList.add('show');
-    }
-  }, 1000);
-});
+const modal=document.getElementById('modal');
+const statusEl=document.getElementById('status');
+const actionBtn=document.getElementById('actionBtn');
+const titleEl=document.getElementById('modalTitle');
+const usernameField=document.getElementById('usernameField');
+const breachInfo=document.getElementById('breachInfo');
 
 window.openModal = () => {
-  const m = document.getElementById('modal');
-  m.style.display = 'flex';
-  setTimeout(() => m.classList.add('open'), 10);
-  statusEl.textContent = '';
-  inputs.email.value = '';
-  inputs.password.value = '';
-  inputs.username.value = '';
-  clearAll();
+  modal.classList.add('open');
+  statusEl.textContent=''; statusEl.className='status';
+  Object.values(inputs).forEach(i=>i.value=''); clearAll();
+  setTimeout(()=>{ (mode==='signup'?inputs.username:inputs.email).focus(); },150);
 };
-
-window.closeModal = () => {
-  const m = document.getElementById('modal');
-  m.classList.remove('open');
-  setTimeout(() => { m.style.display = 'none'; }, 400);
+window.closeModal = e => {
+  if(!e||e.target===modal||e.target.classList.contains('close-btn')) modal.classList.remove('open');
 };
-
-window.closeModalOutside = e => { if (e.target.classList.contains('modal-bg')) closeModal(); };
+document.addEventListener('keydown', e => { if(e.key==='Escape'&&modal.classList.contains('open')) modal.classList.remove('open'); });
 
 window.toggleMode = () => {
-  mode = mode === 'login' ? 'signup' : 'login';
-  const isSignup = mode === 'signup';
-  document.getElementById('modalTitle').textContent = isSignup ? 'Create Account' : 'Login';
-  document.getElementById('switchText').textContent = isSignup ? 'Have an account? ' : 'New player? ';
-  document.querySelector('.form-switch a').textContent = isSignup ? 'Login instead' : 'Create account';
-  btnText.textContent = isSignup ? 'CREATE ACCOUNT' : 'LOGIN';
-  document.getElementById('usernameGroup').style.display = isSignup ? 'block' : 'none';
-  strengthBar.classList.toggle('visible', isSignup);
-  breachInfo.classList.toggle('visible', isSignup);
-  inputs.password.setAttribute('autocomplete', isSignup ? 'new-password' : 'current-password');
-  clearAll();
-  statusEl.textContent = '';
+  mode=mode==='login'?'signup':'login';
+  const isSU=mode==='signup';
+  titleEl.textContent=isSU?'JOIN ARCADE':'LOGIN';
+  document.getElementById('switchText').innerHTML=isSU
+    ?'Already have an account? <a>Login →</a>'
+    :'New player? <a>Create account →</a>';
+  actionBtn.textContent=isSU?'CREATE ACCOUNT':'ENTER ARCADE';
+  usernameField.classList.toggle('hidden',!isSU);
+  strengthContainer.classList.toggle('hidden',!isSU);
+  breachInfo.classList.toggle('hidden',!isSU);
+  inputs.password.setAttribute('autocomplete',isSU?'new-password':'current-password');
+  clearAll(); statusEl.textContent=''; statusEl.className='status';
 };
 
-window.handleAction = async () => {
-  const emailVal = inputs.email.value.trim();
-  const passVal = inputs.password.value;
-  const userVal = inputs.username.value.trim();
-  clearAll(); statusEl.textContent = ''; statusEl.className = 'status-msg';
-
-  if (!emailVal || !passVal) {
-    statusEl.textContent = 'Please fill in all fields.'; statusEl.classList.add('error'); return;
-  }
-
+actionBtn.onclick = async () => {
+  const emailVal=inputs.email.value.trim(),passVal=inputs.password.value,userVal=inputs.username.value.trim();
+  clearAll(); statusEl.textContent=''; statusEl.className='status';
+  if(!emailVal||!passVal){ statusEl.textContent='⚠ Fill all required fields'; statusEl.classList.add('error'); return; }
   try {
-    if (mode === 'login') {
-      statusEl.textContent = 'Authenticating...'; statusEl.classList.add('typing');
-      actionBtn.disabled = true;
-      await signInWithEmailAndPassword(auth, emailVal, passVal);
+    if(mode==='login') {
+      statusEl.textContent='Authenticating...';
+      actionBtn.disabled=true; actionBtn.classList.add('loading');
+      await signInWithEmailAndPassword(auth,emailVal,passVal);
     } else {
-      const ue = validateUsername(userVal);
-      const ee = validateEmail(emailVal);
-      const pe = validatePassword(passVal);
-      if (ue) { showError('username', ue); return; }
-      if (ee) { showError('email', ee); return; }
-      if (pe) { showError('password', pe); return; }
-
-      const taken = await (async () => {
-        const q = query(collection(db,"users"), where("usernameLower","==",userVal.toLowerCase()));
-        return !(await getDocs(q)).empty;
-      })();
-      if (taken) { showError('username', 'Username already taken'); return; }
-
-      statusEl.textContent = 'Checking password security...'; statusEl.classList.add('typing');
-      const breachCount = await checkPasswordBreach(passVal);
-      if (breachCount > 0) {
-        inputs.password.className = 'warning';
-        passwordWarning.textContent = `⚠ Password found in ${breachCount.toLocaleString()} breaches — choose another`;
-        passwordWarning.classList.add('show');
-        statusEl.textContent = '';
-        return;
-      }
-
-      actionBtn.disabled = true;
-      statusEl.textContent = 'Creating account...';
-      isSigningUp = true;
-      const deviceId = getDeviceId();
-      const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
-      await updateProfile(cred.user, { displayName: userVal });
-      await setDoc(doc(db, "users", cred.user.uid), {
-        username: userVal, usernameLower: userVal.toLowerCase(), email: emailVal,
-        createdAt: new Date(), best2048: 0, bestFlappy: 0,
-        activeSessions: [deviceId], maxSessions: 2, currentGameSession: null, lastActivity: new Date()
+      const uE=validateUsername(userVal),eE=validateEmail(emailVal),pE=validatePassword(passVal);
+      if(uE){showError('username',uE);return;}
+      if(eE){showError('email',eE);return;}
+      if(pE){showError('password',pE);return;}
+      if(await isUsernameTaken(userVal)){showError('username','Username taken');return;}
+      statusEl.textContent='Verifying email...';
+      if(!(await checkEmailExists(emailVal))){showError('email','Email domain invalid');statusEl.textContent='';return;}
+      statusEl.textContent='Checking security...';
+      const bc=await checkPasswordBreach(passVal);
+      if(bc>0){showWarning('password',`⚠ Found in ${bc.toLocaleString()} breaches`);statusEl.textContent='';alert(`Password found in ${bc.toLocaleString()} data breaches. Choose another.`);return;}
+      actionBtn.disabled=true; actionBtn.classList.add('loading'); statusEl.textContent='Creating account...';
+      isSigningUp=true;
+      const cred=await createUserWithEmailAndPassword(auth,emailVal,passVal);
+      await updateProfile(cred.user,{displayName:userVal});
+      await setDoc(doc(db,"users",cred.user.uid),{
+        username:userVal,usernameLower:userVal.toLowerCase(),email:emailVal,
+        createdAt:new Date(),best2048:0,bestFlappy:0,
+        activeSessions:[getDeviceId()],maxSessions:2,currentGameSession:null,lastActivity:new Date()
       });
-      isSigningUp = false;
-      statusEl.className = 'status-msg success';
-      statusEl.textContent = 'Account created! Launching...';
-      window.location.href = "blog.html";
+      isSigningUp=false;
+      statusEl.textContent='✓ Account created! Redirecting...'; statusEl.classList.add('success');
+      window.location.href='blog.html';
     }
-  } catch (err) {
-    console.error(err);
-    isSigningUp = false;
-    actionBtn.disabled = false;
-    statusEl.classList.remove('typing');
-    let msg = err.message;
-    if (err.code === 'auth/email-already-in-use') { msg = 'Email already registered. Try logging in.'; showError('email','Already in use'); }
-    else if (err.code === 'auth/invalid-email') { msg = 'Invalid email format'; showError('email','Invalid email'); }
-    else if (err.code === 'auth/weak-password') { msg = 'Password too weak'; showError('password','Too weak'); }
-    else if (['auth/user-not-found','auth/wrong-password','auth/invalid-credential'].includes(err.code)) msg = 'Invalid email or password';
-    msg = msg.replace('Firebase: ','').replace(/\(auth\/.*\)\.?/,'').trim();
-    statusEl.className = 'status-msg error';
-    statusEl.textContent = msg;
+  } catch(err) {
+    console.error(err); isSigningUp=false;
+    actionBtn.disabled=false; actionBtn.classList.remove('loading');
+    let msg=err.message;
+    if(err.code==='auth/email-already-in-use'){msg='Email already registered. Try logging in.';showError('email','Already in use');}
+    else if(err.code==='auth/invalid-email'){msg='Invalid email';showError('email','Invalid format');}
+    else if(err.code==='auth/weak-password'){msg='Password too weak';showError('password','Too weak');}
+    else if(['auth/user-not-found','auth/wrong-password','auth/invalid-credential'].includes(err.code)) msg='Invalid email or password';
+    statusEl.textContent=msg.replace('Firebase: ','').replace(/\(auth\/.*\)\.?/,'');
+    statusEl.classList.add('error');
   }
 };
+</script>
 
-// ── PARTICLES ──
-(function spawnParticles() {
-  for (let i = 0; i < 20; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.cssText = `
-      left: ${Math.random()*100}vw;
-      animation-duration: ${6 + Math.random()*10}s;
-      animation-delay: ${Math.random()*10}s;
-      opacity: ${0.3 + Math.random()*0.7};
-      width: ${1 + Math.random()*2}px;
-      height: ${1 + Math.random()*2}px;
-    `;
-    document.body.appendChild(p);
+<!-- ── VANILLA SCRIPTS ── -->
+<script>
+// ── STARFIELD ──
+(function(){
+  const canvas=document.getElementById('starfield');
+  const ctx=canvas.getContext('2d');
+  let stars=[],W,H,animId,running=true;
+  function resize(){ W=canvas.width=window.innerWidth; H=canvas.height=window.innerHeight; }
+  function mkStar(){ return {x:Math.random()*W,y:Math.random()*H,z:Math.random()*W,pz:0}; }
+  function init(){ resize(); const count=window.innerWidth<600?70:150; stars=Array.from({length:count},mkStar); }
+  function draw(){
+    if(!running) return;
+    ctx.fillStyle='rgba(4,5,15,0.2)'; ctx.fillRect(0,0,W,H);
+    for(const s of stars){
+      s.pz=s.z; s.z-=2.5;
+      if(s.z<=0){Object.assign(s,mkStar());s.z=s.pz=W;continue;}
+      const sx=(s.x-W/2)*(W/s.z)+W/2, sy=(s.y-H/2)*(W/s.z)+H/2;
+      const px=(s.x-W/2)*(W/s.pz)+W/2, py=(s.y-H/2)*(W/s.pz)+H/2;
+      const size=Math.max(0.3,(1-s.z/W)*2.5), alpha=(1-s.z/W);
+      ctx.strokeStyle=`rgba(0,240,255,${alpha*0.8})`; ctx.lineWidth=size;
+      ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(sx,sy); ctx.stroke();
+    }
+    animId=requestAnimationFrame(draw);
   }
+  let rTimer;
+  window.addEventListener('resize',()=>{ clearTimeout(rTimer); rTimer=setTimeout(init,200); });
+  document.addEventListener('visibilitychange',()=>{
+    running=!document.hidden;
+    if(running) draw();
+  });
+  // Respect reduced motion
+  if(window.matchMedia('(prefers-reduced-motion:reduce)').matches){
+    ctx.fillStyle='rgba(4,5,15,1)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    return;
+  }
+  init(); draw();
 })();
 
-// ── ANIMATED COUNTERS ──
-function animateCounter(el, target, duration) {
-  let start = null;
-  const step = ts => {
-    if (!start) start = ts;
-    const progress = Math.min((ts - start) / duration, 1);
-    const ease = 1 - Math.pow(1 - progress, 3);
-    el.textContent = Math.floor(ease * target).toLocaleString();
-    if (progress < 1) requestAnimationFrame(step);
-  };
-  requestAnimationFrame(step);
-}
-setTimeout(() => {
-  animateCounter(document.getElementById('counter1'), 247, 2000);
-  animateCounter(document.getElementById('counter2'), 18329, 2500);
-  animateCounter(document.getElementById('counter3'), 5841, 2200);
-}, 1000);
+// ── CURSOR TRAIL (mouse-only) ──
+(function(){
+  if(window.matchMedia('(pointer:coarse)').matches) return;
+  const trail=document.getElementById('cursor-trail');
+  let tx=0,ty=0,cx=0,cy=0;
+  document.addEventListener('mousemove',e=>{tx=e.clientX;ty=e.clientY;});
+  (function animate(){
+    cx+=(tx-cx)*0.15; cy+=(ty-cy)*0.15;
+    trail.style.left=cx+'px'; trail.style.top=cy+'px';
+    requestAnimationFrame(animate);
+  })();
+})();
+
+// ── TICKER ──
+(function(){
+  const items=['WEBARCADE ONLINE','HIGH SCORES UPDATED','LEADERBOARD LIVE','2048 GAME ACTIVE','FLAPPY CHALLENGE','SEASON 01 ONGOING','NEW RECORDS BROKEN','PLAYERS COMPETING'];
+  const doubled=[...items,...items];
+  document.getElementById('tickerInner').innerHTML=doubled.map(t=>`<span>◆ ${t}</span>`).join('');
+})();
+
+// ── COUNTERS (IntersectionObserver) ──
+(function(){
+  const counters=[
+    {el:document.getElementById('cnt-players'),target:1247},
+    {el:document.getElementById('cnt-games'),target:89432},
+    {el:document.getElementById('cnt-scores'),target:3891}
+  ];
+  const obs=new IntersectionObserver(entries=>{
+    if(!entries[0].isIntersecting) return;
+    counters.forEach(c=>{
+      let cur=0; const step=c.target/60;
+      const t=setInterval(()=>{
+        cur=Math.min(cur+step,c.target);
+        c.el.textContent=Math.floor(cur).toLocaleString();
+        if(cur>=c.target) clearInterval(t);
+      },25);
+    });
+    obs.disconnect();
+  },{threshold:0.3});
+  obs.observe(document.querySelector('.stats-bar'));
+})();
 </script>
 </body>
 </html>
