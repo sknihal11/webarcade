@@ -83,33 +83,43 @@
             opacity: 0.8;
         }
 
-        /* GAME BOARD container */
         #board-container {
             flex: 1;
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 10px;
+            padding: 20px 100px 80px 20px;
+            /* Space for right foundations and bottom bar */
         }
 
         .top-row {
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-start;
             height: var(--card-height);
             margin-bottom: 20px;
+            margin-left: 10px;
         }
 
-        .stock-waste,
-        .foundations {
+        .stock-waste {
             display: flex;
-            gap: 10px;
+            gap: 15px;
+        }
+
+        .foundations {
+            position: absolute;
+            right: 15px;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
         }
 
         .tableau {
             display: flex;
-            gap: 10px;
-            justify-content: space-between;
+            gap: 15px;
+            justify-content: flex-start;
+            margin-left: 10px;
         }
 
         /* PILES */
@@ -226,9 +236,9 @@
 
         /* Interactions */
         .card.selected {
-            box-shadow: 0 0 0 3px #fbbc05, 0 4px 10px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px #fbbc05, 0 10px 25px rgba(0, 0, 0, 0.6);
             z-index: 100 !important;
-            transform: translateY(-5px);
+            transform: scale(1.05) translateY(-10px);
         }
 
         .card.highlight-target {
@@ -277,6 +287,68 @@
         .btn:hover {
             background: #3367d6;
         }
+
+        /* NEW MODALS & BUTTONS */
+        .diff-modal {
+            max-width: 400px;
+        }
+
+        .diff-option {
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+
+        .diff-option:hover {
+            transform: scale(1.05);
+        }
+
+        .diff-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .diff-label {
+            font-weight: bold;
+            color: #4285F4;
+            letter-spacing: 1px;
+        }
+
+        .diff-option:first-child .diff-label {
+            color: #ea4335;
+        }
+
+        .bottom-bar {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 100px;
+            z-index: 50;
+        }
+
+        .action-btn {
+            color: rgba(255, 255, 255, 0.8);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+
+        .action-btn:hover {
+            color: #fff;
+        }
+
+        /* Responsive */
 
         /* RESPONSIVE SCALING */
         @media (max-width: 700px) {
@@ -340,6 +412,8 @@
 
     <!-- GAME BOARD -->
     <div id="board-container">
+
+        <!-- Left Side: Stock & Waste -->
         <div class="top-row">
             <div class="stock-waste">
                 <div class="pile stock-pile" id="stock" onclick="drawCard()">
@@ -349,20 +423,21 @@
                     <div class="pile-empty"></div>
                 </div>
             </div>
+        </div>
 
-            <div class="foundations">
-                <div class="pile foundation-pile spades-bg" id="f0" onclick="handleTapPile('f', 0)">
-                    <div class="foundation-empty"></div>
-                </div>
-                <div class="pile foundation-pile hearts-bg" id="f1" onclick="handleTapPile('f', 1)">
-                    <div class="foundation-empty"></div>
-                </div>
-                <div class="pile foundation-pile clubs-bg" id="f2" onclick="handleTapPile('f', 2)">
-                    <div class="foundation-empty"></div>
-                </div>
-                <div class="pile foundation-pile diamonds-bg" id="f3" onclick="handleTapPile('f', 3)">
-                    <div class="foundation-empty"></div>
-                </div>
+        <!-- Right Side: Foundations -->
+        <div class="foundations">
+            <div class="pile foundation-pile spades-bg" id="f0" onclick="handleTapPile('f', 0)">
+                <div class="foundation-empty"></div>
+            </div>
+            <div class="pile foundation-pile hearts-bg" id="f1" onclick="handleTapPile('f', 1)">
+                <div class="foundation-empty"></div>
+            </div>
+            <div class="pile foundation-pile clubs-bg" id="f2" onclick="handleTapPile('f', 2)">
+                <div class="foundation-empty"></div>
+            </div>
+            <div class="pile foundation-pile diamonds-bg" id="f3" onclick="handleTapPile('f', 3)">
+                <div class="foundation-empty"></div>
             </div>
         </div>
 
@@ -400,7 +475,34 @@
                     id="winMoves">0</span></p>
             <p style="margin-top: 15px; font-weight: bold; color: #34a853; display: none;" id="newBestMsg">New Personal
                 Best!</p>
-            <button class="btn" onclick="newGame()">Play Again</button>
+            <button class="btn" onclick="showDifficultyModal()">Play Again</button>
+        </div>
+    </div>
+
+    <!-- DIFFICULTY MODAL -->
+    <div class="modal-overlay" id="difficultyModal" style="display: flex;">
+        <div class="modal diff-modal">
+            <h2 style="font-size: 20px; font-weight: normal; margin-bottom: 30px;">Choose your difficulty</h2>
+            <div style="display: flex; justify-content: space-around; gap: 20px;">
+                <div class="diff-option" onclick="startGame('easy')">
+                    <div class="diff-icon" style="background:#ea4335;"></div>
+                    <div class="diff-label">EASY</div>
+                </div>
+                <div class="diff-option" onclick="startGame('hard')">
+                    <div class="diff-icon" style="background:#4285F4;"></div>
+                    <div class="diff-label">HARD</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM ACTIONS -->
+    <div class="bottom-bar">
+        <div class="action-btn" onclick="undoMove()">
+            <span>↶ UNDO</span>
+        </div>
+        <div class="action-btn" onclick="showDifficultyModal()">
+            <span>★ NEW</span>
         </div>
     </div>
 
@@ -481,14 +583,53 @@
         };
 
         // Game State
+        let difficulty = 'easy'; // 'easy' or 'hard'
+        let undoStack = []; // stores serialized game states
         let score = 0, moves = 0, timeSeconds = 0, timerInterval = null;
         let selectedNode = null; // { pileType, pileIndex, cardIndex }
         let domCards = {}; // id -> HTMLElement
 
+        window.showDifficultyModal = () => {
+            document.getElementById('difficultyModal').style.display = 'flex';
+        };
+
+        window.startGame = (diff) => {
+            difficulty = diff;
+            document.getElementById('difficultyModal').style.display = 'none';
+            newGame();
+        };
+
+        function saveState() {
+            // Deep copy state for undo
+            const state = {
+                score, moves,
+                stock: stock.map(c => ({ ...c })),
+                waste: waste.map(c => ({ ...c })),
+                foundations: foundations.map(f => f.map(c => ({ ...c }))),
+                tableau: tableau.map(t => t.map(c => ({ ...c })))
+            };
+            undoStack.push(state);
+        }
+
+        window.undoMove = () => {
+            if (undoStack.length === 0) return;
+            const state = undoStack.pop();
+            score = state.score;
+            moves = state.moves;
+            stock = state.stock;
+            waste = state.waste;
+            foundations = state.foundations;
+            tableau = state.tableau;
+            selectedNode = null;
+            updateStats();
+            playSound('drop');
+            renderAll();
+        };
+
         window.newGame = () => {
             document.getElementById('winModal').style.display = 'none';
             clearInterval(timerInterval);
-            timeSeconds = 0; moves = 0; score = 0;
+            timeSeconds = 0; moves = 0; score = 0; undoStack = [];
             updateStats();
             timerInterval = setInterval(() => { timeSeconds++; updateStats(); }, 1000);
 
@@ -498,6 +639,7 @@
             selectedNode = null;
 
             // Build Deck
+            const storedDiff = difficulty;
             deck = [];
             let idCounter = 0;
             for (let s of suits) {
@@ -531,11 +673,22 @@
         };
 
         window.drawCard = () => {
-            if (stock.length > 0) {
-                const c = stock.pop();
-                c.faceUp = true;
-                waste.push(c);
+            saveState();
+            const drawCount = difficulty === 'hard' ? 3 : 1;
+            let drewAny = false;
+
+            for (let i = 0; i < drawCount; i++) {
+                if (stock.length > 0) {
+                    const c = stock.pop();
+                    c.faceUp = true;
+                    waste.push(c);
+                    drewAny = true;
+                }
+            }
+
+            if (drewAny) {
                 score += 5; // Google points system approx
+                playSound('deal');
             } else if (waste.length > 0) {
                 // Recycle waste to stock
                 while (waste.length > 0) {
@@ -544,7 +697,13 @@
                     stock.push(c);
                 }
                 score -= 15; // penalty for recycle
+                playSound('deal');
+            } else {
+                undoStack.pop(); // nothing happened, pop the save
+                playSound('error');
+                return;
             }
+
             moves++;
             selectedNode = null;
             score = Math.max(0, score);
@@ -585,6 +744,7 @@
             if (pileType === 'waste' && cardIndex !== waste.length - 1) return;
             if (pileType === 'f' && cardIndex !== foundations[pileIndex].length - 1) return;
 
+            playSound('pickup');
             selectedNode = { pileType, pileIndex, cardIndex };
             renderAll();
         }
@@ -598,25 +758,22 @@
             const srcPile = getPile(srcType, srcIndex);
             const targetPile = getPile(targetType, targetIndex);
             const movingCards = srcPile.slice(cIndex); // Array of cards moving
+            let moved = false;
 
             if (targetType === 'f') {
                 // Foundation drop
-                if (movingCards.length > 1) {
-                    // Can only move 1 card to foundation
-                    selectedNode = null; renderAll(); return;
-                }
-                const card = movingCards[0];
-                const topF = targetPile.length > 0 ? targetPile[targetPile.length - 1] : null;
+                if (movingCards.length === 1) {
+                    const card = movingCards[0];
+                    const topF = targetPile.length > 0 ? targetPile[targetPile.length - 1] : null;
 
-                if (!topF) {
-                    if (card.valueIndex === 0) { // Ace
+                    if (!topF && card.valueIndex === 0) { // Ace
                         executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
                         score += 15;
-                    }
-                } else {
-                    if (card.suit === topF.suit && card.valueIndex === topF.valueIndex + 1) {
+                        moved = true;
+                    } else if (topF && card.suit === topF.suit && card.valueIndex === topF.valueIndex + 1) {
                         executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
                         score += 15;
+                        moved = true;
                     }
                 }
             }
@@ -625,17 +782,20 @@
                 const card = movingCards[0]; // The bottom-most moving card determines validity
                 const topT = targetPile.length > 0 ? targetPile[targetPile.length - 1] : null;
 
-                if (!topT) {
-                    if (card.valueIndex === 12) { // King
-                        executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
-                        score += 5;
-                    }
-                } else {
-                    if (topT.faceUp && card.color !== topT.color && card.valueIndex === topT.valueIndex - 1) {
-                        executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
-                        score += 5;
-                    }
+                if (!topT && card.valueIndex === 12) { // King
+                    executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
+                    score += 5;
+                    moved = true;
+                } else if (topT && topT.faceUp && card.color !== topT.color && card.valueIndex === topT.valueIndex - 1) {
+                    executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
+                    score += 5;
+                    moved = true;
                 }
+            }
+
+            if (!moved && (srcType !== targetType || srcIndex !== targetIndex)) {
+                // Tried to drop but it failed
+                playSound('error');
             }
 
             selectedNode = null;
@@ -644,6 +804,8 @@
         }
 
         function executeMove(srcType, srcIndex, cIndex, targetType, targetIndex) {
+            saveState(); // Record state before mutation
+            playSound('drop');
             const srcPile = getPile(srcType, srcIndex);
             const targetPile = getPile(targetType, targetIndex);
 
@@ -832,11 +994,63 @@
 
         // Initialize globally 
         window.onload = () => {
-            // Small delay to ensure CSS calculations are ready
-            setTimeout(() => {
-                window.newGame();
-            }, 100);
-        }
+            // Setup Audio Context lazily on first click
+            document.body.addEventListener('click', () => {
+                if (audioCtx && audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            }, { once: true });
+
+            document.getElementById('difficultyModal').style.display = 'flex';
+        };
+
+        // --- SOUND SYSTEM ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        window.playSound = (type) => {
+            if (!audioCtx) return;
+            if (audioCtx.state === 'suspended') return; // wait for user interaction
+
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+
+            if (type === 'pickup') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(450, now + 0.05);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'drop') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(500, now);
+                osc.frequency.exponentialRampToValueAtTime(200, now + 0.08);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now);
+                osc.stop(now + 0.1);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.15);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start(now);
+                osc.stop(now + 0.2);
+            } else if (type === 'deal') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                osc.start(now);
+                osc.stop(now + 0.05);
+            }
+        };
 
         // Resize handler to reposition cards
         window.addEventListener('resize', () => {
