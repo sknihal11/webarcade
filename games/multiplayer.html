@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,7 +24,7 @@
 <div class="card" id="view-setup">
     <h1>WebArcade Lobby</h1>
     <button class="btn btn-p" onclick="createRoom()">Host Game</button>
-    <div style="margin: 10px 0; color: #64748b;">— OR —</div>
+    <div style="margin: 10px 0; color: #64748b;">â€” OR â€”</div>
     <input type="text" id="joinInput" placeholder="Enter 6-Digit Code">
     <button class="btn btn-s" onclick="joinRoom()">Join Friend</button>
 </div>
@@ -50,7 +50,7 @@ const db = getFirestore(app);
 
 let user, currentRoom, isHost = false;
 
-onAuthStateChanged(auth, u => { if(u) user = u; else location.href="index.html"; });
+onAuthStateChanged(auth, u => { if(u) user = u; else location.href="../index.html"; });
 
 window.createRoom = async () => {
     const id = Math.floor(100000 + Math.random() * 900000).toString();
@@ -127,3 +127,4 @@ window.startGame = async () => {
 </script>
 </body>
 </html>
+

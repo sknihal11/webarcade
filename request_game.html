@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Request a Game | WebArcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #131829;
+            --bg-card: rgba(26, 31, 53, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: #a5b4c8;
+            --accent-primary: #6366f1;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .container {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        h2 {
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 6px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--accent-primary);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #6366f1, #818cf8);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 1.5rem;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            width: 100%;
+        }
+
+        #authCheck {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .req-status {
+            padding: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid var(--success);
+            color: var(--success);
+            border-radius: 6px;
+            margin-bottom: 1.5rem;
+            display: none;
+            text-align: center;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="authCheck">Checking Authentication...</div>
+
+    <div class="container">
+        <h2>Request a Game</h2>
+        <p>Got a favorite game you want to see on WebArcade? Let us know!</p>
+
+        <div class="req-status" id="successMsg">Your game request has been submitted!</div>
+
+        <div class="form-group">
+            <label>Game Title</label>
+            <input type="text" id="gameTitle" placeholder="e.g. Pac-Man">
+        </div>
+
+        <div class="form-group">
+            <label>Description (Optional)</label>
+            <textarea id="gameDesc" rows="4"
+                placeholder="Why should we add this game? Any specific version?"></textarea>
+        </div>
+
+        <button class="btn" id="submitBtn">Submit Request</button>
+        <a href="blog.html" class="back-link">← Back to Dashboard</a>
+    </div>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d",
+            storageBucket: "webarcade-d4c3d.firebasestorage.app",
+            messagingSenderId: "918209461327",
+            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, user => {
+            if (user) {
+                currentUser = user;
+                document.getElementById("authCheck").style.display = "none";
+            } else {
+                alert("You must be logged in to request a game.");
+                window.location.href = "login.html";
+            }
+        });
+
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            if (!currentUser) return;
+
+            const title = document.getElementById('gameTitle').value.trim();
+            const desc = document.getElementById('gameDesc').value.trim();
+
+            if (!title) {
+                alert('Please enter a game title.');
+                return;
+            }
+
+            const btn = document.getElementById('submitBtn');
+            btn.innerText = "Submitting...";
+            btn.disabled = true;
+
+            try {
+                await addDoc(collection(db, "game_requests"), {
+                    uid: currentUser.uid,
+                    username: currentUser.displayName || "Unknown",
+                    email: currentUser.email || "Unknown",
+                    gameTitle: title,
+                    description: desc,
+                    status: "pending",
+                    createdAt: serverTimestamp()
+                });
+
+                document.getElementById('gameTitle').value = "";
+                document.getElementById('gameDesc').value = "";
+                document.getElementById('successMsg').style.display = "block";
+
+                setTimeout(() => {
+                    document.getElementById('successMsg').style.display = "none";
+                }, 5000);
+
+            } catch (error) {
+                alert("Error submitting request: " + error.message);
+            } finally {
+                btn.innerText = "Submit Request";
+                btn.disabled = false;
+            }
+        });
+    </script>
+
+</body>
+
+</html>

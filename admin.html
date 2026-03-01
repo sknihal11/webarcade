@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | WebArcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0e1a;
+            --bg-secondary: #131829;
+            --bg-card: rgba(26, 31, 53, 0.8);
+            --text-primary: #ffffff;
+            --text-secondary: #a5b4c8;
+            --accent-primary: #6366f1;
+            --error: #ef4444;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+        }
+
+        .header a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab {
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-primary);
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        .tab.active {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+        }
+
+        .panel {
+            display: none;
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-secondary);
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #fff;
+            padding: 0.75rem;
+            border-radius: 6px;
+        }
+
+        button.btn {
+            background: var(--accent-primary);
+            color: #fff;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        button.btn:hover {
+            opacity: 0.9;
+        }
+
+        button.btn-danger {
+            background: var(--error);
+        }
+
+        .req-card {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .req-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .req-meta {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .req-actions {
+            margin-top: 1rem;
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        #authCheck {
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="authCheck">Verifying Admin Access...</div>
+
+    <div class="header">
+        <h1>⚙️ WebArcade Admin Panel</h1>
+        <a href="blog.html">← Back to Dashboard</a>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('announcements')">📢 Announcements</button>
+        <button class="tab" onclick="switchTab('requests')">📥 Game Requests</button>
+        <button class="tab" onclick="switchTab('users')">👥 Users</button>
+    </div>
+
+    <!-- Announcements Tab -->
+    <div id="announcements" class="panel active">
+        <h2>Create Announcement</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">This will appear as a notification ticker for all
+            users.</p>
+
+        <div class="form-group">
+            <label>Announcement Text</label>
+            <textarea id="annText" rows="3" placeholder="Enter announcement here..."></textarea>
+        </div>
+        <button class="btn" onclick="postAnnouncement()">Publish Announcement</button>
+
+        <div style="margin-top:2rem;">
+            <h3>Current Announcement:</h3>
+            <div id="currentAnn"
+                style="margin-top:1rem; padding:1rem; background:rgba(255,255,255,0.05); border-radius:6px;">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Requests Tab -->
+    <div id="requests" class="panel">
+        <h2>User Game Requests</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">Review and manage game ideas submitted by users.
+        </p>
+
+        <div id="requestsList">Loading requests...</div>
+    </div>
+
+    <!-- Users Tab -->
+    <div id="users" class="panel">
+        <h2>User Management</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">Total registered users and their high scores.</p>
+        <div id="usersList">Loading users...</div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, doc, deleteDoc, updateDoc, query, orderBy, limit, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d",
+            storageBucket: "webarcade-d4c3d.firebasestorage.app",
+            messagingSenderId: "918209461327",
+            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Tab switching
+        window.switchTab = (tabId) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+            if (tabId === 'requests') loadRequests();
+            if (tabId === 'users') loadUsers();
+        };
+
+        // Auth Guard
+        onAuthStateChanged(auth, user => {
+            if (user && user.email === "nihalsk2022@gmail.com") {
+                document.getElementById("authCheck").style.display = "none";
+                loadCurrentAnnouncement();
+            } else {
+                alert("Access Denied. You must be an administrator.");
+                window.location.href = "index.html";
+            }
+        });
+
+        // Announcements Logic
+        async function loadCurrentAnnouncement() {
+            const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+            const snap = await getDocs(q);
+            const div = document.getElementById("currentAnn");
+            if (!snap.empty) {
+                div.innerText = snap.docs[0].data().text;
+            } else {
+                div.innerText = "No announcements published yet.";
+            }
+        }
+
+        window.postAnnouncement = async () => {
+            const text = document.getElementById('annText').value.trim();
+            if (!text) return alert("Announcement cannot be empty");
+            try {
+                await addDoc(collection(db, "announcements"), {
+                    text: text,
+                    createdAt: serverTimestamp()
+                });
+                alert("Announcement published!");
+                document.getElementById('annText').value = "";
+                loadCurrentAnnouncement();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        };
+
+        // Requests Logic
+        window.loadRequests = async () => {
+            const list = document.getElementById("requestsList");
+            list.innerHTML = "Loading...";
+            try {
+                const q = query(collection(db, "game_requests"), orderBy("createdAt", "desc"));
+                const snap = await getDocs(q);
+                list.innerHTML = "";
+                if (snap.empty) {
+                    list.innerHTML = "<p>No game requests found.</p>";
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    const status = data.status || 'pending';
+                    const date = data.createdAt ? data.createdAt.toDate().toLocaleString() : 'Unknown date';
+
+                    let html = `
+        <div class="req-card" id="req-${id}">
+          <div class="req-header">
+            <strong>${data.gameTitle}</strong>
+            <span class="req-meta">${data.username} (${data.email})</span>
+          </div>
+          <p>${data.description}</p>
+          <div class="req-meta" style="margin-top:0.5rem;">Date: ${date} | Status: ${status}</div>
+      `;
+
+                    if (status === 'replied') {
+                        html += `<div style="margin-top:0.5rem; color:var(--accent-primary);"><strong>Admin Reply:</strong> ${data.replyText}</div>`;
+                    }
+
+                    html += `
+          <div class="req-actions">
+            <button class="btn" style="background:var(--success)" onclick="replyRequest('${id}')">Reply</button>
+            <button class="btn btn-danger" onclick="deleteRequest('${id}')">Delete</button>
+          </div>
+        </div>
+      `;
+                    list.innerHTML += html;
+                });
+            } catch (e) {
+                list.innerHTML = "Failed to load requests: " + e.message;
+            }
+        };
+
+        window.deleteRequest = async (id) => {
+            if (confirm("Delete this request?")) {
+                await deleteDoc(doc(db, "game_requests", id));
+                loadRequests();
+            }
+        };
+
+        window.replyRequest = async (id) => {
+            const reply = prompt("Enter your reply to the user:");
+            if (reply) {
+                await updateDoc(doc(db, "game_requests", id), {
+                    status: 'replied',
+                    replyText: reply,
+                    repliedAt: serverTimestamp()
+                });
+                loadRequests();
+            }
+        };
+
+        // Users Logic
+        window.loadUsers = async () => {
+            const list = document.getElementById("usersList");
+            list.innerHTML = "Loading...";
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                list.innerHTML = `<p style="margin-bottom:1rem; font-weight:bold; color:var(--accent-primary);">Total Users: ${snap.size}</p>`;
+                let html = `<table style="width:100%; text-align:left; border-collapse:collapse; background:rgba(0,0,0,0.2); border-radius:8px;">
+                  <tr style="border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);">
+                    <th style="padding:1rem">Name</th>
+                    <th style="padding:1rem">Best 2048</th>
+                    <th style="padding:1rem">Best Flappy</th>
+                  </tr>`;
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const name = data.username || data.displayName || data.name || "Unknown";
+                    html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:1rem">${name}</td>
+                    <td style="padding:1rem">${data.best2048 || 0}</td>
+                    <td style="padding:1rem">${data.bestFlappy || 0}</td>
+                  </tr>`;
+                });
+                html += `</table>`;
+                list.innerHTML += html;
+            } catch (e) {
+                list.innerHTML = "Failed to load users: " + e.message;
+            }
+        };
+    </script>
+
+</body>
+
+</html>

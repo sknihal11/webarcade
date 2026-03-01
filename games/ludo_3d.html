@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -91,7 +91,7 @@
 
 <div class="controls">
     <div id="turnStatus">Waiting...</div>
-    <div class="dice-container" id="dice" onclick="handleRoll()">🎲</div>
+    <div class="dice-container" id="dice" onclick="handleRoll()">ðŸŽ²</div>
 </div>
 
 <script type="module">
@@ -151,7 +151,7 @@ function renderPlayers() {
     const container = document.getElementById('playersUI');
     container.innerHTML = game.players.map(p => `
         <div class="player-item">
-            <span style="color:var(--p${p.colorIdx})">●</span>
+            <span style="color:var(--p${p.colorIdx})">â—</span>
             <span>${p.name}</span>
             ${isHost && p.uid !== auth.currentUser.uid ? 
               `<button class="kick-btn" onclick="kickPlayer('${p.uid}')">Kick</button>` : ''}
@@ -173,7 +173,7 @@ window.leaveMatch = async () => {
     await updateDoc(doc(db, "ludo_matches", room), {
         players: arrayRemove(me)
     });
-    window.location.href = "lobby.html";
+    window.location.href = "../lobby.html";
 };
 
 // --- VS BOT LOGIC ---
@@ -187,3 +187,4 @@ init();
 </script>
 </body>
 </html>
+
