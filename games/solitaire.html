@@ -774,6 +774,12 @@
         function handlePointerMove(e) {
             if (!dragData) return;
 
+            // If it's a mouse event and button is released, force drop!
+            if (e.type === 'mousemove' && e.buttons === 0) {
+                handlePointerUp(e);
+                return;
+            }
+
             let clientX = e.clientX || (e.touches && e.touches[0].clientX);
             let clientY = e.clientY || (e.touches && e.touches[0].clientY);
 
@@ -985,6 +991,7 @@
             </div>
           </div>
         `;
+                el.ondragstart = () => false; // Prevent native browser ghost dragging
                 document.getElementById('board-container').appendChild(el);
                 domCards[card.id] = el;
             }
@@ -998,8 +1005,13 @@
                 const c = stock[stock.length - 1];
                 const el = getOrCreateDomCard(c);
                 updateCardVisuals(el, c);
+                el.style.display = "flex";
                 el.style.zIndex = 10;
                 positionCard(el, stockEl, 0);
+
+                el.onmousedown = null;
+                el.ontouchstart = null;
+                el.onclick = window.drawCard;
             }
             // Hide other stock cards behind
             for (let i = 0; i < stock.length - 1; i++) {
