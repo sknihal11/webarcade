@@ -402,14 +402,15 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
     /* --- FIREBASE --- */
     const app = initializeApp({
       apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
       authDomain: "webarcade-d4c3d.firebaseapp.com",
+    databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com",
       projectId: "webarcade-d4c3d"
     });
     const auth = getAuth(app);
