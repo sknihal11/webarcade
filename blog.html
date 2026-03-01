@@ -5,46 +5,52 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>WebArcade | Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
 
   <style>
     /* ============================================
    DESIGN SYSTEM & CSS VARIABLES
    ============================================ */
     :root {
-      /* Dark Mode (Default) */
-      --bg-primary: #0a0e1a;
-      --bg-secondary: #131829;
-      --bg-tertiary: #1a1f35;
-      --bg-card: rgba(26, 31, 53, 0.8);
-      --bg-glass: rgba(19, 24, 41, 0.6);
+      /* Neon Cyberpunk Theme */
+      --bg-primary: #050814;
+      --bg-secondary: #0a0d20;
+      --bg-tertiary: #131732;
+      --bg-card: rgba(10, 13, 32, 0.4);
+      --bg-glass: rgba(5, 8, 20, 0.6);
 
       --text-primary: #ffffff;
-      --text-secondary: #a5b4c8;
-      --text-muted: #6b7a94;
+      --text-secondary: #aab8d2;
+      --text-muted: #53648a;
 
-      --accent-primary: #6366f1;
-      --accent-secondary: #818cf8;
-      --accent-tertiary: #a5b4fc;
-      --accent-glow: rgba(99, 102, 241, 0.4);
+      /* Electric Cyan and Neon Pink Accents */
+      --accent-primary: #00f0ff;
+      --accent-secondary: #00b3ff;
+      --accent-tertiary: #a5e9ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
 
-      --gold: #fbbf24;
-      --silver: #94a3b8;
-      --bronze: #d97706;
+      --multiplayer: #ff0055;
+      --multiplayer-glow: rgba(255, 0, 85, 0.4);
 
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --info: #3b82f6;
-      --multiplayer: #ec4899;
-      --purple: #a855f7;
+      --gold: #ffd700;
+      --silver: #b5c7e1;
+      --bronze: #e67e22;
 
-      --border-subtle: rgba(255, 255, 255, 0.05);
-      --border-medium: rgba(255, 255, 255, 0.1);
+      --success: #00ff9d;
+      --warning: #ffb300;
+      --error: #ff0055;
+      --info: #00f0ff;
+      --purple: #b700ff;
 
-      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
-      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
-      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
-      --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.5);
+      --border-subtle: rgba(0, 240, 255, 0.1);
+      --border-medium: rgba(0, 240, 255, 0.2);
+
+      --shadow-sm: 0 0 10px rgba(0, 240, 255, 0.1);
+      --shadow-md: 0 4px 16px rgba(0, 240, 255, 0.2);
+      --shadow-lg: 0 0 30px rgba(0, 240, 255, 0.25);
+      --shadow-xl: 0 0 50px rgba(0, 240, 255, 0.3);
 
       --radius-sm: 8px;
       --radius-md: 12px;
@@ -52,9 +58,9 @@
       --radius-xl: 24px;
       --radius-full: 9999px;
 
-      --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
-      --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
-      --transition-slow: 500ms cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-fast: 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      --transition-base: 300ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      --transition-slow: 500ms cubic-bezier(0.2, 0.8, 0.2, 1);
     }
 
     /* Light Mode */
@@ -120,9 +126,9 @@
       inset: 0;
       z-index: -2;
       background:
-        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 40% 20%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+        radial-gradient(circle at 20% 50%, rgba(0, 240, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 0, 85, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(0, 179, 255, 0.1) 0%, transparent 50%);
       animation: cosmicDrift 20s ease-in-out infinite alternate;
     }
 
@@ -254,10 +260,12 @@
       text-decoration: none;
       color: var(--text-primary);
       transition: transform var(--transition-fast);
+      font-family: 'Space Grotesk', sans-serif;
     }
 
     .logo:hover {
       transform: scale(1.05);
+      text-shadow: 0 0 10px var(--accent-glow);
     }
 
     .logo-icon {
@@ -457,8 +465,9 @@
     }
 
     .welcome-title {
-      font-size: 2rem;
-      font-weight: 800;
+      font-size: 2.5rem;
+      font-weight: 700;
+      font-family: 'Space Grotesk', sans-serif;
       margin-bottom: 0.5rem;
       background: linear-gradient(135deg, var(--text-primary), var(--accent-tertiary));
       -webkit-background-clip: text;
@@ -1446,18 +1455,18 @@
   <header id="header">
     <div class="header-container">
       <a href="#" class="logo">
-        <span class="logo-icon">ðŸŽ®</span>
+        <span class="logo-icon">🕹️</span>
         <span>WebArcade</span>
       </a>
 
       <div class="header-actions">
         <div class="header-stats" id="headerStats">
           <div class="header-stat">
-            <div class="header-stat-icon">ðŸŽ¯</div>
+            <div class="header-stat-icon">🎯</div>
             <div class="header-stat-value" id="headerScore2048">0</div>
           </div>
           <div class="header-stat">
-            <div class="header-stat-icon">ðŸ¦</div>
+            <div class="header-stat-icon">🐦</div>
             <div class="header-stat-value" id="headerScoreFlappy">0</div>
           </div>
         </div>
@@ -1465,7 +1474,7 @@
         <div class="user-profile" onclick="openDrawer()">
           <img id="userAvatar" class="user-avatar" src="https://i.imgur.com/8Km9tLL.png" alt="Avatar">
           <span id="userName" class="user-name">Loading...</span>
-          <span class="chevron">â–¼</span>
+          <span class="chevron">▼</span>
         </div>
       </div>
     </div>
@@ -1475,10 +1484,10 @@
   <div class="announcement-banner">
     <div class="announcement-scroll">
       <span class="announcement-text" id="scrollText">
-        ðŸš§ Website is still under development â€” developed by sknihal11 ðŸš§
+        🚧 Website is still under development — developed by sknihal11 🚧
       </span>
       <span class="announcement-text" id="scrollTextDupe">
-        ðŸš§ PLEASE VISIT AGAIN ðŸš§
+        🚀 PLEASE VISIT AGAIN 🚀
       </span>
     </div>
   </div>
@@ -1489,8 +1498,8 @@
     <section class="welcome-section">
       <div class="welcome-card">
         <div class="welcome-content">
-          <h1 class="welcome-title">Welcome back, <span id="welcomeName">Player</span>! ðŸ‘‹</h1>
-          <p class="welcome-subtitle">Ready to break some records today?</p>
+          <h1 class="welcome-title">Welcome back, <span id="welcomeName">Player</span>! 👋</h1>
+          <p class="welcome-subtitle">Ready to set some new high scores?</p>
         </div>
       </div>
     </section>
@@ -1500,37 +1509,37 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">2048 High Score</span>
-          <span class="stat-icon">ðŸŽ¯</span>
+          <span class="stat-icon">🎯</span>
         </div>
         <div class="stat-value" id="statScore2048">0</div>
-        <div class="stat-change">â†— Personal Best</div>
+        <div class="stat-change">↗ Personal Best</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Flappy High Score</span>
-          <span class="stat-icon">ðŸ¦</span>
+          <span class="stat-icon">🐦</span>
         </div>
         <div class="stat-value" id="statScoreFlappy">0</div>
-        <div class="stat-change">â†— Personal Best</div>
+        <div class="stat-change">↗ Personal Best</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Total Rating</span>
-          <span class="stat-icon">â­</span>
+          <span class="stat-icon">🌟</span>
         </div>
         <div class="stat-value" id="statTotalRating">0</div>
-        <div class="stat-change">ðŸ“Š Combined Score</div>
+        <div class="stat-change">📊 Combined Score</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Global Rank</span>
-          <span class="stat-icon">ðŸ†</span>
+          <span class="stat-icon">🏆</span>
         </div>
         <div class="stat-value" id="statGlobalRank">-</div>
-        <div class="stat-change">ðŸ“ˆ Leaderboard Position</div>
+        <div class="stat-change">📈 Leaderboard Position</div>
       </div>
     </div>
 
@@ -1540,8 +1549,8 @@
       <div class="alert-content">
         <div class="alert-title" id="alertTitle">WebArcade Update</div>
         <div class="alert-description" id="alertDescription">
-          ðŸš€ <strong>What's New?</strong> Fixed few bugs/issues<br>
-          New games will be added soon.
+          🚀 <strong>What's New?</strong> Massive Neon Cyberpunk UI Redesign deployed!<br>
+          Experience WebArcade in a completely new aesthetic.
         </div>
         <div class="alert-meta">
           <div style="margin-top: 0.75rem; color: var(--text-muted); font-size: 0.75rem;">
@@ -1549,7 +1558,7 @@
           </div>
         </div>
       </div>
-      <button class="alert-close" onclick="closeAlert()">Ã—</button>
+      <button class="alert-close" onclick="closeAlert()">×</button>
     </div>
 
     <!-- Games Section -->
@@ -1569,7 +1578,7 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/2048_logo.svg/1200px-2048_logo.svg.png"
               alt="2048" class="game-thumbnail">
             <div class="game-overlay">
-              <button class="play-overlay-btn">â–¶</button>
+              <button class="play-overlay-btn">▶</button>
             </div>
           </div>
           <div class="game-info">
@@ -1579,12 +1588,12 @@
             </div>
             <div class="game-stats">
               <div class="game-stat-item">
-                ðŸ† Your Best: <strong id="gameScore2048">0</strong>
+                🏆 Your Best: <strong id="gameScore2048">0</strong>
               </div>
             </div>
             <div class="game-actions">
               <a href="games/2048.html" class="play-btn" onclick="event.stopPropagation()">
-                â–¶ Play Now
+                ▶ Play Now
               </a>
             </div>
           </div>
@@ -1595,7 +1604,7 @@
           <div class="game-thumbnail-wrapper">
             <img src="assets/img/flappybird.png" alt="Flappy Bird" class="game-thumbnail">
             <div class="game-overlay">
-              <button class="play-overlay-btn">â–¶</button>
+              <button class="play-overlay-btn">▶</button>
             </div>
           </div>
           <div class="game-info">
@@ -1605,12 +1614,12 @@
             </div>
             <div class="game-stats">
               <div class="game-stat-item">
-                ðŸ† Your Best: <strong id="gameScoreFlappy">0</strong>
+                🏆 Your Best: <strong id="gameScoreFlappy">0</strong>
               </div>
             </div>
             <div class="game-actions">
               <a href="games/flappy.html" class="play-btn" onclick="event.stopPropagation()">
-                â–¶ Play Now
+                ▶ Play Now
               </a>
             </div>
           </div>
