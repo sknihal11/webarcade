@@ -1470,7 +1470,7 @@
       <div class="header-actions">
         <div class="header-stats" id="headerStats">
           <div class="header-stat">
-            <div class="header-stat-icon">ð¯</div>
+            <div class="header-stat-icon">🎯</div>
             <div class="header-stat-value" id="headerScore2048">0</div>
           </div>
           <div class="header-stat">
@@ -1492,7 +1492,7 @@
   <div class="announcement-banner">
     <div class="announcement-scroll">
       <span class="announcement-text" id="scrollText">
-        ð§ Website is still under development — developed by sknihal11 ð§
+        🚧 Website is still under development — developed by sknihal11 🚧
       </span>
       <span class="announcement-text" id="scrollTextDupe">
         &#x1F680; PLEASE VISIT AGAIN &#x1F680;
@@ -1517,7 +1517,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">2048 High Score</span>
-          <span class="stat-icon">ð¯</span>
+          <span class="stat-icon">🎯</span>
         </div>
         <div class="stat-value" id="statScore2048">0</div>
         <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
@@ -1544,7 +1544,7 @@
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Global Rank</span>
-          <span class="stat-icon">ð</span>
+          <span class="stat-icon">🏆</span>
         </div>
         <div class="stat-value" id="statGlobalRank">-</div>
         <div class="stat-change">&#x1F4C8; Leaderboard Position</div>
@@ -1596,7 +1596,7 @@
             </div>
             <div class="game-stats">
               <div class="game-stat-item">
-                ð Your Best: <strong id="gameScore2048">0</strong>
+                🏆 Your Best: <strong id="gameScore2048">0</strong>
               </div>
             </div>
             <div class="game-actions">
@@ -1622,7 +1622,7 @@
             </div>
             <div class="game-stats">
               <div class="game-stat-item">
-                ð Your Best: <strong id="gameScoreFlappy">0</strong>
+                🏆 Your Best: <strong id="gameScoreFlappy">0</strong>
               </div>
             </div>
             <div class="game-actions">
@@ -1665,7 +1665,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-text">
-        Ã&copy; 2026 WebArcade | All Rights Reserved
+        Ã&copy;        © 2026 WebArcade | All Rights Reserved
       </div>
       <div class="footer-version">
         Version 2.1
@@ -1700,7 +1700,7 @@
           <input type="text" id="nameInput" class="form-input" placeholder="Enter your display name">
         </div>
         <button class="btn btn-primary" onclick="saveName()">
-          &#x1F4BE; Save Name
+          💾 Save Name
         </button>
       </div>
 
@@ -1713,7 +1713,7 @@
           <input type="url" id="avatarInput" class="form-input" placeholder="https://example.com/avatar.jpg">
         </div>
         <button class="btn btn-primary" onclick="saveAvatar()">
-          ð¼ï¸ Update Avatar
+          🖼️ Update Avatar
         </button>
       </div>
 
@@ -1722,29 +1722,29 @@
         <div class="drawer-section-title">More Controls</div>
         <button class="btn" onclick="window.location.href='request_game.html'"
           style="margin-bottom: 0.5rem; background: var(--success); color: white;">
-          ð® Request a Game
+          🎮 Request a Game
         </button>
         <button class="btn btn-secondary" id="adminBtn" onclick="window.location.href='admin.html'"
           style="display: none; border-color: var(--warning); color: var(--warning);">
-          &#x2699;&#xFE0F; Admin Panel
+          ⚙️ Admin Panel
         </button>
       </div>
 
       <!-- Account Actions -->
       <div class="drawer-section">
         <button class="btn btn-secondary" onclick="logoutUser()">
-          &#x1F6AA; Logout
+          🚪 Logout
         </button>
       </div>
 
       <!-- Danger Zone -->
       <div class="danger-zone">
-        <div class="danger-zone-title">Ã¢Å¡Â Ã¯Â¸Â Danger Zone</div>
+        <div class="danger-zone-title">⚠️ Danger Zone</div>
         <p style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 1rem;">
           Once you delete your account, there is no going back. Please be certain.
         </p>
         <button class="btn btn-danger" onclick="deleteAccount()">
-          Ã°Å¸âðï¸Delete Account
+          🗑️ Delete Account
         </button>
       </div>
     </div>
@@ -2020,7 +2020,7 @@
           if (annText) {
             const alertDesc = document.getElementById("alertDescription");
             if (alertDesc) {
-              alertDesc.innerHTML = `&#x1F4E2; <strong>New Announcement:</strong> ${annText}`;
+              alertDesc.innerHTML = `📢 <strong>New Announcement:</strong> ${annText}`;
             }
             const alertBox = document.getElementById("alertBox");
             if (alertBox) alertBox.style.display = "flex";
@@ -2171,7 +2171,7 @@
         if (top5.length === 0) {
           elements.leaderboard.innerHTML = `
         <div class="leaderboard-empty">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">Ã°Å¸Ââ </div>
+          <div style="font-size: 3rem; margin-bottom: 1rem;">👑</div>
           <div>No players yet. Be the first champion!</div>
         </div>
       `;
@@ -2213,7 +2213,7 @@
         console.error("Error loading leaderboard:", error);
         elements.leaderboard.innerHTML = `
       <div class="leaderboard-empty">
-        <div style="font-size: 3rem; margin-bottom: 1rem;">Ã¢Å¡Â Ã¯Â¸Â</div>
+        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
         <div>Failed to load leaderboard</div>
       </div>
     `;
@@ -2276,7 +2276,7 @@
         alert("✅ Name updated successfully!");
         loadLeaderboard();
       } catch (error) {
-        alert("Ã¢ÂÅ Error updating name: " + error.message);
+        alert("❌ Error updating name: " + error.message);
       }
     };
 
@@ -2291,7 +2291,7 @@
       try {
         new URL(newUrl);
       } catch (error) {
-        alert("Ã¢ÂÅ Please enter a valid URL");
+        alert("❌ Please enter a valid URL");
         return;
       }
 
@@ -2301,7 +2301,7 @@
         elements.drawerAvatar.src = newUrl;
         alert("✅ Avatar updated successfully!");
       } catch (error) {
-        alert("Ã¢ÂÅ Error updating avatar: " + error.message);
+        alert("❌ Error updating avatar: " + error.message);
       }
     };
 
@@ -2318,7 +2318,7 @@
         await signOut(auth);
         location.replace("index.html");
       } catch (error) {
-        alert("Ã¢ÂÅ Error logging out: " + error.message);
+        alert("❌ Error logging out: " + error.message);
       }
     };
 
@@ -2350,7 +2350,7 @@
         alert("Account deleted successfully");
         location.replace("index.html");
       } catch (error) {
-        alert("Ã¢ÂÅ Error deleting account: " + error.message + "\n\nYou may need to re-login and try again.");
+        alert("❌ Error deleting account: " + error.message + "\n\nYou may need to re-login and try again.");
       }
     };
 
