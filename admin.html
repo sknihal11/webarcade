@@ -445,10 +445,8 @@
         window.deleteUser = async (id) => {
             if (confirm("Are you sure you want to completely DELETE this user? This action cannot be undone.")) {
                 try {
-                    await import("https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js").then(async (m) => {
-                        await m.deleteDoc(m.doc(db, "users", id));
-                        loadUsers();
-                    });
+                    await deleteDoc(doc(db, "users", id));
+                    loadUsers();
                 } catch (e) {
                     alert("Error deleting user: " + e.message);
                 }

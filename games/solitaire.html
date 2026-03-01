@@ -485,7 +485,7 @@
         let selectedNode = null; // { pileType, pileIndex, cardIndex }
         let domCards = {}; // id -> HTMLElement
 
-        windows.newGame = () => {
+        window.newGame = () => {
             document.getElementById('winModal').style.display = 'none';
             clearInterval(timerInterval);
             timeSeconds = 0; moves = 0; score = 0;
