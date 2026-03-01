@@ -1692,7 +1692,7 @@
           <input type="text" id="nameInput" class="form-input" placeholder="Enter your display name">
         </div>
         <button class="btn btn-primary" onclick="saveName()">
-          ðŸ’¾ Save Name
+          💾 Save Name
         </button>
       </div>
 
@@ -1705,7 +1705,7 @@
           <input type="url" id="avatarInput" class="form-input" placeholder="https://example.com/avatar.jpg">
         </div>
         <button class="btn btn-primary" onclick="saveAvatar()">
-          ðŸ–¼ï¸ Update Avatar
+          🖼️ Update Avatar
         </button>
       </div>
 
@@ -1725,7 +1725,7 @@
       <!-- Account Actions -->
       <div class="drawer-section">
         <button class="btn btn-secondary" onclick="logoutUser()">
-          ðŸšª Logout
+          🚪 Logout
         </button>
       </div>
 
@@ -1736,7 +1736,7 @@
           Once you delete your account, there is no going back. Please be certain.
         </p>
         <button class="btn btn-danger" onclick="deleteAccount()">
-          ðŸ—‘ï¸ Delete Account
+          ðŸ�🗑️Delete Account
         </button>
       </div>
     </div>
@@ -1996,24 +1996,7 @@
     // ============================================
     // SYNC ANNOUNCEMENT FROM FIRESTORE
     // ============================================
-    async function syncAnnouncement() {
-      try {
-        const snap = await getDoc(doc(db, "config", "announcement"));
-        if (snap.exists()) {
-          const data = snap.data();
 
-          if (data.text) {
-            elements.alertDescription.innerHTML = data.text;
-          }
-
-          if (data.marquee) {
-            elements.scrollText.textContent = data.marquee;
-            elements.scrollTextDupe.textContent = data.marquee;
-          }
-        }
-      } catch (error) {
-        console.error("Error syncing announcement:", error);
-      }
     }
 
     // ============================================
@@ -2223,6 +2206,7 @@
     // DRAWER CONTROLS
     // ============================================
     window.openDrawer = () => {
+      if (!currentUser) return;
       elements.drawer.classList.add('open');
       elements.drawerOverlay.classList.add('active');
       elements.nameInput.value = currentUser.displayName || "";
