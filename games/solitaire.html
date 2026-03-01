@@ -11,8 +11,8 @@
         :root {
             --bg-color: #3b9055;
             --panel-bg: rgba(0, 0, 0, 0.4);
-            --card-width: 80px;
-            --card-height: 115px;
+            --card-width: 90px;
+            --card-height: 130px;
             --card-radius: 6px;
             --card-bg: #fff;
             --card-back: #4285F4;
@@ -281,8 +281,8 @@
         /* RESPONSIVE SCALING */
         @media (max-width: 700px) {
             :root {
-                --card-width: 12vw;
-                --card-height: 18vw;
+                --card-width: 13vw;
+                --card-height: 19vw;
             }
 
             #board-container {
@@ -766,8 +766,8 @@
             }
 
             // 4. Tableau
-            let mobileSpacing = window.innerWidth <= 700 ? 15 : 25;
-            let mobileFaceDownSpacing = window.innerWidth <= 700 ? 5 : 8;
+            let mobileSpacing = window.innerWidth <= 700 ? 25 : 35;
+            let mobileFaceDownSpacing = window.innerWidth <= 700 ? 5 : 10;
 
             for (let tIdx = 0; tIdx < 7; tIdx++) {
                 const tPile = tableau[tIdx];
