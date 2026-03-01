@@ -373,6 +373,7 @@
                     <th style="padding:1rem">Name</th>
                     <th style="padding:1rem">Best 2048</th>
                     <th style="padding:1rem">Best Flappy</th>
+                    <th style="padding:1rem">Action</th>
                   </tr>`;
                 snap.forEach(docSnap => {
                     const data = docSnap.data();
@@ -381,12 +382,28 @@
                     <td style="padding:1rem">${name}</td>
                     <td style="padding:1rem">${data.best2048 || 0}</td>
                     <td style="padding:1rem">${data.bestFlappy || 0}</td>
+                    <td style="padding:1rem">
+                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetUserData('${docSnap.id}')">Reset Scores</button>
+                    </td>
                   </tr>`;
                 });
                 html += `</table>`;
                 list.innerHTML += html;
             } catch (e) {
                 list.innerHTML = "Failed to load users: " + e.message;
+            }
+        };
+        window.resetUserData = async (id) => {
+            if (confirm("Reset high scores for this user to 0?")) {
+                try {
+                    await updateDoc(doc(db, "users", id), {
+                        best2048: 0,
+                        bestFlappy: 0
+                    });
+                    loadUsers();
+                } catch (e) {
+                    alert("Error resetting user: " + e.message);
+                }
             }
         };
     </script>
