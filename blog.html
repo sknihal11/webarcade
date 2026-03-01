@@ -2123,26 +2123,6 @@
     });
 
     // ============================================
-    // ANNOUNCEMENTS
-    // ============================================
-    async function syncAnnouncement() {
-      try {
-        const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-          const annText = snap.docs[0].data().text;
-          document.getElementById("scrollText").textContent = annText;
-          document.getElementById("scrollTextDupe").textContent = annText;
-        } else {
-          document.getElementById("scrollText").textContent = "ð§ Website is still under development â developed by sknihal11 ð§";
-          document.getElementById("scrollTextDupe").textContent = "ð§ PLEASE VISIT AGAIN ð§";
-        }
-      } catch (error) {
-        console.error("Error loading announcements:", error);
-      }
-    }
-
-    // ============================================
     // LEADERBOARD (TOP 5 ONLY)
     // ============================================
     async function loadLeaderboard() {
