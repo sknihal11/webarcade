@@ -1492,7 +1492,7 @@
   <div class="announcement-banner">
     <div class="announcement-scroll">
       <span class="announcement-text" id="scrollText">
-        ð§ Website is still under development â developed by sknihal11 ð§
+        ð§ Website is still under development — developed by sknihal11 ð§
       </span>
       <span class="announcement-text" id="scrollTextDupe">
         &#x1F680; PLEASE VISIT AGAIN &#x1F680;
@@ -1680,7 +1680,7 @@
   <div class="drawer" id="drawer">
     <div class="drawer-header">
       <h3 class="drawer-title">Settings</h3>
-      <button class="drawer-close" onclick="closeDrawer()">Ãâ</button>
+      <button class="drawer-close" onclick="closeDrawer()">×</button>
     </div>
 
     <div class="drawer-content">
@@ -2186,13 +2186,13 @@
           let rankClass = '';
 
           if (index === 0) {
-            rankBadge = 'Ã°Å¸Â¥â¡';
+            rankBadge = '🥇';
             rankClass = 'gold';
           } else if (index === 1) {
-            rankBadge = 'Ã°Å¸Â¥Ë';
+            rankBadge = '🥈';
             rankClass = 'silver';
           } else if (index === 2) {
-            rankBadge = 'Ã°Å¸Â¥â°';
+            rankBadge = '🥉';
             rankClass = 'bronze';
           } else {
             rankBadge = `#${index + 1}`;
@@ -2273,7 +2273,7 @@
         elements.userName.textContent = newName;
         elements.welcomeName.textContent = newName;
         elements.drawerName.textContent = newName;
-        alert("Ã¢Åâ¦ Name updated successfully!");
+        alert("✅ Name updated successfully!");
         loadLeaderboard();
       } catch (error) {
         alert("Ã¢ÂÅ Error updating name: " + error.message);
@@ -2299,7 +2299,7 @@
         await updateProfile(currentUser, { photoURL: newUrl });
         elements.userAvatar.src = newUrl;
         elements.drawerAvatar.src = newUrl;
-        alert("Ã¢Åâ¦ Avatar updated successfully!");
+        alert("✅ Avatar updated successfully!");
       } catch (error) {
         alert("Ã¢ÂÅ Error updating avatar: " + error.message);
       }
