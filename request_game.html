@@ -5,23 +5,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request a Game | WebArcade</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@500;700&display=swap"
+        rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0e1a;
-            --bg-secondary: #131829;
-            --bg-card: rgba(26, 31, 53, 0.8);
+            /* Neon Cyberpunk Theme */
+            --bg-primary: #050814;
+            --bg-secondary: #0a0d20;
+            --bg-tertiary: #131732;
+            --bg-card: rgba(10, 13, 32, 0.4);
+            --bg-glass: rgba(5, 8, 20, 0.6);
+
             --text-primary: #ffffff;
-            --text-secondary: #a5b4c8;
-            --accent-primary: #6366f1;
-            --success: #10b981;
+            --text-secondary: #aab8d2;
+
+            /* Electric Cyan and Neon Pink Accents */
+            --accent-primary: #00f0ff;
+            --accent-secondary: #00b3ff;
+            --accent-glow: rgba(0, 240, 255, 0.4);
+
+            --success: #00ff9d;
+
+            --border-medium: rgba(0, 240, 255, 0.2);
+            --shadow-md: 0 4px 16px rgba(0, 240, 255, 0.2);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Space Grotesk', 'Inter', sans-serif;
         }
 
         body {
@@ -38,10 +52,11 @@
             background: var(--bg-card);
             padding: 2.5rem;
             border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--border-medium);
             width: 100%;
             max-width: 500px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(24px) saturate(150%);
+            box-shadow: var(--shadow-md);
         }
 
         h2 {
@@ -80,23 +95,27 @@
         .form-group input:focus,
         .form-group textarea:focus {
             border-color: var(--accent-primary);
+            box-shadow: 0 0 10px var(--accent-glow);
         }
 
         .btn {
-            background: linear-gradient(135deg, #6366f1, #818cf8);
-            color: #fff;
+            background: var(--accent-primary);
+            color: #050814;
             border: none;
             padding: 0.75rem 1.5rem;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 800;
             width: 100%;
             font-size: 1.1rem;
             margin-top: 1rem;
+            transition: all 0.3s;
         }
 
         .btn:hover {
             opacity: 0.9;
+            box-shadow: 0 0 15px var(--accent-glow);
+            transform: translateY(-2px);
         }
 
         .back-link {
@@ -138,7 +157,7 @@
     <div id="authCheck">Checking Authentication...</div>
 
     <div class="container">
-        <h2>Request a Game</h2>
+        <h2 style="text-shadow: 0 0 10px var(--accent-glow)">Request a Game</h2>
         <p>Got a favorite game you want to see on WebArcade? Let us know!</p>
 
         <div class="req-status" id="successMsg">Your game request has been submitted!</div>
