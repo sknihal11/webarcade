@@ -1565,7 +1565,7 @@
           </div>
         </div>
       </div>
-      <button class="alert-close" onclick="closeAlert()">Ã</button>
+      <button class="alert-close" onclick="closeAlert()">×</button>
     </div>
 
     <!-- Games Section -->
@@ -1664,7 +1664,7 @@
   <footer>
     <div class="footer-content">
       <div class="footer-text">
-        ÃÂ© 2026 WebArcade | All Rights Reserved
+        Ã© 2026 WebArcade | All Rights Reserved
       </div>
       <div class="footer-version">
         Version 2.1
@@ -2217,7 +2217,7 @@
     window.openDrawer = () => {
       elements.drawer.classList.add('open');
       elements.drawerOverlay.classList.add('active');
-      elements.nameInput.value = currentUser ? (currentUser.displayName || '') : '';
+      elements.nameInput.value = currentUser ? (currentUser ? (currentUser.displayName || '') : '') : '';
       elements.avatarInput.value = currentUser ? (currentUser.photoURL || '') : '';
     };
 
