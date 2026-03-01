@@ -631,7 +631,7 @@
                         score += 5;
                     }
                 } else {
-                    if (card.color !== topT.color && card.valueIndex === topT.valueIndex - 1) {
+                    if (topT.faceUp && card.color !== topT.color && card.valueIndex === topT.valueIndex - 1) {
                         executeMove(srcType, srcIndex, cIndex, targetType, targetIndex);
                         score += 5;
                     }
