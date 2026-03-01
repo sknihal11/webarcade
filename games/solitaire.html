@@ -180,6 +180,8 @@
             flex-direction: column;
             justify-content: space-between;
             padding: 5px;
+            user-select: none;
+            touch-action: none;
             transition: transform 0.2s, top 0.2s, left 0.2s, box-shadow 0.2s;
         }
 
@@ -239,6 +241,15 @@
             box-shadow: 0 0 0 3px #fbbc05, 0 10px 25px rgba(0, 0, 0, 0.6);
             z-index: 100 !important;
             transform: scale(1.05) translateY(-10px);
+        }
+
+        .card.dragging {
+            box-shadow: 0 0 0 3px #fbbc05, 0 10px 25px rgba(0, 0, 0, 0.6);
+            z-index: 9999 !important;
+            transform: scale(1.05) !important;
+            transition: none !important;
+            pointer-events: none;
+            /* Prevent blocking drop area calculation */
         }
 
         .card.highlight-target {
@@ -717,36 +728,138 @@
             attemptDrop(pileType, pileIndex);
         };
 
-        window.handleTapCard = (e, pileType, pileIndex, cardIndex) => {
-            e.stopPropagation(); // prevent triggering pile tap
+        let isDragging = false;
+        let dragStartX = 0, dragStartY = 0;
+        let draggedEls = []; // DOM elements being dragged
+        let dragData = null; // { pileType, pileIndex, cardIndex }
 
-            if (!selectedNode) {
-                selectCard(pileType, pileIndex, cardIndex);
-            } else {
-                // We already have a selection, so this tap is a DROP target!
-                if (selectedNode.pileType === pileType && selectedNode.pileIndex === pileIndex) {
-                    // Tapped same pile => deselect
-                    selectedNode = null;
-                    renderAll();
-                } else {
-                    // Attempt move
-                    attemptDrop(pileType, pileIndex);
-                }
-            }
-        };
+        window.handlePointerDown = (e, pileType, pileIndex, cardIndex) => {
+            if (e.type === 'mousedown' && e.button !== 0) return; // Only left click allowed
+            e.stopPropagation();
 
-        function selectCard(pileType, pileIndex, cardIndex) {
-            // Can only select face up cards
             let pile = getPile(pileType, pileIndex);
             if (!pile[cardIndex].faceUp) return;
-
-            // Can only select top card of waste/foundation. Can select any face up in tableau.
             if (pileType === 'waste' && cardIndex !== waste.length - 1) return;
             if (pileType === 'f' && cardIndex !== foundations[pileIndex].length - 1) return;
 
+            isDragging = false;
+            dragStartX = e.clientX || (e.touches && e.touches[0].clientX);
+            dragStartY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            dragData = { pileType, pileIndex, cardIndex };
+            draggedEls = [];
+
+            const movingCards = pile.slice(cardIndex);
+            movingCards.forEach(c => {
+                let el = domCards[c.id];
+                if (el) {
+                    // Force update DOM positions tightly before drag starts to ensure no offset lag
+                    draggedEls.push({
+                        el,
+                        origTop: parseFloat(el.style.top),
+                        origLeft: parseFloat(el.style.left)
+                    });
+                    el.classList.add('dragging');
+                }
+            });
+
             playSound('pickup');
-            selectedNode = { pileType, pileIndex, cardIndex };
-            renderAll();
+
+            document.addEventListener('mousemove', handlePointerMove, { passive: false });
+            document.addEventListener('touchmove', handlePointerMove, { passive: false });
+            document.addEventListener('mouseup', handlePointerUp);
+            document.addEventListener('touchend', handlePointerUp);
+        };
+
+        function handlePointerMove(e) {
+            if (!dragData) return;
+
+            let clientX = e.clientX || (e.touches && e.touches[0].clientX);
+            let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+
+            let dx = clientX - dragStartX;
+            let dy = clientY - dragStartY;
+
+            if (!isDragging && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+                isDragging = true;
+                selectedNode = { ...dragData }; // Note state logically
+            }
+
+            if (isDragging) {
+                e.preventDefault();
+                draggedEls.forEach(item => {
+                    item.el.style.top = (item.origTop + dy) + 'px';
+                    item.el.style.left = (item.origLeft + dx) + 'px';
+                });
+            }
+        }
+
+        function handlePointerUp(e) {
+            document.removeEventListener('mousemove', handlePointerMove);
+            document.removeEventListener('touchmove', handlePointerMove);
+            document.removeEventListener('mouseup', handlePointerUp);
+            document.removeEventListener('touchend', handlePointerUp);
+
+            if (!dragData) return;
+
+            draggedEls.forEach(item => {
+                item.el.classList.remove('dragging');
+            });
+
+            if (!isDragging) {
+                // Tap mode
+                let { pileType, pileIndex, cardIndex } = dragData;
+                if (!selectedNode) {
+                    selectedNode = { pileType, pileIndex, cardIndex };
+                    renderAll();
+                } else {
+                    if (selectedNode.pileType === pileType && selectedNode.pileIndex === pileIndex) {
+                        selectedNode = null;
+                        renderAll();
+                    } else {
+                        attemptDrop(pileType, pileIndex);
+                    }
+                }
+            } else {
+                // Drop mode
+                let clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
+                let clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+
+                let targetArea = findDropTarget(clientX, clientY);
+                if (targetArea) {
+                    attemptDrop(targetArea.pileType, targetArea.pileIndex);
+                } else {
+                    playSound('error');
+                    selectedNode = null;
+                    renderAll();
+                }
+            }
+
+            dragData = null;
+            draggedEls = [];
+            isDragging = false;
+        }
+
+        function findDropTarget(x, y) {
+            for (let i = 0; i < 4; i++) {
+                let rect = els.f[i].getBoundingClientRect();
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    return { pileType: 'f', pileIndex: i };
+                }
+            }
+            for (let i = 0; i < 7; i++) {
+                let baseRect = els.t[i].getBoundingClientRect();
+                let pile = tableau[i];
+                let bottom = baseRect.bottom + 200;
+                if (pile.length > 0) {
+                    let lastCardRect = domCards[pile[pile.length - 1].id].getBoundingClientRect();
+                    bottom = lastCardRect.bottom + 200;
+                }
+                if (x >= baseRect.left - 20 && x <= baseRect.right + 20 && y >= baseRect.top - 20 && y <= bottom) {
+                    return { pileType: 't', pileIndex: i };
+                }
+            }
+            return null;
         }
 
         function attemptDrop(targetType, targetIndex) {
@@ -908,7 +1021,8 @@
                 }
                 positionCard(el, els.waste, 0, offset);
 
-                el.onclick = (e) => handleTapCard(e, 'waste', 0, i);
+                el.onmousedown = (e) => handlePointerDown(e, 'waste', 0, i);
+                el.ontouchstart = (e) => handlePointerDown(e, 'waste', 0, i);
                 highlightIfSelected(el, 'waste', 0, i);
             }
 
@@ -922,7 +1036,10 @@
                     el.style.display = "flex";
                     el.style.zIndex = i + 1;
                     positionCard(el, els.f[fIdx], 0);
-                    el.onclick = (e) => handleTapCard(e, 'f', fIdx, i);
+
+                    el.onmousedown = (e) => handlePointerDown(e, 'f', fIdx, i);
+                    el.ontouchstart = (e) => handlePointerDown(e, 'f', fIdx, i);
+
                     highlightIfSelected(el, 'f', fIdx, i);
                 }
             }
@@ -948,7 +1065,8 @@
                         currentY += mobileFaceDownSpacing;
                     }
 
-                    el.onclick = (e) => handleTapCard(e, 't', tIdx, i);
+                    el.onmousedown = (e) => handlePointerDown(e, 't', tIdx, i);
+                    el.ontouchstart = (e) => handlePointerDown(e, 't', tIdx, i);
 
                     // Highlights
                     highlightIfSelected(el, 't', tIdx, i);
