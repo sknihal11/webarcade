@@ -1,173 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<title>Login – WebArcade</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <title>Login – WebArcade</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&display=swap"
+    rel="stylesheet">
 
-<style>
-:root {
-  --primary:#6366f1;
-  --bg:#020617;
-  --card:#0f172a;
-  --text:#e5e7eb;
-}
+  <style>
+    :root {
+      /* Neon Cyberpunk Theme */
+      --bg-primary: #050814;
+      --bg-secondary: #0a0d20;
+      --bg-tertiary: #131732;
+      --bg-card: rgba(10, 13, 32, 0.4);
 
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg:#f8fafc;
-    --card:#ffffff;
-    --text:#020617;
-  }
-}
+      --text-primary: #ffffff;
+      --text-secondary: #aab8d2;
 
-body {
-  margin:0;
-  min-height:100vh;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  font-family:"Segoe UI", system-ui, sans-serif;
-  background: radial-gradient(circle at top, #1e293b, var(--bg));
-  color:var(--text);
-}
+      --accent-primary: #00f0ff;
+      --accent-secondary: #00b3ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
 
-.card {
-  width:100%;
-  max-width:380px;
-  background:var(--card);
-  border-radius:18px;
-  padding:32px;
-  box-shadow:0 30px 60px rgba(0,0,0,0.35);
-  animation:fade .8s ease;
-}
+      --error: #ff0055;
+      --border-medium: rgba(0, 240, 255, 0.2);
+      --shadow-md: 0 4px 16px rgba(0, 240, 255, 0.2);
+    }
 
-h1 {
-  margin:0 0 8px;
-  text-align:center;
-}
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      background-image: radial-gradient(circle at top, var(--bg-tertiary), var(--bg-primary));
+      color: var(--text-primary);
+    }
 
-p {
-  text-align:center;
-  opacity:.8;
-  font-size:14px;
-  margin-bottom:24px;
-}
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: var(--bg-card);
+      border-radius: 18px;
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-medium);
+      backdrop-filter: blur(24px) saturate(150%);
+      animation: fade .8s ease;
+    }
 
-input {
-  width:100%;
-  padding:14px;
-  margin-bottom:14px;
-  border-radius:12px;
-  border:none;
-  outline:none;
-  background:#020617;
-  color:white;
-  font-size:14px;
-}
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      text-shadow: 0 0 10px var(--accent-glow);
+    }
 
-@media (prefers-color-scheme: light) {
-  input {
-    background:#f1f5f9;
-    color:#020617;
-  }
-}
+    p {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
 
-button {
-  width:100%;
-  padding:14px;
-  border:none;
-  border-radius:12px;
-  background:var(--primary);
-  color:white;
-  font-size:15px;
-  font-weight:600;
-  cursor:pointer;
-  transition:.25s;
-}
+    input {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      outline: none;
+      background: rgba(0, 0, 0, 0.3);
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: .3s;
+    }
 
-button:hover {
-  transform:translateY(-2px);
-  box-shadow:0 10px 30px rgba(99,102,241,.45);
-}
+    input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
 
-.footer {
-  margin-top:18px;
-  text-align:center;
-  font-size:14px;
-}
+    button {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 12px;
+      background: var(--accent-primary);
+      color: #050814;
+      font-size: 15px;
+      font-weight: 800;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      transition: .25s;
+    }
 
-.footer a {
-  color:var(--primary);
-  text-decoration:none;
-  font-weight:600;
-}
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 15px var(--accent-glow);
+      opacity: 0.9;
+    }
 
-.error {
-  color:#ef4444;
-  font-size:13px;
-  margin-top:8px;
-  text-align:center;
-}
+    .footer {
+      margin-top: 18px;
+      text-align: center;
+      font-size: 14px;
+    }
 
-@keyframes fade {
-  from {opacity:0; transform:translateY(20px)}
-  to {opacity:1; transform:none}
-}
-</style>
+    .footer a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .error {
+      color: var(--error);
+      font-size: 13px;
+      margin-top: 8px;
+      text-align: center;
+    }
+
+    @keyframes fade {
+      from {
+        opacity: 0;
+        transform: translateY(20px)
+      }
+
+      to {
+        opacity: 1;
+        transform: none
+      }
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="card">
-  <h1>Welcome back 🎮</h1>
-  <p>Login to continue to WebArcade</p>
+  <div class="card">
+    <h1>Welcome back 🎮</h1>
+    <p>Login to continue to WebArcade</p>
 
-  <input type="email" id="email" placeholder="Email">
-  <input type="password" id="password" placeholder="Password">
+    <input type="email" id="email" placeholder="Email">
+    <input type="password" id="password" placeholder="Password">
 
-  <button onclick="login()">Login</button>
+    <button onclick="login()">Login</button>
 
-  <div class="error" id="error"></div>
+    <div class="error" id="error"></div>
 
-  <div class="footer">
-    New here?
-    <a href="signup.html">Create account</a>
+    <div class="footer">
+      New here?
+      <a href="signup.html">Create account</a>
+    </div>
   </div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-  authDomain: "webarcade-d4c3d.firebaseapp.com",
-  projectId: "webarcade-d4c3d",
-  storageBucket: "webarcade-d4c3d.firebasestorage.app",
-  messagingSenderId: "918209461327",
-  appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-};
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+      authDomain: "webarcade-d4c3d.firebaseapp.com",
+      projectId: "webarcade-d4c3d",
+      storageBucket: "webarcade-d4c3d.firebasestorage.app",
+      messagingSenderId: "918209461327",
+      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+    };
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
 
-window.login = function () {
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const error = document.getElementById("error");
+    window.login = function () {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const error = document.getElementById("error");
 
-  error.textContent = "";
+      error.textContent = "";
 
-  signInWithEmailAndPassword(auth, email, password)
-    .then(() => {
-      window.location.href = "blog.html";
-    })
-    .catch(err => {
-      error.textContent = err.message;
-    });
-};
-</script>
+      signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          window.location.href = "blog.html";
+        })
+        .catch(err => {
+          error.textContent = err.message;
+        });
+    };
+  </script>
 
 </body>
+
 </html>
