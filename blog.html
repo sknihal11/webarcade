@@ -2107,6 +2107,14 @@
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
+
+          if (data.banned) {
+            alert("Your account has been banned by an administrator.");
+            await signOut(auth);
+            location.replace("index.html");
+            return;
+          }
+
           const score2048 = data.best2048 || 0;
           const scoreFlappy = data.bestFlappy || 0;
 
