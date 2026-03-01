@@ -1463,7 +1463,7 @@
   <header id="header">
     <div class="header-container">
       <a href="#" class="logo">
-        <span class="logo-icon">ð¹ï¸</span>
+        <span class="logo-icon">&#x1F579;&#xFE0F;</span>
         <span>WebArcade</span>
       </a>
 
@@ -1474,7 +1474,7 @@
             <div class="header-stat-value" id="headerScore2048">0</div>
           </div>
           <div class="header-stat">
-            <div class="header-stat-icon">ð¦</div>
+            <div class="header-stat-icon">&#x1F426;</div>
             <div class="header-stat-value" id="headerScoreFlappy">0</div>
           </div>
         </div>
@@ -1495,7 +1495,7 @@
         ð§ Website is still under development â developed by sknihal11 ð§
       </span>
       <span class="announcement-text" id="scrollTextDupe">
-        ð PLEASE VISIT AGAIN ð
+        &#x1F680; PLEASE VISIT AGAIN &#x1F680;
       </span>
     </div>
   </div>
@@ -1506,7 +1506,7 @@
     <section class="welcome-section">
       <div class="welcome-card">
         <div class="welcome-content">
-          <h1 class="welcome-title">Welcome back, <span id="welcomeName">Player</span>! ð</h1>
+          <h1 class="welcome-title">Welcome back, <span id="welcomeName">Player</span>! &#x1F44B;</h1>
           <p class="welcome-subtitle">Ready to set some new high scores?</p>
         </div>
       </div>
@@ -1520,25 +1520,25 @@
           <span class="stat-icon">ð¯</span>
         </div>
         <div class="stat-value" id="statScore2048">0</div>
-        <div class="stat-change">â Personal Best</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Flappy High Score</span>
-          <span class="stat-icon">ð¦</span>
+          <span class="stat-icon">&#x1F426;</span>
         </div>
         <div class="stat-value" id="statScoreFlappy">0</div>
-        <div class="stat-change">â Personal Best</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
       </div>
 
       <div class="stat-card">
         <div class="stat-header">
           <span class="stat-label">Total Rating</span>
-          <span class="stat-icon">ð</span>
+          <span class="stat-icon">&#x1F31F;</span>
         </div>
         <div class="stat-value" id="statTotalRating">0</div>
-        <div class="stat-change">ð Combined Score</div>
+        <div class="stat-change">&#x1F4CA; Combined Score</div>
       </div>
 
       <div class="stat-card">
@@ -1547,7 +1547,7 @@
           <span class="stat-icon">ð</span>
         </div>
         <div class="stat-value" id="statGlobalRank">-</div>
-        <div class="stat-change">ð Leaderboard Position</div>
+        <div class="stat-change">&#x1F4C8; Leaderboard Position</div>
       </div>
     </div>
 
@@ -1557,7 +1557,7 @@
       <div class="alert-content">
         <div class="alert-title" id="alertTitle">WebArcade Update</div>
         <div class="alert-description" id="alertDescription">
-          ð <strong>What's New?</strong> Massive Neon Cyberpunk UI Redesign deployed!<br>
+          &#x1F680; <strong>What's New?</strong> Massive Neon Cyberpunk UI Redesign deployed!<br>
           Experience WebArcade in a completely new aesthetic.
         </div>
         <div class="alert-meta">
@@ -1700,7 +1700,7 @@
           <input type="text" id="nameInput" class="form-input" placeholder="Enter your display name">
         </div>
         <button class="btn btn-primary" onclick="saveName()">
-          ð¾ Save Name
+          &#x1F4BE; Save Name
         </button>
       </div>
 
@@ -1726,14 +1726,14 @@
         </button>
         <button class="btn btn-secondary" id="adminBtn" onclick="window.location.href='admin.html'"
           style="display: none; border-color: var(--warning); color: var(--warning);">
-          âï¸ Admin Panel
+          &#x2699;&#xFE0F; Admin Panel
         </button>
       </div>
 
       <!-- Account Actions -->
       <div class="drawer-section">
         <button class="btn btn-secondary" onclick="logoutUser()">
-          ðª Logout
+          &#x1F6AA; Logout
         </button>
       </div>
 
@@ -2006,6 +2006,36 @@
     // ============================================
     // SYNC ANNOUNCEMENT FROM FIRESTORE
     // ============================================
+    async function syncAnnouncement() {
+      try {
+        const q = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+          const data = snap.docs[0].data();
+          const annText = data.text || "";
+          // Update scrolling banner
+          document.getElementById("scrollText").textContent = annText;
+          document.getElementById("scrollTextDupe").textContent = annText;
+          // Update the alert box description if there's an announcement
+          if (annText) {
+            const alertDesc = document.getElementById("alertDescription");
+            if (alertDesc) {
+              alertDesc.innerHTML = `&#x1F4E2; <strong>New Announcement:</strong> ${annText}`;
+            }
+            const alertBox = document.getElementById("alertBox");
+            if (alertBox) alertBox.style.display = "flex";
+          }
+        } else {
+          // No announcements — hide the alert box
+          const alertBox = document.getElementById("alertBox");
+          if (alertBox) alertBox.style.display = "none";
+          document.getElementById("scrollText").textContent = "&#x1F6A7; Website is still under development — developed by sknihal11 &#x1F6A7;";
+          document.getElementById("scrollTextDupe").textContent = "&#x1F6A7; Website is still under development — developed by sknihal11 &#x1F6A7;";
+        }
+      } catch (error) {
+        console.error("Error loading announcements:", error);
+      }
+    }
 
     // ============================================
     // UPDATE USER STATS
