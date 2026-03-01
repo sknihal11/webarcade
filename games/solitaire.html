@@ -1009,14 +1009,18 @@
                 el.style.zIndex = 10;
                 positionCard(el, stockEl, 0);
 
-                el.onmousedown = null;
-                el.ontouchstart = null;
-                el.onclick = window.drawCard;
+                el.onclick = null;
+                // Use onmousedown/ontouchstart for instant response bypassing click delay and pointer filtering
+                el.onmousedown = (e) => { e.stopPropagation(); window.drawCard(); };
+                el.ontouchstart = (e) => { e.stopPropagation(); window.drawCard(); };
             }
             // Hide other stock cards behind
             for (let i = 0; i < stock.length - 1; i++) {
                 const el = getOrCreateDomCard(stock[i]);
                 el.style.display = "none";
+                el.onmousedown = null;
+                el.ontouchstart = null;
+                el.onclick = null;
             }
 
             // 2. Waste
