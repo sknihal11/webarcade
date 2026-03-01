@@ -149,6 +149,71 @@
             display: none;
             text-align: center;
         }
+
+        .past-requests {
+            margin-top: 3rem;
+            border-top: 1px solid var(--border-medium);
+            padding-top: 2rem;
+        }
+
+        .req-card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .req-title {
+            font-weight: bold;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+            color: var(--accent-primary);
+        }
+
+        .req-status {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            display: inline-block;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .req-badge {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+
+        .req-badge.replied {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .req-badge.pending {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fcd34d;
+        }
+
+        .req-reply {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 240, 255, 0.05);
+            border-left: 3px solid var(--accent-primary);
+            border-radius: 4px;
+        }
+
+        .req-reply-title {
+            font-weight: bold;
+            font-size: 0.9rem;
+            color: var(--accent-primary);
+            margin-bottom: 0.25rem;
+        }
     </style>
 </head>
 
@@ -175,13 +240,20 @@
 
         <button class="btn" id="submitBtn">Submit Request</button>
         <a href="blog.html" class="back-link">← Back to Dashboard</a>
+
+        <div class="past-requests">
+            <h3>My Past Requests</h3>
+            <p style="margin-bottom: 1rem; font-size: 0.9rem;">Check the status of your game requests and replies from
+                admins.</p>
+            <div id="pastRequestsList">Loading your requests...</div>
+        </div>
     </div>
 
     <!-- Firebase Scripts -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -202,11 +274,108 @@
             if (user) {
                 currentUser = user;
                 document.getElementById("authCheck").style.display = "none";
+                loadMyRequests();
             } else {
                 alert("You must be logged in to request a game.");
                 window.location.href = "login.html";
             }
         });
+
+        async function loadMyRequests() {
+            const list = document.getElementById("pastRequestsList");
+            list.innerHTML = "Loading your requests...";
+            try {
+                const q = query(
+                    collection(db, "game_requests"),
+                    where("uid", "==", currentUser.uid),
+                    orderBy("createdAt", "desc")
+                );
+                const snap = await getDocs(q);
+
+                list.innerHTML = "";
+                if (snap.empty) {
+                    list.innerHTML = "<p>You haven't made any requests yet.</p>";
+                    return;
+                }
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const status = data.status || 'pending';
+                    const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Unknown date';
+                    const badgeClass = status === 'replied' ? 'replied' : 'pending';
+
+                    let html = `
+                        <div class="req-card">
+                            <div class="req-title">${data.gameTitle}</div>
+                            <div class="req-status">
+                                <span class="req-badge ${badgeClass}">${status}</span> • ${date}
+                            </div>
+                            <p style="margin-bottom: 0; font-size: 0.95rem; color: #fff;">${data.description || 'No description provided.'}</p>
+                    `;
+
+                    if (status === 'replied' && data.replyText) {
+                        html += `
+                            <div class="req-reply">
+                                <div class="req-reply-title">Admin Reply</div>
+                                <div>${data.replyText}</div>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                    list.innerHTML += html;
+                });
+            } catch (error) {
+                console.error("Error loading past requests:", error);
+
+                // If index is missing, fallback to unordered query temporarily
+                if (error.message.includes("index")) {
+                    console.log("Falling back to un-ordered query due to missing index");
+                    try {
+                        const fallbackQ = query(collection(db, "game_requests"), where("uid", "==", currentUser.uid));
+                        const snap = await getDocs(fallbackQ);
+                        let requestsArray = [];
+                        snap.forEach(d => requestsArray.push(d.data()));
+                        // Sort locally
+                        requestsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+                        list.innerHTML = "";
+                        if (requestsArray.length === 0) list.innerHTML = "<p>You haven't made any requests yet.</p>";
+
+                        requestsArray.forEach(data => {
+                            const status = data.status || 'pending';
+                            const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Unknown date';
+                            const badgeClass = status === 'replied' ? 'replied' : 'pending';
+
+                            let html = `
+                                <div class="req-card">
+                                    <div class="req-title">${data.gameTitle}</div>
+                                    <div class="req-status">
+                                        <span class="req-badge ${badgeClass}">${status}</span> • ${date}
+                                    </div>
+                                    <p style="margin-bottom: 0; font-size: 0.95rem; color: #fff;">${data.description || 'No description provided.'}</p>
+                            `;
+
+                            if (status === 'replied' && data.replyText) {
+                                html += `
+                                    <div class="req-reply">
+                                        <div class="req-reply-title">Admin Reply</div>
+                                        <div>${data.replyText}</div>
+                                    </div>
+                                `;
+                            }
+
+                            html += `</div>`;
+                            list.innerHTML += html;
+                        });
+                    } catch (e2) {
+                        list.innerHTML = "Failed to load requests.";
+                    }
+                } else {
+                    list.innerHTML = "Failed to load requests.";
+                }
+            }
+        }
 
         document.getElementById('submitBtn').addEventListener('click', async () => {
             if (!currentUser) return;
@@ -237,6 +406,9 @@
                 document.getElementById('gameTitle').value = "";
                 document.getElementById('gameDesc').value = "";
                 document.getElementById('successMsg').style.display = "block";
+
+                // Refresh the list immediately
+                loadMyRequests();
 
                 setTimeout(() => {
                     document.getElementById('successMsg').style.display = "none";

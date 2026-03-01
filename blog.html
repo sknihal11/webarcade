@@ -1476,6 +1476,11 @@
             <div class="header-stat-icon">&#x1F426;</div>
             <div class="header-stat-value" id="headerScoreFlappy">0</div>
           </div>
+          <div class="header-stat">
+            <div class="header-stat-icon">🃏</div>
+            <div class="header-stat-value" id="headerScoreSolitaire" style="color:var(--accent); font-weight:800;">0
+            </div>
+          </div>
         </div>
 
         <div class="user-profile" onclick="openDrawer()">
@@ -1533,6 +1538,15 @@
 
       <div class="stat-card">
         <div class="stat-header">
+          <span class="stat-label">Solitaire High Score</span>
+          <span class="stat-icon">🃏</span>
+        </div>
+        <div class="stat-value" id="statScoreSolitaire">0</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
           <span class="stat-label">Total Rating</span>
           <span class="stat-icon">&#x1F31F;</span>
         </div>
@@ -1575,7 +1589,7 @@
           <div class="section-accent"></div>
           <h2 class="section-title">Available Games</h2>
         </div>
-        <span class="section-badge">2 Games</span>
+        <span class="section-badge">3 Games</span>
       </div>
 
       <div class="games-grid">
@@ -1626,6 +1640,35 @@
             </div>
             <div class="game-actions">
               <a href="games/flappy.html" class="play-btn" onclick="event.stopPropagation()">
+                ▶ Play Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Solitaire -->
+        <div class="game-card" onclick="window.location.href='games/solitaire.html'">
+          <div class="game-thumbnail-wrapper">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Solitaire_icon.png/1024px-Solitaire_icon.png"
+              alt="Solitaire" class="game-thumbnail" style="object-fit: cover; background: #2a7a3b;">
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">Solitaire</h3>
+              <span class="game-badge new">New</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item">
+                🏆 Your Best: <strong id="gameScoreSolitaire">0</strong>
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/solitaire.html" class="play-btn" style="background:var(--success); color:#fff;"
+                onclick="event.stopPropagation()">
                 ▶ Play Now
               </a>
             </div>
@@ -1980,12 +2023,15 @@
       welcomeName: document.getElementById('welcomeName'),
       statScore2048: document.getElementById('statScore2048'),
       statScoreFlappy: document.getElementById('statScoreFlappy'),
+      statScoreSolitaire: document.getElementById('statScoreSolitaire'),
       statTotalRating: document.getElementById('statTotalRating'),
       statGlobalRank: document.getElementById('statGlobalRank'),
       gameScore2048: document.getElementById('gameScore2048'),
       gameScoreFlappy: document.getElementById('gameScoreFlappy'),
+      gameScoreSolitaire: document.getElementById('gameScoreSolitaire'),
       headerScore2048: document.getElementById('headerScore2048'),
       headerScoreFlappy: document.getElementById('headerScoreFlappy'),
+      headerScoreSolitaire: document.getElementById('headerScoreSolitaire'),
       leaderboard: document.getElementById('leaderboard'),
       drawer: document.getElementById('drawer'),
       drawerOverlay: document.getElementById('drawerOverlay'),
@@ -2039,22 +2085,23 @@
     // ============================================
     // UPDATE USER STATS
     // ============================================
-    function updateUserStats(score2048, scoreFlappy, globalRank = null) {
-      const totalRating = ((score2048 || 0) * 0.01) + ((scoreFlappy || 0) * 0.1);
+    function updateUserStats(score2048, scoreFlappy, scoreSolitaire, globalRank = null) {
+      const totalRating = ((score2048 || 0) * 0.01) + ((scoreFlappy || 0) * 0.1) + ((scoreSolitaire || 0) * 0.05);
 
-      elements.statScore2048.textContent = score2048 || 0;
-      elements.statScoreFlappy.textContent = scoreFlappy || 0;
-      elements.gameScore2048.textContent = score2048 || 0;
-      elements.gameScoreFlappy.textContent = scoreFlappy || 0;
-      elements.headerScore2048.textContent = score2048 || 0;
-      elements.headerScoreFlappy.textContent = scoreFlappy || 0;
-      elements.statTotalRating.textContent = totalRating.toFixed(2);
+      if (elements.statScore2048) elements.statScore2048.textContent = score2048 || 0;
+      if (elements.statScoreFlappy) elements.statScoreFlappy.textContent = scoreFlappy || 0;
+      if (elements.statScoreSolitaire) elements.statScoreSolitaire.textContent = scoreSolitaire || 0;
 
-      if (globalRank !== null) {
-        elements.statGlobalRank.textContent = `#${globalRank}`;
-      } else {
-        elements.statGlobalRank.textContent = '-';
-      }
+      if (elements.gameScore2048) elements.gameScore2048.textContent = score2048 || 0;
+      if (elements.gameScoreFlappy) elements.gameScoreFlappy.textContent = scoreFlappy || 0;
+      if (elements.gameScoreSolitaire) elements.gameScoreSolitaire.textContent = scoreSolitaire || 0;
+
+      if (elements.headerScore2048) elements.headerScore2048.textContent = score2048 || 0;
+      if (elements.headerScoreFlappy) elements.headerScoreFlappy.textContent = scoreFlappy || 0;
+      if (elements.headerScoreSolitaire) elements.headerScoreSolitaire.textContent = scoreSolitaire || 0;
+
+      if (elements.statTotalRating) elements.statTotalRating.textContent = totalRating.toFixed(2);
+      if (elements.statGlobalRank) elements.statGlobalRank.textContent = globalRank ? `#${globalRank}` : "-";
     }
 
     // ============================================
@@ -2117,8 +2164,9 @@
 
           const score2048 = data.best2048 || 0;
           const scoreFlappy = data.bestFlappy || 0;
+          const scoreSolitaire = data.bestSolitaire || 0;
 
-          updateUserStats(score2048, scoreFlappy);
+          updateUserStats(score2048, scoreFlappy, scoreSolitaire);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -2139,7 +2187,7 @@
 
         usersSnapshot.forEach(docSnap => {
           const data = docSnap.data();
-          const totalRating = ((data.best2048 || 0) * 0.01) + ((data.bestFlappy || 0) * 0.1);
+          const totalRating = ((data.best2048 || 0) * 0.01) + ((data.bestFlappy || 0) * 0.1) + ((data.bestSolitaire || 0) * 0.05);
 
           if (totalRating > 0) {
             // ---- FIX: use all available name fields as fallbacks ----
