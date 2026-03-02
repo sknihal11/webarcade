@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ludo - WebArcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="ludo.css">
+</head>
+
+<body>
+
+    <!-- Main Menu Overlay -->
+    <div id="mainMenu" class="overlay">
+        <div class="menu-container">
+            <h1 class="menu-title">LUDO KING</h1>
+
+            <div style="text-align: left; margin: 10px 0;">
+                <label style="font-weight: 600; color: #ccc;">Select Players:</label>
+                <div class="player-setup" id="playerSetup">
+                    <div class="player-count-btn active" data-count="2">2 Players</div>
+                    <div class="player-count-btn" data-count="3">3 Players</div>
+                    <div class="player-count-btn" data-count="4">4 Players</div>
+                </div>
+            </div>
+
+            <button class="btn" id="startBtn">Play Now</button>
+            <button class="btn btn-secondary" id="rulesBtn">How to Play</button>
+        </div>
+    </div>
+
+    <!-- Rules Menu Overlay -->
+    <div id="rulesMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h2 style="color:white; margin-bottom: 20px;">How To Play</h2>
+            <ul
+                style="text-align: left; color: #ccc; font-size: 14px; gap: 10px; display: flex; flex-direction: column; padding-left: 20px;">
+                <li>Roll a 6 to move a token out of the base.</li>
+                <li>Roll a 6 grants an extra turn. Rolling three 6s in a row passes the turn.</li>
+                <li>Landing on an opponent's token sends it back to base and grants you an extra turn.</li>
+                <li>Spaces marked with ★ are safe zones.</li>
+                <li>Getting a token Home grants an auto extra turn.</li>
+                <li>First player to get all 4 tokens Home wins!</li>
+            </ul>
+            <button class="btn btn-secondary" style="margin-top: 20px;" id="closeRulesBtn">Back</button>
+        </div>
+    </div>
+
+    <!-- Win Screen Overlay -->
+    <div id="winMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h1 class="menu-title" id="winTitle" style="font-size: 40px;">RED WINS!</h1>
+            <button class="btn" style="margin-top: 20px;" id="playAgainBtn">Play Again</button>
+            <button class="btn btn-secondary" id="homeBtn">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <a href="../blog.html" class="back-btn">← Back to Arcade</a>
+        <div class="game-status" id="statusText">Red's Turn</div>
+        <div class="controls-row">
+            <button class="icon-btn" id="soundToggle">🔊</button>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div class="game-container">
+
+        <!-- The Board Grid will be generated via JS for precise cell mapping -->
+        <div class="ludo-board" id="board"></div>
+
+        <!-- Player Panels (Bottom) -->
+        <div class="players-panel" id="playersPanel">
+            <!-- Populated via JS -->
+        </div>
+
+    </div>
+
+    <div class="toast" id="toast">Message</div>
+
+    <script src="ludo.js"></script>
+</body>
+
+</html>

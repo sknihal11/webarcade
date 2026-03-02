@@ -1,0 +1,660 @@
+:root {
+    --red: #f44336;
+    --green: #4caf50;
+    --yellow: #ffeb3b;
+    --blue: #2196f3;
+    --bg-color: #1a1a2e;
+    --panel-bg: rgba(255, 255, 255, 0.1);
+    --text-color: #fff;
+    --border-color: #ccc;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* --- UI Overlay (Menus) --- */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    transition: opacity 0.3s;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.menu-container {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    width: 90%;
+    max-width: 450px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.menu-title {
+    font-size: 48px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, var(--red), var(--yellow), var(--green), var(--blue));
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 2px 2px 10px rgba(255, 255, 255, 0.1);
+}
+
+.btn {
+    background: linear-gradient(45deg, #e91e63, #9c27b0);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 20px;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    width: 100%;
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Setup Menu */
+.player-setup {
+    display: flex;
+    justify-content: space-around;
+    margin: 20px 0;
+}
+
+.player-count-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+.player-count-btn.active {
+    border-color: #4caf50;
+    background: rgba(76, 175, 80, 0.2);
+}
+
+/* --- Top Bar --- */
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 10;
+}
+
+.back-btn {
+    color: #fff;
+    text-decoration: none;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.back-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.game-status {
+    font-size: 18px;
+    font-weight: 600;
+    letter-spacing: 1px;
+}
+
+.controls-row {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.icon-btn:hover {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* --- Main Layout --- */
+.game-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    position: relative;
+    /* Move board slightly up to give room for players panel */
+    margin-bottom: 20px;
+}
+
+/* --- The Ludo Board --- */
+.ludo-board {
+    display: grid;
+    grid-template-columns: repeat(15, 1fr);
+    grid-template-rows: repeat(15, 1fr);
+    width: 100%;
+    max-width: 500px;
+    aspect-ratio: 1;
+    background: #fff;
+    border: 8px solid #333;
+    border-radius: 12px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+    position: relative;
+    padding: 2px;
+    gap: 1px;
+    background-color: #ddd;
+}
+
+.cell {
+    background: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    /* Allows multiple tokens to sit inside */
+}
+
+/* Bases (4 corners, spans 6x6) */
+.base {
+    position: relative;
+    border: 2px solid #333;
+    border-radius: 8px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.base-inner {
+    width: 75%;
+    height: 75%;
+    background: #fff;
+    border-radius: 8px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    gap: 15%;
+    padding: 15%;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.base.red {
+    grid-column: 1 / 7;
+    grid-row: 1 / 7;
+    background: var(--red);
+}
+
+.base.green {
+    grid-column: 10 / 16;
+    grid-row: 1 / 7;
+    background: var(--green);
+}
+
+.base.blue {
+    grid-column: 1 / 7;
+    grid-row: 10 / 16;
+    background: var(--blue);
+}
+
+.base.yellow {
+    grid-column: 10 / 16;
+    grid-row: 10 / 16;
+    background: var(--yellow);
+}
+
+.token-slot {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.home-center {
+    grid-column: 7 / 10;
+    grid-row: 7 / 10;
+    background: #333;
+    clip-path: polygon(50% 50%, 0 0, 100% 0, 100% 100%, 0 100%, 0 0);
+    position: relative;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 2px;
+}
+
+.home-center::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(var(--yellow) 0deg 90deg,
+            var(--blue) 90deg 180deg,
+            var(--red) 180deg 270deg,
+            var(--green) 270deg 360deg);
+    transform: rotate(45deg);
+    z-index: 1;
+    /* Keep below tokens */
+}
+
+.home-center {
+    z-index: 5;
+    /* Establish stacking context */
+}
+
+.home-center .token {
+    z-index: 10;
+    /* Important so tokens are on top of center gradients! */
+}
+
+/* Path coloring */
+.path-red {
+    background: var(--red);
+}
+
+.path-green {
+    background: var(--green);
+}
+
+.path-yellow {
+    background: var(--yellow);
+}
+
+.path-blue {
+    background: var(--blue);
+}
+
+/* Safe zones (Star markers) */
+.safe-zone::before {
+    content: '★';
+    font-size: 20px;
+    color: rgba(0, 0, 0, 0.3);
+    position: absolute;
+    z-index: 1;
+}
+
+/* Arrows */
+.path-arrow {
+    position: absolute;
+    font-size: 16px;
+    color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
+
+/* --- Tokens --- */
+.token {
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    position: relative;
+    /* Must be relative to allow flex tiling! */
+    box-shadow: inset -2px -4px 5px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.4);
+    border: 2px solid white;
+    cursor: pointer;
+    z-index: 10;
+    transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    /* Smooth hop */
+}
+
+/* Multiple tokens in one spot need scaled down to fit */
+.token.stacked {
+    width: 40%;
+    height: 40%;
+    margin: 2px;
+}
+
+.token.red {
+    background: radial-gradient(circle at 30% 30%, #ff8a80, var(--red));
+}
+
+.token.green {
+    background: radial-gradient(circle at 30% 30%, #b9f6ca, var(--green));
+}
+
+.token.yellow {
+    background: radial-gradient(circle at 30% 30%, #ffff8d, var(--yellow));
+}
+
+.token.blue {
+    background: radial-gradient(circle at 30% 30%, #8c9eff, var(--blue));
+}
+
+.token.highlight {
+    animation: pulse-token 1s infinite alternate;
+    z-index: 20;
+}
+
+@keyframes pulse-token {
+    0% {
+        transform: scale(1);
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+    }
+
+    100% {
+        transform: scale(1.1);
+        box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+    }
+}
+
+/* --- Player Controls / Dice --- */
+.players-panel {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 600px;
+    margin-top: 20px;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.player-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0.5;
+    transition: 0.3s;
+    border: 2px solid transparent;
+}
+
+.player-card.active {
+    opacity: 1;
+    transform: scale(1.05);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
+.player-card.active.red {
+    border-color: var(--red);
+}
+
+.player-card.active.green {
+    border-color: var(--green);
+}
+
+.player-card.active.yellow {
+    border-color: var(--yellow);
+}
+
+.player-card.active.blue {
+    border-color: var(--blue);
+}
+
+.player-name {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 5px;
+}
+
+.dice-container {
+    width: 45px;
+    height: 45px;
+    background: #fff;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    position: relative;
+    pointer-events: none;
+    /* Disabled by default */
+}
+
+.player-card.active .dice-container {
+    pointer-events: auto;
+    /* Enabled only for active player */
+}
+
+.dice-face {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    padding: 8px;
+    gap: 2px;
+}
+
+.dot {
+    background: #333;
+    border-radius: 50%;
+    width: 100%;
+    height: 100%;
+}
+
+/* Dice dot placements via CSS Classes */
+.dice-1 .dot:nth-child(1) {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.dice-2 .dot:nth-child(1) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.dice-2 .dot:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.dice-3 .dot:nth-child(1) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.dice-3 .dot:nth-child(2) {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.dice-3 .dot:nth-child(3) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.dice-4 .dot:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.dice-4 .dot:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.dice-4 .dot:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.dice-4 .dot:nth-child(4) {
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.dice-5 .dot:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.dice-5 .dot:nth-child(2) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.dice-5 .dot:nth-child(3) {
+    grid-column: 2;
+    grid-row: 2;
+}
+
+.dice-5 .dot:nth-child(4) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.dice-5 .dot:nth-child(5) {
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.dice-6 .dot:nth-child(1) {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.dice-6 .dot:nth-child(2) {
+    grid-column: 1;
+    grid-row: 2;
+}
+
+.dice-6 .dot:nth-child(3) {
+    grid-column: 1;
+    grid-row: 3;
+}
+
+.dice-6 .dot:nth-child(4) {
+    grid-column: 3;
+    grid-row: 1;
+}
+
+.dice-6 .dot:nth-child(5) {
+    grid-column: 3;
+    grid-row: 2;
+}
+
+.dice-6 .dot:nth-child(6) {
+    grid-column: 3;
+    grid-row: 3;
+}
+
+.rolling {
+    animation: shake 0.3s linear infinite;
+}
+
+@keyframes shake {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    25% {
+        transform: rotate(-20deg) scale(1.1);
+    }
+
+    50% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    75% {
+        transform: rotate(20deg) scale(1.1);
+    }
+
+    100% {
+        transform: rotate(0deg) scale(1);
+    }
+}
+
+/* Message Toast */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 500;
+    transition: transform 0.3s;
+    z-index: 2000;
+}
+
+.toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+@media (max-width: 600px) {
+    .ludo-board {
+        max-width: 95vw;
+        border-width: 5px;
+    }
+
+    .players-panel {
+        max-width: 95vw;
+    }
+
+    .dice-container {
+        width: 35px;
+        height: 35px;
+    }
+
+    .menu-title {
+        font-size: 36px;
+    }
+}
