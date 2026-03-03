@@ -13,22 +13,99 @@
 <body>
 
     <!-- Main Menu Overlay -->
+    <!-- Main Menu Overlay -->
     <div id="mainMenu" class="overlay">
-        <div class="menu-container">
-            <h1 class="menu-title">LUDO KING</h1>
 
-            <div style="text-align: left; margin: 10px 0;">
-                <label style="font-weight: 600; color: #ccc;">Select Players:</label>
-                <div class="player-setup" id="playerSetup">
-                    <div class="player-count-btn active" data-count="2">2 Players</div>
-                    <div class="player-count-btn" data-count="3">3 Players</div>
-                    <div class="player-count-btn" data-count="4">4 Players</div>
+        <!-- Screen 1: Dashboard -->
+        <div class="menu-container dashboard-menu" id="mainDashboard">
+            <h1 class="menu-title">LUDO KING</h1>
+            <div class="dashboard-grid top-row">
+                <div class="btn-dashboard online-btn" onclick="alert('Online Multiplayer coming soon!')">
+                    <div class="btn-icon">🌍</div>
+                    <div class="btn-label">ONLINE</div>
+                </div>
+                <div class="btn-dashboard teamup-btn" onclick="openSelectGame('team')">
+                    <div class="btn-icon">⚔️</div>
+                    <div class="btn-label">TEAM UP</div>
+                </div>
+                <div class="btn-dashboard friends-btn" onclick="alert('Friends Module coming soon!')">
+                    <div class="btn-icon">💕</div>
+                    <div class="btn-label">FRIENDS</div>
+                </div>
+            </div>
+            <div class="dashboard-grid bottom-row">
+                <div class="btn-dashboard computer-btn" onclick="openSelectGame('bot')">
+                    <div class="btn-icon">💻</div>
+                    <div class="btn-label">COMPUTER</div>
+                </div>
+                <div class="btn-dashboard passnplay-btn" onclick="openSelectGame('local')">
+                    <div class="btn-icon">👥</div>
+                    <div class="btn-label">PASS N PLAY</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" id="rulesBtn" style="margin-top: 20px;">How to Play</button>
+        </div>
+
+        <!-- Screen 2: Select Game -->
+        <div class="menu-container select-game-menu hidden" id="selectGameMenu">
+            <div class="select-header">
+                <h2 class="lk-title">SELECT GAME</h2>
+            </div>
+
+            <div class="select-options">
+                <div class="select-row active" onclick="selectVariant('classic')" id="rowClassic">
+                    <div class="row-icon"><span class="icon-classic">⚄</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle">✔</span> Classic
+                    </div>
+                </div>
+
+                <div class="select-row" onclick="selectVariant('team')" id="rowTeam">
+                    <div class="row-icon"><span class="icon-team">⚔️</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle"></span> Classic Team Up
+                    </div>
+                </div>
+
+                <div class="select-row" onclick="selectVariant('quick')" id="rowQuick">
+                    <div class="row-icon"><span class="icon-quick">⏱️</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle"></span> QUICK
+                    </div>
                 </div>
             </div>
 
-            <button class="btn" id="startBtn">Play Now</button>
-            <button class="btn btn-secondary" id="rulesBtn">How to Play</button>
+            <div style="display:flex; justify-content:center; gap: 15px; margin-top: 30px;">
+                <button class="lk-pill-btn secondary" onclick="backToDashboard()">Back</button>
+                <button class="lk-pill-btn primary" onclick="goToColorSelection()">Next</button>
+            </div>
         </div>
+
+        <!-- Screen 3: Choose Color and Name -->
+        <div class="menu-container choose-color-menu hidden" id="chooseColorMenu" style="max-width: 600px;">
+            <div class="select-header">
+                <h2 class="lk-title" style="font-size: 24px;">CHOOSE COLOR AND NAME</h2>
+            </div>
+
+            <div class="color-slots" id="colorSlotsContainer">
+                <!-- JS will populate rows for Red, Green, Yellow, Blue -->
+            </div>
+
+            <div class="player-count-selector" id="playerCountSelector">
+                <div class="p-btn active" onclick="selectPlayerCount(2)" id="pbtn2">2P</div>
+                <div class="p-btn" onclick="selectPlayerCount(3)" id="pbtn3">3P</div>
+                <div class="p-btn" onclick="selectPlayerCount(4)" id="pbtn4">4P</div>
+                <div class="p-btn disabled">5P</div>
+                <div class="p-btn disabled">6P</div>
+            </div>
+
+            <div style="display:flex; justify-content:center; gap: 15px; margin-top: 30px;">
+                <button class="lk-pill-btn secondary" onclick="backToSelectGame()"
+                    style="width: auto; padding: 10px 30px;">Back</button>
+                <button class="lk-pill-btn huge" id="startBtn">Play</button>
+            </div>
+        </div>
+
     </div>
 
     <!-- Rules Menu Overlay -->
@@ -62,25 +139,109 @@
         <a href="../blog.html" class="back-btn">← Back to Arcade</a>
         <div class="game-status" id="statusText">Red's Turn</div>
         <div class="controls-row">
+            <button class="icon-btn" id="emojiBtn">💬</button>
             <button class="icon-btn" id="soundToggle">🔊</button>
+            <button class="icon-btn" id="settingsBtn">⚙️</button>
         </div>
     </div>
 
     <!-- Game Area -->
     <div class="game-container">
 
-        <!-- The Board Grid will be generated via JS for precise cell mapping -->
-        <div class="ludo-board" id="board"></div>
+        <!-- Corner Dice & Player Info -->
+        <div class="corner-dice red" id="corner_red"></div>
+        <div class="corner-dice green" id="corner_green"></div>
+        <div class="corner-dice blue" id="corner_blue"></div>
+        <div class="corner-dice yellow" id="corner_yellow"></div>
 
-        <!-- Player Panels (Bottom) -->
-        <div class="players-panel" id="playersPanel">
-            <!-- Populated via JS -->
-        </div>
+        <div class="ludo-board" id="board"></div>
 
     </div>
 
     <div class="toast" id="toast">Message</div>
 
+    <!-- Emoji Picker Overlay -->
+    <div id="emojiPicker" class="emoji-picker hidden">
+        <div class="emoji-btn" onclick="sendEmoji('😂')">😂</div>
+        <div class="emoji-btn" onclick="sendEmoji('🔥')">🔥</div>
+        <div class="emoji-btn" onclick="sendEmoji('😢')">😢</div>
+        <div class="emoji-btn" onclick="sendEmoji('👏')">👏</div>
+        <div class="emoji-btn" onclick="sendEmoji('🎲')">🎲</div>
+        <div class="emoji-btn" onclick="sendEmoji('👋')">👋</div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div id="settingsMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h2 style="color:white; margin-bottom: 20px;">Settings</h2>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-weight: 600; color: #ccc;">Board Theme:</label>
+                <div class="player-setup" id="themeSetup" style="margin-top:10px;">
+                    <div class="player-count-btn active" data-theme="neon">Neon</div>
+                    <div class="player-count-btn" data-theme="classic">Classic</div>
+                    <div class="player-count-btn" data-theme="nature">Nature</div>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-weight: 600; color: #ccc;">Team Mode: Friendly Kill</label>
+                <div class="player-setup" id="friendlyKillSetup" style="margin-top:10px;">
+                    <div class="player-count-btn active" data-kill="false">Safe</div>
+                    <div class="player-count-btn" data-kill="true">Kill Allowed</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" id="closeSettingsBtn">Back</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let user = null;
+
+        onAuthStateChanged(auth, u => {
+            user = u;
+            if (u) {
+                console.log("Logged in as", u.displayName || u.email);
+            }
+        });
+
+        window.reportLudoWin = async () => {
+            if (!user) {
+                const localWins = parseInt(localStorage.getItem('ludo_wins') || '0') + 1;
+                localStorage.setItem('ludo_wins', localWins);
+                return;
+            }
+
+            try {
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                    bestLudo: increment(1),
+                    totalRating: increment(50) // Huge boost for winning Ludo!
+                });
+                console.log("Score updated in Firebase!");
+            } catch (e) {
+                console.error("Firebase score error", e);
+            }
+        };
+    </script>
     <script src="ludo.js"></script>
 </body>
 
