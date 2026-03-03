@@ -782,8 +782,14 @@
                 if (pileType === 'f' && cardIndex !== foundations[pileIndex].length - 1) return;
 
                 isDragging = false;
-                dragStartX = e.clientX || (e.touches && e.touches[0].clientX);
-                dragStartY = e.clientY || (e.touches && e.touches[0].clientY);
+
+                // Explicitly pull coordinates from mouse or touch
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                if (e.touches && e.touches.length > 0) {
+                    dragStartX = e.touches[0].clientX;
+                    dragStartY = e.touches[0].clientY;
+                }
 
                 dragData = { pileType, pileIndex, cardIndex };
                 draggedEls = [];
@@ -820,14 +826,22 @@
             function handlePointerMove(e) {
                 if (!dragData) return;
 
+                // Stop mobile scroll when attempting to move a card
+                if (e.cancelable) e.preventDefault();
+
                 // If it's a mouse event and button is released, force drop!
                 if (e.type === 'mousemove' && e.buttons === 0) {
                     handlePointerUp(e);
                     return;
                 }
 
-                let clientX = e.clientX || (e.touches && e.touches[0].clientX);
-                let clientY = e.clientY || (e.touches && e.touches[0].clientY);
+                // Support both TouchEvent lists and standard MouseEvent
+                let clientX = e.clientX;
+                let clientY = e.clientY;
+                if (e.touches && e.touches.length > 0) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                }
 
                 let dx = clientX - dragStartX;
                 let dy = clientY - dragStartY;
@@ -838,7 +852,6 @@
                 }
 
                 if (isDragging) {
-                    e.preventDefault();
                     draggedEls.forEach(item => {
                         item.el.style.top = (item.origTop + dy) + 'px';
                         item.el.style.left = (item.origLeft + dx) + 'px';
@@ -878,8 +891,12 @@
                     }
                 } else {
                     // Drop mode
-                    let clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX);
-                    let clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY);
+                    let clientX = e.clientX;
+                    let clientY = e.clientY;
+                    if (e.changedTouches && e.changedTouches.length > 0) {
+                        clientX = e.changedTouches[0].clientX;
+                        clientY = e.changedTouches[0].clientY;
+                    }
 
                     let targetArea = findDropTarget(clientX, clientY);
                     if (targetArea) {
