@@ -2497,7 +2497,7 @@
 
         for (const docSnap of snapshot.docs) {
           const d = docSnap.data();
-          if (!d.isActive) continue;
+          if (d.banned || d.isActive === false) continue;
 
           const d2 = await getDoc(doc(db, "scores_2048", docSnap.id));
           const s2 = d2.exists() ? d2.data().score : 0;
