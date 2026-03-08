@@ -173,22 +173,41 @@
             width: var(--card-width);
             height: var(--card-height);
             border-radius: var(--card-radius);
-            background: var(--card-bg);
+            background: #ffffff;
             position: absolute;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15), 0 1px 2px rgba(0, 0, 0, 0.1);
             cursor: pointer;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 5px;
+            padding: 6px;
             user-select: none;
             touch-action: none;
-            transition: transform 0.2s, top 0.2s, left 0.2s, box-shadow 0.2s;
+            transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                box-shadow 0.2s cubic-bezier(0.2, 0.8, 0.2, 1),
+                top 0.2s, left 0.2s;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            /* Subtle rim light */
+        }
+
+        .card:hover:not(.face-down):not(.dragging) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .card.face-down {
-            background: var(--card-back);
-            border: 4px solid #fff;
+            /* Premium blue geometric pattern back */
+            background-color: #1a4da0;
+            background-image: linear-gradient(30deg, #1e56b3 12%, transparent 12.5%, transparent 87%, #1e56b3 87.5%, #1e56b3),
+                linear-gradient(150deg, #1e56b3 12%, transparent 12.5%, transparent 87%, #1e56b3 87.5%, #1e56b3),
+                linear-gradient(30deg, #1e56b3 12%, transparent 12.5%, transparent 87%, #1e56b3 87.5%, #1e56b3),
+                linear-gradient(150deg, #1e56b3 12%, transparent 12.5%, transparent 87%, #1e56b3 87.5%, #1e56b3),
+                linear-gradient(60deg, #2465d3 25%, transparent 25.5%, transparent 75%, #2465d3 75%, #2465d3),
+                linear-gradient(60deg, #2465d3 25%, transparent 25.5%, transparent 75%, #2465d3 75%, #2465d3);
+            background-size: 20px 35px;
+            background-position: 0 0, 0 0, 10px 18px, 10px 18px, 0 0, 10px 18px;
+            border: 3px solid #fff;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .card.face-down .card-content {
@@ -196,25 +215,30 @@
         }
 
         .card.red {
-            color: var(--red);
+            color: #e53935;
+            /* Crisp material red */
         }
 
         .card.black {
-            color: var(--black);
+            color: #212121;
+            /* Crisp off-black */
         }
 
         .card-top {
-            font-size: 20px;
-            font-weight: bold;
-            line-height: 1;
+            font-size: 21px;
+            font-weight: 800;
+            line-height: 0.8;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 20px;
+            width: 25px;
+            letter-spacing: -1.5px;
+            margin-top: 1px;
         }
 
         .card-suit {
-            font-size: 16px;
+            font-size: 19px;
+            margin-top: 2px;
         }
 
         .card-center {
@@ -222,40 +246,44 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 40px;
+            font-size: 48px;
+            opacity: 0.95;
         }
 
         .card-bottom {
-            font-size: 20px;
-            font-weight: bold;
-            line-height: 1;
+            font-size: 21px;
+            font-weight: 800;
+            line-height: 0.8;
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 20px;
+            width: 25px;
             align-self: flex-end;
             transform: rotate(180deg);
+            letter-spacing: -1.5px;
+            margin-bottom: 1px;
         }
 
         /* Interactions */
         .card.selected {
-            box-shadow: 0 0 0 3px #fbbc05, 0 10px 25px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 0 0 3px #fbbc05, 0 15px 30px rgba(0, 0, 0, 0.4);
             z-index: 100 !important;
-            transform: scale(1.05) translateY(-10px);
+            transform: translateY(-8px) scale(1.02);
+            border-color: #fbbc05;
         }
 
         .card.dragging {
-            box-shadow: 0 0 0 3px #fbbc05, 0 10px 25px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
             z-index: 9999 !important;
-            transform: scale(1.05) !important;
+            transform: scale(1.04) !important;
             transition: none !important;
             pointer-events: none;
             position: fixed !important;
-            /* Prevent blocking drop area calculation */
+            opacity: 0.95;
         }
 
         .card.highlight-target {
-            box-shadow: 0 0 0 3px #34a853 inset;
+            box-shadow: 0 0 0 4px #34a853 inset;
         }
 
         /* GAME OVER & WIN SCREENS */
@@ -1207,14 +1235,99 @@
                     el.classList.remove('face-down');
                     el.className = `card ${data.color}`;
 
-                    const v = values[data.valueIndex];
+                    const v = values[data.valueIndex]; // 'A', '2', ... 'J', 'Q', 'K'
                     const tops = el.querySelectorAll('.card-top span, .card-bottom span');
                     tops[0].textContent = v;
                     tops[1].textContent = data.suit;
                     tops[2].textContent = v;
                     tops[3].textContent = data.suit;
 
-                    el.querySelector('.card-center').textContent = data.suit;
+                    // Handle Royal Face Cards
+                    let centerEl = el.querySelector('.card-center');
+                    if (v === 'K') {
+                        // Symmetrical King with detailed crown and sword motif
+                        centerEl.innerHTML = `<svg width="55" height="85" viewBox="0 0 100 150">
+                            <rect width="100" height="150" fill="transparent" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                            <!-- Top Half -->
+                            <g>
+                                <path d="M 20 75 L 20 20 C 20 10, 80 10, 80 20 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 30 25 L 40 10 L 50 25 L 60 10 L 70 25 L 80 15 L 80 35 L 20 35 L 20 15 Z" fill="#f4b400"/>
+                                <circle cx="40" cy="10" r="4" fill="#e53935"/><circle cx="50" cy="25" r="4" fill="#1e56b3"/><circle cx="60" cy="10" r="4" fill="#e53935"/>
+                                <circle cx="50" cy="45" r="12" fill="#ffebd2"/>
+                                <path d="M 45 42 L 55 42 M 50 50 C 47 50, 45 53, 50 53 C 55 53, 53 50, 50 50" stroke="#000" stroke-width="1.5" fill="none"/>
+                                <path d="M 25 75 L 35 45 L 65 45 L 75 75 Z" fill="#f4b400"/>
+                                <path d="M 50 45 L 50 75" stroke="#fff" stroke-width="2"/>
+                            </g>
+                            <!-- Bottom Half (Mirrored) -->
+                            <g transform="translate(100, 150) rotate(180)">
+                                <path d="M 20 75 L 20 20 C 20 10, 80 10, 80 20 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 30 25 L 40 10 L 50 25 L 60 10 L 70 25 L 80 15 L 80 35 L 20 35 L 20 15 Z" fill="#f4b400"/>
+                                <circle cx="40" cy="10" r="4" fill="#e53935"/><circle cx="50" cy="25" r="4" fill="#1e56b3"/><circle cx="60" cy="10" r="4" fill="#e53935"/>
+                                <circle cx="50" cy="45" r="12" fill="#ffebd2"/>
+                                <path d="M 45 42 L 55 42 M 50 50 C 47 50, 45 53, 50 53 C 55 53, 53 50, 50 50" stroke="#000" stroke-width="1.5" fill="none"/>
+                                <path d="M 25 75 L 35 45 L 65 45 L 75 75 Z" fill="#f4b400"/>
+                                <path d="M 50 45 L 50 75" stroke="#fff" stroke-width="2"/>
+                            </g>
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                        </svg>`;
+                    } else if (v === 'Q') {
+                        // Symmetrical Queen with rounded crown and flower motif
+                        centerEl.innerHTML = `<svg width="55" height="85" viewBox="0 0 100 150">
+                            <rect width="100" height="150" fill="transparent" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                            <!-- Top Half -->
+                            <g>
+                                <path d="M 20 75 L 20 25 C 20 15, 80 15, 80 25 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 30 25 C 30 10, 50 10, 50 25 C 50 10, 70 10, 70 25 L 80 25 L 80 35 L 20 35 L 20 25 Z" fill="#f4b400"/>
+                                <circle cx="30" cy="15" r="4" fill="#1e56b3"/><circle cx="50" cy="15" r="4" fill="#e53935"/><circle cx="70" cy="15" r="4" fill="#1e56b3"/>
+                                <circle cx="50" cy="45" r="10" fill="#ffebd2"/>
+                                <path d="M 46 43 L 54 43 M 48 49 C 48 51, 52 51, 52 49" stroke="#000" stroke-width="1" fill="none"/>
+                                <path d="M 35 75 C 35 55, 65 55, 65 75 Z" fill="#fff"/>
+                                <circle cx="50" cy="65" r="6" fill="#e53935"/>
+                            </g>
+                            <!-- Bottom Half (Mirrored) -->
+                            <g transform="translate(100, 150) rotate(180)">
+                                <path d="M 20 75 L 20 25 C 20 15, 80 15, 80 25 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 30 25 C 30 10, 50 10, 50 25 C 50 10, 70 10, 70 25 L 80 25 L 80 35 L 20 35 L 20 25 Z" fill="#f4b400"/>
+                                <circle cx="30" cy="15" r="4" fill="#1e56b3"/><circle cx="50" cy="15" r="4" fill="#e53935"/><circle cx="70" cy="15" r="4" fill="#1e56b3"/>
+                                <circle cx="50" cy="45" r="10" fill="#ffebd2"/>
+                                <path d="M 46 43 L 54 43 M 48 49 C 48 51, 52 51, 52 49" stroke="#000" stroke-width="1" fill="none"/>
+                                <path d="M 35 75 C 35 55, 65 55, 65 75 Z" fill="#fff"/>
+                                <circle cx="50" cy="65" r="6" fill="#e53935"/>
+                            </g>
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                        </svg>`;
+                    } else if (v === 'J') {
+                        // Symmetrical Jack with halberd / hat motif
+                        centerEl.innerHTML = `<svg width="55" height="85" viewBox="0 0 100 150">
+                            <rect width="100" height="150" fill="transparent" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                            <!-- Top Half -->
+                            <g>
+                                <path d="M 20 75 L 20 35 C 20 20, 80 20, 80 35 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 15 35 L 85 35 L 75 15 L 25 15 Z" fill="#212121"/>
+                                <path d="M 30 15 L 40 5 L 60 5 L 70 15 Z" fill="#e53935"/>
+                                <circle cx="50" cy="50" r="11" fill="#ffebd2"/>
+                                <path d="M 45 47 L 55 47 M 49 54 L 51 54" stroke="#000" stroke-width="1.5" fill="none"/>
+                                <path d="M 25 75 L 30 60 L 70 60 L 75 75 Z" fill="#f4b400"/>
+                            </g>
+                            <!-- Bottom Half (Mirrored) -->
+                            <g transform="translate(100, 150) rotate(180)">
+                                <path d="M 20 75 L 20 35 C 20 20, 80 20, 80 35 L 80 75 Z" fill="${data.color === 'red' ? '#e53935' : '#1e56b3'}"/>
+                                <path d="M 15 35 L 85 35 L 75 15 L 25 15 Z" fill="#212121"/>
+                                <path d="M 30 15 L 40 5 L 60 5 L 70 15 Z" fill="#e53935"/>
+                                <circle cx="50" cy="50" r="11" fill="#ffebd2"/>
+                                <path d="M 45 47 L 55 47 M 49 54 L 51 54" stroke="#000" stroke-width="1.5" fill="none"/>
+                                <path d="M 25 75 L 30 60 L 70 60 L 75 75 Z" fill="#f4b400"/>
+                            </g>
+                            <line x1="0" y1="75" x2="100" y2="75" stroke="${data.color === 'red' ? '#e53935' : '#212121'}" stroke-width="3"/>
+                        </svg>`;
+                    } else if (v === 'A') {
+                        // Giant Ace
+                        centerEl.innerHTML = `<span style="font-size: 64px;">${data.suit}</span>`;
+                    } else {
+                        // Standard number cards
+                        centerEl.textContent = data.suit;
+                    }
+
                 } else {
                     el.className = 'card face-down';
                 }
