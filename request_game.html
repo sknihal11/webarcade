@@ -285,21 +285,24 @@
             const list = document.getElementById("pastRequestsList");
             list.innerHTML = "Loading your requests...";
             try {
+                // Fix: Fetch without orderBy to avoid Composite Index errors, then sort locally
                 const q = query(
                     collection(db, "game_requests"),
-                    where("uid", "==", currentUser.uid),
-                    orderBy("createdAt", "desc")
+                    where("uid", "==", currentUser.uid)
                 );
                 const snap = await getDocs(q);
 
+                let requestsArray = [];
+                snap.forEach(d => requestsArray.push(d.data()));
+                requestsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
                 list.innerHTML = "";
-                if (snap.empty) {
+                if (requestsArray.length === 0) {
                     list.innerHTML = "<p>You haven't made any requests yet.</p>";
                     return;
                 }
 
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
+                requestsArray.forEach(data => {
                     const status = data.status || 'pending';
                     const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Unknown date';
                     const badgeClass = status === 'replied' ? 'replied' : 'pending';
@@ -327,53 +330,7 @@
                 });
             } catch (error) {
                 console.error("Error loading past requests:", error);
-
-                // If index is missing, fallback to unordered query temporarily
-                if (error.message.includes("index")) {
-                    console.log("Falling back to un-ordered query due to missing index");
-                    try {
-                        const fallbackQ = query(collection(db, "game_requests"), where("uid", "==", currentUser.uid));
-                        const snap = await getDocs(fallbackQ);
-                        let requestsArray = [];
-                        snap.forEach(d => requestsArray.push(d.data()));
-                        // Sort locally
-                        requestsArray.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
-
-                        list.innerHTML = "";
-                        if (requestsArray.length === 0) list.innerHTML = "<p>You haven't made any requests yet.</p>";
-
-                        requestsArray.forEach(data => {
-                            const status = data.status || 'pending';
-                            const date = data.createdAt ? data.createdAt.toDate().toLocaleDateString() : 'Unknown date';
-                            const badgeClass = status === 'replied' ? 'replied' : 'pending';
-
-                            let html = `
-                                <div class="req-card">
-                                    <div class="req-title">${data.gameTitle}</div>
-                                    <div class="req-status">
-                                        <span class="req-badge ${badgeClass}">${status}</span> • ${date}
-                                    </div>
-                                    <p style="margin-bottom: 0; font-size: 0.95rem; color: #fff;">${data.description || 'No description provided.'}</p>
-                            `;
-
-                            if (status === 'replied' && data.replyText) {
-                                html += `
-                                    <div class="req-reply">
-                                        <div class="req-reply-title">Admin Reply</div>
-                                        <div>${data.replyText}</div>
-                                    </div>
-                                `;
-                            }
-
-                            html += `</div>`;
-                            list.innerHTML += html;
-                        });
-                    } catch (e2) {
-                        list.innerHTML = "Failed to load requests.";
-                    }
-                } else {
-                    list.innerHTML = "Failed to load requests.";
-                }
+                list.innerHTML = "Failed to load requests.";
             }
         }
 

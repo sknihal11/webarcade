@@ -1886,13 +1886,18 @@
 
           if (!activeSessions.includes(deviceId)) {
             if (activeSessions.length >= maxSessions) {
-              throw new Error(`Session limit reached. Maximum ${maxSessions} devices allowed. Please logout from another device.`);
+              activeSessions.shift();
+              activeSessions.push(deviceId);
+              await updateDoc(userDocRef, {
+                activeSessions: activeSessions,
+                lastActivity: new Date()
+              });
+            } else {
+              await updateDoc(userDocRef, {
+                activeSessions: arrayUnion(deviceId),
+                lastActivity: new Date()
+              });
             }
-
-            await updateDoc(userDocRef, {
-              activeSessions: arrayUnion(deviceId),
-              lastActivity: new Date()
-            });
           } else {
             await updateDoc(userDocRef, {
               lastActivity: new Date()
@@ -1906,6 +1911,19 @@
               currentGameSession: null
             });
           }
+        } else {
+          await setDoc(userDocRef, {
+            username: currentUser.displayName || "Player",
+            usernameLower: (currentUser.displayName || "Player").toLowerCase(),
+            email: currentUser.email,
+            createdAt: new Date(),
+            best2048: 0,
+            bestFlappy: 0,
+            activeSessions: [deviceId],
+            maxSessions: 2,
+            currentGameSession: null,
+            lastActivity: new Date()
+          });
         }
       } catch (error) {
         console.error("Session registration error:", error);

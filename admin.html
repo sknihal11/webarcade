@@ -404,7 +404,6 @@
                     <td style="padding:1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
                         <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetUserData('${docSnap.id}')">Reset Scores</button>
                         <button class="btn ${data.banned ? 'btn-primary' : 'btn-secondary'}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="toggleBanUser('${docSnap.id}', ${data.banned ? true : false})">${data.banned ? 'Unban' : 'Ban'}</button>
-                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="deleteUser('${docSnap.id}')">Delete</button>
                     </td>
                   </tr>`;
                 });
@@ -438,17 +437,6 @@
                     loadUsers();
                 } catch (e) {
                     alert(`Error attempting to ${action} user: ` + e.message);
-                }
-            }
-        };
-
-        window.deleteUser = async (id) => {
-            if (confirm("Are you sure you want to completely DELETE this user? This action cannot be undone.")) {
-                try {
-                    await deleteDoc(doc(db, "users", id));
-                    loadUsers();
-                } catch (e) {
-                    alert("Error deleting user: " + e.message);
                 }
             }
         };

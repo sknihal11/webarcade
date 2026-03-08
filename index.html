@@ -1215,13 +1215,33 @@
       const ref = doc(db, "users", userId);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        const { activeSessions = [], maxSessions = 2 } = snap.data();
+        let { activeSessions = [], maxSessions = 2 } = snap.data();
         if (!activeSessions.includes(deviceId)) {
-          if (activeSessions.length >= maxSessions) throw new Error(`Session limit reached. Max ${maxSessions} devices allowed.`);
-          await updateDoc(ref, { activeSessions: arrayUnion(deviceId), lastActivity: new Date() });
+          if (activeSessions.length >= maxSessions) {
+            // Fix: Evict the oldest ghost session instead of locking the user out
+            activeSessions.shift();
+            activeSessions.push(deviceId);
+            await updateDoc(ref, { activeSessions, lastActivity: new Date() });
+          } else {
+            await updateDoc(ref, { activeSessions: arrayUnion(deviceId), lastActivity: new Date() });
+          }
         } else {
           await updateDoc(ref, { lastActivity: new Date() });
         }
+      } else {
+        // Fix: Auto-repair corrupted/orphaned profiles missing from Firestore
+        await setDoc(ref, {
+          username: currentUser.displayName || "Player",
+          usernameLower: (currentUser.displayName || "Player").toLowerCase(),
+          email: currentUser.email,
+          createdAt: new Date(),
+          best2048: 0,
+          bestFlappy: 0,
+          activeSessions: [deviceId],
+          maxSessions: 2,
+          currentGameSession: null,
+          lastActivity: new Date()
+        });
       }
     }
     async function unregisterSession(userId, deviceId) {
