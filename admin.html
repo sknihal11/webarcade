@@ -8,6 +8,7 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@500;700&display=swap"
         rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             /* Neon Cyberpunk Theme */
@@ -173,6 +174,44 @@
             justify-content: center;
             font-size: 1.5rem;
         }
+
+        /* Analytics Specific */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+
+        .chart-box {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-online {
+            background-color: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .status-offline {
+            background-color: var(--text-muted);
+        }
+
+        @media (max-width: 800px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
 
@@ -186,13 +225,30 @@
     </div>
 
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('announcements')">📢 Announcements</button>
+        <button class="tab active" onclick="switchTab('analytics')">📊 Analytics</button>
+        <button class="tab" onclick="switchTab('announcements')">📢 Announcements</button>
         <button class="tab" onclick="switchTab('requests')">📥 Game Requests</button>
         <button class="tab" onclick="switchTab('users')">👥 Users</button>
     </div>
 
+    <!-- Analytics Tab -->
+    <div id="analytics" class="panel active">
+        <h2>Dashboard Analytics</h2>
+        <p style="color:var(--text-secondary); margin-bottom:1.5rem;">Visual breakdown of platform traffic and game
+            popularity.</p>
+
+        <div class="charts-grid">
+            <div class="chart-box">
+                <canvas id="growthChart"></canvas>
+            </div>
+            <div class="chart-box" style="display:flex; justify-content:center; align-items:center;">
+                <canvas id="gameChart" style="max-height: 250px;"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Announcements Tab -->
-    <div id="announcements" class="panel active">
+    <div id="announcements" class="panel">
         <h2>Create Announcement</h2>
         <p style="color:var(--text-secondary); margin-bottom:1.5rem;">This will appear as a notification ticker for all
             users.</p>
@@ -256,6 +312,7 @@
             document.getElementById(tabId).classList.add('active');
             if (tabId === 'requests') loadRequests();
             if (tabId === 'users') loadUsers();
+            if (tabId === 'analytics') loadAnalytics();
         };
 
         // Auth Guard
@@ -263,11 +320,107 @@
             if (user && user.email === "nihalsk2022@gmail.com") {
                 document.getElementById("authCheck").style.display = "none";
                 loadCurrentAnnouncement();
+                loadAnalytics();
             } else {
                 alert("Access Denied. You must be an administrator.");
                 window.location.href = "index.html";
             }
         });
+
+        // Analytics Logic
+        let growthChartInstance = null;
+        let gameChartInstance = null;
+
+        window.loadAnalytics = async () => {
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                let total2048 = 0, totalFlappy = 0, totalSolitaire = 0;
+                let signupDates = {};
+
+                const now = new Date();
+                // Initialize last 7 days
+                for (let i = 6; i >= 0; i--) {
+                    const d = new Date(now);
+                    d.setDate(d.getDate() - i);
+                    signupDates[d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })] = 0;
+                }
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+
+                    // Game Stats
+                    if (data.best2048 > 0) total2048++;
+                    if (data.bestFlappy > 0) totalFlappy++;
+                    if (data.bestSolitaire > 0) totalSolitaire++;
+
+                    // Growth Stats
+                    if (data.createdAt) {
+                        const d = data.createdAt.toDate().toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                        if (signupDates[d] !== undefined) signupDates[d]++;
+                    }
+                });
+
+                // Theme Colors
+                Chart.defaults.color = '#aab8d2';
+                Chart.defaults.font.family = "'Space Grotesk', sans-serif";
+
+                // Render Growth Chart
+                const ctxGrowth = document.getElementById('growthChart').getContext('2d');
+                if (growthChartInstance) growthChartInstance.destroy();
+                growthChartInstance = new Chart(ctxGrowth, {
+                    type: 'line',
+                    data: {
+                        labels: Object.keys(signupDates),
+                        datasets: [{
+                            label: 'New Registrations (Last 7 Days)',
+                            data: Object.values(signupDates),
+                            borderColor: '#00f0ff',
+                            backgroundColor: 'rgba(0, 240, 255, 0.2)',
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#00f0ff',
+                            pointBorderColor: '#050814',
+                            pointHoverRadius: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: 'rgba(255, 255, 255, 0.05)' } },
+                            x: { grid: { display: false } }
+                        },
+                        plugins: { legend: { labels: { font: { weight: 'bold' } } } }
+                    }
+                });
+
+                // Render Game Popularity Chart
+                const ctxGame = document.getElementById('gameChart').getContext('2d');
+                if (gameChartInstance) gameChartInstance.destroy();
+                gameChartInstance = new Chart(ctxGame, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['2048', 'Flappy Bird', 'Solitaire', 'Ludo (Defaulted)'],
+                        datasets: [{
+                            data: [total2048, totalFlappy, totalSolitaire, snap.size],
+                            backgroundColor: ['#f59e0b', '#22c55e', '#ef4444', '#3b82f6'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: '70%',
+                        plugins: {
+                            legend: { position: 'right' },
+                            title: { display: true, text: 'Active Players per Game', color: '#fff', font: { size: 16 } }
+                        }
+                    }
+                });
+
+            } catch (e) {
+                console.error("Analytics Error: ", e);
+            }
+        };
 
         // Announcements Logic
         let currentAnnId = null;
@@ -390,15 +543,42 @@
                 let html = `<table style="width:100%; text-align:left; border-collapse:collapse; background:rgba(0,0,0,0.2); border-radius:8px;">
                   <tr style="border-bottom:1px solid rgba(255,255,255,0.1); background:rgba(255,255,255,0.05);">
                     <th style="padding:1rem">Name</th>
+                    <th style="padding:1rem">Status</th>
                     <th style="padding:1rem">Best 2048</th>
                     <th style="padding:1rem">Best Flappy</th>
                     <th style="padding:1rem">Action</th>
                   </tr>`;
-                snap.forEach(docSnap => {
-                    const data = docSnap.data();
+
+                let usersArr = [];
+                snap.forEach(d => usersArr.push({ ...d.data(), id: d.id }));
+                // Sort by last activity roughly
+                usersArr.sort((a, b) => (b.lastActivity?.seconds || 0) - (a.lastActivity?.seconds || 0));
+
+                usersArr.forEach(data => {
                     const name = data.username || data.displayName || data.name || "Unknown";
+
+                    let isOnline = false;
+                    let lastActiveText = "Never";
+                    if (data.lastActivity) {
+                        const dateObj = data.lastActivity.toDate();
+                        lastActiveText = dateObj.toLocaleDateString() + " " + dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                        // Consider online if active sessions exist and last activity was within last 1 hour
+                        if (data.activeSessions && data.activeSessions.length > 0) {
+                            const diffMinutes = (new Date() - dateObj) / (1000 * 60);
+                            if (diffMinutes < 60) isOnline = true;
+                        }
+                    }
+
                     html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
-                    <td style="padding:1rem">${name}</td>
+                    <td style="padding:1rem">
+                        <div style="font-weight:bold">${name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-muted)">${data.email}</div>
+                    </td>
+                    <td style="padding:1rem; font-size:0.85rem;">
+                        <span class="status-dot ${isOnline ? 'status-online' : 'status-offline'}"></span>
+                        <span style="color:${isOnline ? 'var(--success)' : 'var(--text-muted)'}">${isOnline ? 'Online' : 'Offline'}</span><br>
+                        <span style="font-size:0.7rem; color:var(--text-muted)">Seen: ${lastActiveText}</span>
+                    </td>
                     <td style="padding:1rem">${data.best2048 || 0}</td>
                     <td style="padding:1rem">${data.bestFlappy || 0}</td>
                     <td style="padding:1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
