@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Retro Snake - WebArcade</title>
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-0000000000000000"
+        crossorigin="anonymous"></script>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: rgba(30, 41, 59, 0.8);
+            --primary: #0f0;
+            --text-main: #fff;
+            --text-muted: #94a3b8;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg);
+            color: var(--text-main);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .header {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .score-box {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid var(--primary);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        }
+
+        #gameCanvas {
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid var(--primary);
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.2);
+            image-rendering: pixelated;
+        }
+
+        /* Mobile Controls */
+        .controls {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 80px 80px 80px;
+            grid-template-rows: 80px 80px;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        @media (min-width: 768px) {
+            .controls {
+                display: none;
+            }
+
+            /* Hide on PC */
+        }
+
+        .d-pad-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(0, 255, 0, 0.3);
+            border-radius: 50%;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: var(--primary);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .d-pad-btn:active {
+            background: rgba(0, 255, 0, 0.3);
+            transform: scale(0.95);
+        }
+
+        #btnUp {
+            grid-column: 2;
+            grid-row: 1;
+        }
+
+        #btnLeft {
+            grid-column: 1;
+            grid-row: 2;
+        }
+
+        #btnRight {
+            grid-column: 3;
+            grid-row: 2;
+        }
+
+        #btnDown {
+            grid-column: 2;
+            grid-row: 2;
+        }
+
+        /* Overlays */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        h1 {
+            font-size: 48px;
+            color: var(--primary);
+            text-shadow: 0 0 20px var(--primary);
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            text-align: center;
+        }
+
+        .btn {
+            background: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            font-family: inherit;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+            margin-bottom: 15px;
+        }
+
+        .btn:hover {
+            background: var(--primary);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.6);
+        }
+
+        .btn-secondary {
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background: var(--text-muted);
+            color: #000;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <a href="../blog.html" style="color:var(--text-muted); text-decoration:none; font-size: 18px;">← DASH</a>
+        <div class="score-box">SCORE: <span id="scoreDisplay">0</span></div>
+    </div>
+
+    <!-- Canvas Size set via JS for responsiveness constraints -->
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+    <div class="controls">
+        <div class="d-pad-btn" id="btnUp">▲</div>
+        <div class="d-pad-btn" id="btnLeft">◀</div>
+        <div class="d-pad-btn" id="btnRight">▶</div>
+        <div class="d-pad-btn" id="btnDown">▼</div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="startMenu" class="overlay">
+        <h1>Retro Snake</h1>
+        <button class="btn" onclick="startGame()">START GAME</button>
+        <button class="btn btn-secondary" onclick="window.location.href='../blog.html'">BACK TO ARCADE</button>
+    </div>
+
+    <!-- Game Over Menu -->
+    <div id="gameOverMenu" class="overlay hidden">
+        <h1 style="color: #ff3333; text-shadow: 0 0 20px #ff3333;">GAME OVER</h1>
+        <p style="font-size: 24px; margin-bottom: 20px;">FINAL SCORE: <span id="finalScore"
+                style="color:var(--primary); font-weight:bold;">0</span></p>
+
+        <!-- AdSense Banner Start -->
+        <div style="margin-bottom: 20px; width: 100%; max-width: 300px; text-align: center;">
+            <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-0000000000000000"
+                data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+            <script>
+                (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+        <!-- AdSense Banner End -->
+
+        <button class="btn" onclick="startGame()">PLAY AGAIN</button>
+        <button class="btn btn-secondary" onclick="window.location.href='../blog.html'">DASHBOARD</button>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const firestore = getFirestore(app);
+
+        // Core Game Constants
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const TILE_SIZE = 20;
+
+        // Auto-Scale Canvas for mobile while keeping grid logic sound
+        const resizeCanvas = () => {
+            let width = window.innerWidth * 0.95;
+            let height = window.innerHeight * 0.5;
+
+            if (width > 600) width = 600;
+            if (height > 600) height = 600;
+
+            // Snap to grid
+            canvas.width = Math.floor(width / TILE_SIZE) * TILE_SIZE;
+            canvas.height = Math.floor(height / TILE_SIZE) * TILE_SIZE;
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        const GRID_W = canvas.width / TILE_SIZE;
+        const GRID_H = canvas.height / TILE_SIZE;
+
+        let snake = [];
+        let dx = 0; let dy = 0;
+        let pDx = 0; let pDy = 0; // Prevent reversing into self immediately
+        let food = { x: 0, y: 0 };
+        let score = 0;
+        let gameLoop;
+        let fps = 10;
+
+        // Initialize Input Events
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowUp' && pDy === 0) { dx = 0; dy = -1; }
+            if (e.key === 'ArrowDown' && pDy === 0) { dx = 0; dy = 1; }
+            if (e.key === 'ArrowLeft' && pDx === 0) { dx = -1; dy = 0; }
+            if (e.key === 'ArrowRight' && pDx === 0) { dx = 1; dy = 0; }
+        });
+
+        const setDir = (x, y) => {
+            if (x !== 0 && pDx === 0) { dx = x; dy = 0; }
+            if (y !== 0 && pDy === 0) { dx = 0; dy = y; }
+        };
+
+        document.getElementById('btnUp').addEventListener('touchstart', (e) => { e.preventDefault(); setDir(0, -1); });
+        document.getElementById('btnDown').addEventListener('touchstart', (e) => { e.preventDefault(); setDir(0, 1); });
+        document.getElementById('btnLeft').addEventListener('touchstart', (e) => { e.preventDefault(); setDir(-1, 0); });
+        document.getElementById('btnRight').addEventListener('touchstart', (e) => { e.preventDefault(); setDir(1, 0); });
+
+        // Ensure mouse clicks work on mobile overlay buttons too
+        document.getElementById('btnUp').addEventListener('mousedown', () => setDir(0, -1));
+        document.getElementById('btnDown').addEventListener('mousedown', () => setDir(0, 1));
+        document.getElementById('btnLeft').addEventListener('mousedown', () => setDir(-1, 0));
+        document.getElementById('btnRight').addEventListener('mousedown', () => setDir(1, 0));
+
+        function spawnFood() {
+            food = {
+                x: Math.floor(Math.random() * (canvas.width / TILE_SIZE)),
+                y: Math.floor(Math.random() * (canvas.height / TILE_SIZE))
+            };
+            // Check if spawned on snake
+            for (let part of snake) {
+                if (part.x === food.x && part.y === food.y) return spawnFood();
+            }
+        }
+
+        window.startGame = () => {
+            document.getElementById('startMenu').classList.add('hidden');
+            document.getElementById('gameOverMenu').classList.add('hidden');
+
+            const startX = Math.floor((canvas.width / TILE_SIZE) / 2);
+            const startY = Math.floor((canvas.height / TILE_SIZE) / 2);
+
+            snake = [
+                { x: startX, y: startY },
+                { x: startX - 1, y: startY },
+                { x: startX - 2, y: startY }
+            ];
+
+            dx = 1; dy = 0;
+            pDx = 1; pDy = 0;
+            score = 0;
+            fps = 10;
+            document.getElementById('scoreDisplay').innerText = score;
+
+            spawnFood();
+            if (gameLoop) clearTimeout(gameLoop);
+            loop();
+        };
+
+        async function triggerGameOver() {
+            clearTimeout(gameLoop);
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('gameOverMenu').classList.remove('hidden');
+
+            if (auth.currentUser) {
+                try {
+                    const scoreRef = doc(firestore, "scores_snake", auth.currentUser.uid);
+                    const scoreSnap = await getDoc(scoreRef);
+                    if (!scoreSnap.exists() || score > scoreSnap.data().score) {
+                        await setDoc(scoreRef, { score: score });
+                    }
+                } catch (e) {
+                    console.error("Score Save Error", e);
+                }
+            }
+        }
+
+        function loop() {
+            pDx = dx; pDy = dy;
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+
+            // Wall Collision Check (No wrapping initially, brutal classic)
+            if (head.x < 0 || head.x >= canvas.width / TILE_SIZE || head.y < 0 || head.y >= canvas.height / TILE_SIZE) {
+                return triggerGameOver();
+            }
+
+            // Self Collision
+            for (let i = 0; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) return triggerGameOver();
+            }
+
+            snake.unshift(head);
+
+            // Food Check
+            if (head.x === food.x && head.y === food.y) {
+                score += 10;
+                document.getElementById('scoreDisplay').innerText = score;
+                fps = Math.min(25, fps + 0.5); // Speed up slightly
+                spawnFood();
+            } else {
+                snake.pop(); // Remove tail
+            }
+
+            render();
+            gameLoop = setTimeout(loop, 1000 / fps);
+        }
+
+        function render() {
+            // Draw BG
+            ctx.fillStyle = 'rgba(0,0,0,0.8)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Food
+            ctx.fillStyle = '#f0f';
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = '#f0f';
+            ctx.beginPath();
+            ctx.arc(food.x * TILE_SIZE + TILE_SIZE / 2, food.y * TILE_SIZE + TILE_SIZE / 2, TILE_SIZE / 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.shadowBlur = 0; // Reset
+
+            // Draw Snake
+            for (let i = 0; i < snake.length; i++) {
+                // Head is brighter
+                ctx.fillStyle = i === 0 ? '#0f0' : '#080';
+                ctx.strokeStyle = '#000';
+
+                const sx = snake[i].x * TILE_SIZE;
+                const sy = snake[i].y * TILE_SIZE;
+
+                ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+                ctx.strokeRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            }
+        }
+    </script>
+</body>
+
+</html>

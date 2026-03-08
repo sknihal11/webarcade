@@ -1580,6 +1580,33 @@
 
       <div class="stat-card">
         <div class="stat-header">
+          <span class="stat-label">Pong High Score</span>
+          <span class="stat-icon">🏓</span>
+        </div>
+        <div class="stat-value" id="statScorePong">0</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Snake High Score</span>
+          <span class="stat-icon">🐍</span>
+        </div>
+        <div class="stat-value" id="statScoreSnake">0</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
+          <span class="stat-label">Tetris High Score</span>
+          <span class="stat-icon">🧱</span>
+        </div>
+        <div class="stat-value" id="statScoreTetris">0</div>
+        <div class="stat-change">&#x2197;&#xFE0F; Personal Best</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-header">
           <span class="stat-label">Total Rating</span>
           <span class="stat-icon">&#x1F31F;</span>
         </div>
@@ -1635,7 +1662,7 @@
           <div class="section-accent"></div>
           <h2 class="section-title">Available Games</h2>
         </div>
-        <span class="section-badge">4 Games</span>
+        <span class="section-badge" id="gamesCountBadge">9 Games</span>
       </div>
 
       <div class="games-grid">
@@ -1732,7 +1759,6 @@
           <div class="game-info">
             <div class="game-header">
               <h3 class="game-title">Ludo King</h3>
-              <span class="game-badge new">New</span>
             </div>
             <div class="game-stats">
               <div class="game-stat-item" style="color: var(--text-secondary);">
@@ -1743,6 +1769,149 @@
               <a href="games/ludo.html" class="play-btn" style="background:var(--multiplayer); color:#fff;"
                 onclick="event.stopPropagation()">
                 ▶ Play Ludo
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Neon Pong -->
+        <div class="game-card" onclick="window.location.href='games/pong.html'">
+          <div class="game-thumbnail-wrapper">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/f/f8/Pong.png" alt="Pong" class="game-thumbnail"
+              style="object-fit: contain; background: #000;">
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">Neon Pong</h3>
+              <span class="game-badge hot">Classic</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item">
+                🏆 Your Best: <strong id="gameScorePong">0</strong>
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/pong.html" class="play-btn" onclick="event.stopPropagation()">
+                ▶ Play Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- UNO Multiplayer -->
+        <div class="game-card multiplayer" onclick="window.location.href='games/multiplayer.html'">
+          <div class="game-thumbnail-wrapper">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/UNO_Logo.svg/1200px-UNO_Logo.svg.png"
+              alt="UNO" class="game-thumbnail" style="object-fit: contain; background: #cc0000; padding: 10px;">
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">UNO Online</h3>
+              <span class="game-badge new">Beta</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item" style="color: var(--text-secondary);">
+                👥 WebRTC Multiplayer
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/multiplayer.html" class="play-btn" style="background:var(--multiplayer); color:#fff;"
+                onclick="event.stopPropagation()">
+                ▶ Join Lobby
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Retro Snake -->
+        <div class="game-card" onclick="window.location.href='games/snake.html'">
+          <div class="game-thumbnail-wrapper">
+            <div class="game-thumbnail"
+              style="background: #111; display:flex; align-items:center; justify-content:center; font-size: 50px;">
+              🐍
+            </div>
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">Retro Snake</h3>
+              <span class="game-badge new">New</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item">
+                🏆 Your Best: <strong id="gameScoreSnake">0</strong>
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/snake.html" class="play-btn" onclick="event.stopPropagation()">
+                ▶ Play Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cyber Tetris -->
+        <div class="game-card" onclick="window.location.href='games/tetris.html'">
+          <div class="game-thumbnail-wrapper">
+            <div class="game-thumbnail"
+              style="background: #2a1b4d; display:flex; align-items:center; justify-content:center; font-size: 50px;">
+              🧱
+            </div>
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">Cyber Tetris</h3>
+              <span class="game-badge new">New</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item">
+                🏆 Your Best: <strong id="gameScoreTetris">0</strong>
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/tetris.html" class="play-btn" onclick="event.stopPropagation()">
+                ▶ Play Now
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tic-Tac-Toe -->
+        <div class="game-card multiplayer" onclick="window.location.href='games/tictactoe.html'">
+          <div class="game-thumbnail-wrapper">
+            <div class="game-thumbnail"
+              style="background: #002233; display:flex; align-items:center; justify-content:center; font-size: 50px; font-weight: bold; color: #00f3ff; font-family: monospace;">
+              X O X
+            </div>
+            <div class="game-overlay">
+              <button class="play-overlay-btn">▶</button>
+            </div>
+          </div>
+          <div class="game-info">
+            <div class="game-header">
+              <h3 class="game-title">Tic-Tac-Toe</h3>
+              <span class="game-badge new">New</span>
+            </div>
+            <div class="game-stats">
+              <div class="game-stat-item" style="color: var(--text-secondary);">
+                🤖 vs AI / Local
+              </div>
+            </div>
+            <div class="game-actions">
+              <a href="games/tictactoe.html" class="play-btn" style="background:var(--multiplayer); color:#fff;"
+                onclick="event.stopPropagation()">
+                ▶ Play Now
               </a>
             </div>
           </div>
@@ -1783,7 +1952,7 @@
         &copy; 2026 WebArcade | All Rights Reserved
       </div>
       <div class="footer-version">
-        Version 2.1
+        Version 2.2
       </div>
     </div>
   </footer>
@@ -2202,28 +2371,6 @@
     }
 
     // ============================================
-    // UPDATE USER STATS
-    // ============================================
-    function updateUserStats(score2048, scoreFlappy, scoreSolitaire, globalRank = null) {
-      const totalRating = ((score2048 || 0) * 0.01) + ((scoreFlappy || 0) * 0.1) + ((scoreSolitaire || 0) * 0.05);
-
-      if (elements.statScore2048) elements.statScore2048.textContent = score2048 || 0;
-      if (elements.statScoreFlappy) elements.statScoreFlappy.textContent = scoreFlappy || 0;
-      if (elements.statScoreSolitaire) elements.statScoreSolitaire.textContent = scoreSolitaire || 0;
-
-      if (elements.gameScore2048) elements.gameScore2048.textContent = score2048 || 0;
-      if (elements.gameScoreFlappy) elements.gameScoreFlappy.textContent = scoreFlappy || 0;
-      if (elements.gameScoreSolitaire) elements.gameScoreSolitaire.textContent = scoreSolitaire || 0;
-
-      if (elements.headerScore2048) elements.headerScore2048.textContent = score2048 || 0;
-      if (elements.headerScoreFlappy) elements.headerScoreFlappy.textContent = scoreFlappy || 0;
-      if (elements.headerScoreSolitaire) elements.headerScoreSolitaire.textContent = scoreSolitaire || 0;
-
-      if (elements.statTotalRating) elements.statTotalRating.textContent = totalRating.toFixed(2);
-      if (elements.statGlobalRank) elements.statGlobalRank.textContent = globalRank ? `#${globalRank}` : "-";
-    }
-
-    // ============================================
     // AUTH STATE LISTENER
     // ============================================
     onAuthStateChanged(auth, async (user) => {
@@ -2281,9 +2428,41 @@
             return;
           }
 
-          const score2048 = data.best2048 || 0;
-          const scoreFlappy = data.bestFlappy || 0;
-          const scoreSolitaire = data.bestSolitaire || 0;
+          const d2048 = await getDoc(doc(db, "scores_2048", user.uid));
+          const s2048 = d2048.exists() ? d2048.data().score : 0;
+          if (document.getElementById('statScore2048')) document.getElementById('statScore2048').innerText = s2048;
+          if (document.getElementById('gameScore2048')) document.getElementById('gameScore2048').innerText = s2048;
+
+          const df = await getDoc(doc(db, "scores_flappy", user.uid));
+          const sf = df.exists() ? df.data().score : 0;
+          if (document.getElementById('statScoreFlappy')) document.getElementById('statScoreFlappy').innerText = sf;
+          if (document.getElementById('gameScoreFlappy')) document.getElementById('gameScoreFlappy').innerText = sf;
+
+          const ds = await getDoc(doc(db, "scores_solitaire", user.uid));
+          const ss = ds.exists() ? ds.data().score : 0;
+          if (document.getElementById('statScoreSolitaire')) document.getElementById('statScoreSolitaire').innerText = ss;
+          if (document.getElementById('gameScoreSolitaire')) document.getElementById('gameScoreSolitaire').innerText = ss;
+
+          const dpong = await getDoc(doc(db, "scores_pong", user.uid));
+          const spong = dpong.exists() ? dpong.data().score : 0;
+          if (document.getElementById('statScorePong')) document.getElementById('statScorePong').innerText = spong;
+          if (document.getElementById('gameScorePong')) document.getElementById('gameScorePong').innerText = spong;
+
+          const dsnake = await getDoc(doc(db, "scores_snake", user.uid));
+          const ssnake = dsnake.exists() ? dsnake.data().score : 0;
+          if (document.getElementById('statScoreSnake')) document.getElementById('statScoreSnake').innerText = ssnake;
+          if (document.getElementById('gameScoreSnake')) document.getElementById('gameScoreSnake').innerText = ssnake;
+
+          const dtet = await getDoc(doc(db, "scores_tetris", user.uid));
+          const stet = dtet.exists() ? dtet.data().score : 0;
+          if (document.getElementById('statScoreTetris')) document.getElementById('statScoreTetris').innerText = stet;
+          if (document.getElementById('gameScoreTetris')) document.getElementById('gameScoreTetris').innerText = stet;
+
+          // Multiplier scaling:
+          // Using 2048 (x1), Flappy (x500), Solitaire (x100), Pong (x1000), Snake (x20), Tetris (x1)
+          const totalRating = s2048 + (sf * 500) + (ss * 100) + (spong * 1000) + (ssnake * 20) + stet;
+          if (elements.statTotalRating) elements.statTotalRating.innerText = totalRating.toLocaleString();
+
           const streakCount = data.streak || 1;
 
           document.getElementById('headerStreakVal').textContent = streakCount;
@@ -2298,8 +2477,6 @@
             elements.userName.classList.add(streakClass);
             elements.welcomeName.classList.add(streakClass);
           }
-
-          updateUserStats(score2048, scoreFlappy, scoreSolitaire);
         }
       } catch (error) {
         console.error("Error loading user data:", error);
@@ -2315,87 +2492,88 @@
     // ============================================
     async function loadLeaderboard() {
       try {
-        const usersSnapshot = await getDocs(collection(db, "users"));
-        const players = [];
+        const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
+        const leaderData = [];
 
-        usersSnapshot.forEach(docSnap => {
-          const data = docSnap.data();
-          const totalRating = ((data.best2048 || 0) * 0.01) + ((data.bestFlappy || 0) * 0.1) + ((data.bestSolitaire || 0) * 0.05);
+        for (const docSnap of snapshot.docs) {
+          const d = docSnap.data();
+          if (!d.isActive) continue;
 
-          if (totalRating > 0) {
-            // ---- FIX: use all available name fields as fallbacks ----
-            const displayName =
-              data.username ||
-              data.displayName ||
-              data.name ||
-              "Unknown";
+          const d2 = await getDoc(doc(db, "scores_2048", docSnap.id));
+          const s2 = d2.exists() ? d2.data().score : 0;
 
-            players.push({
-              uid: docSnap.id,
-              name: displayName,
-              rating: totalRating.toFixed(2),
-              best2048: data.best2048 || 0,
-              bestFlappy: data.bestFlappy || 0
+          const df = await getDoc(doc(db, "scores_flappy", docSnap.id));
+          const sf = df.exists() ? df.data().score : 0;
+
+          const ds = await getDoc(doc(db, "scores_solitaire", docSnap.id));
+          const ss = ds.exists() ? ds.data().score : 0;
+
+          const dp = await getDoc(doc(db, "scores_pong", docSnap.id));
+          const sp = dp.exists() ? dp.data().score : 0;
+
+          const dsn = await getDoc(doc(db, "scores_snake", docSnap.id));
+          const ssn = dsn.exists() ? dsn.data().score : 0;
+
+          const dt = await getDoc(doc(db, "scores_tetris", docSnap.id));
+          const st = dt.exists() ? dt.data().score : 0;
+
+          const rating = s2 + (sf * 500) + (ss * 100) + (sp * 1000) + (ssn * 20) + st;
+
+          if (rating > 0) {
+            leaderData.push({
+              id: docSnap.id,
+              name: d.name || 'Anonymous',
+              photoURL: d.photoURL || 'assets/img/default-avatar.png',
+              streak: d.streak || 0,
+              rating: rating
             });
           }
-        });
+        }
 
         // Sort by rating descending
-        players.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
+        leaderData.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
 
         // Find current user's rank
         if (currentUser) {
-          const userRankIndex = players.findIndex(p => p.uid === currentUser.uid);
+          const userRankIndex = leaderData.findIndex(p => p.id === currentUser.uid);
           if (userRankIndex !== -1) {
             elements.statGlobalRank.textContent = `#${userRankIndex + 1}`;
           }
         }
 
-        // Take only top 5
-        const top5 = players.slice(0, 5);
-
         elements.leaderboard.innerHTML = "";
 
-        if (top5.length === 0) {
-          elements.leaderboard.innerHTML = `
-        <div class="leaderboard-empty">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">👑</div>
-          <div>No players yet. Be the first champion!</div>
-        </div>
-      `;
-          return;
-        }
+        leaderData.forEach((player, index) => {
+          let rankDisplay = '';
+          if (index === 0) rankDisplay = '<span class="rank-badge rank-1">1</span>';
+          else if (index === 1) rankDisplay = '<span class="rank-badge rank-2">2</span>';
+          else if (index === 2) rankDisplay = '<span class="rank-badge rank-3">3</span>';
+          else rankDisplay = `<span class="rank-badge text-muted">${index + 1}</span>`;
 
-        top5.forEach((player, index) => {
-          const row = document.createElement('div');
-          row.className = 'leaderboard-row';
+          const item = document.createElement('div');
+          item.className = 'leaderboard-item fade-in';
+          item.style.animationDelay = `${index * 0.1}s`;
 
-          let rankBadge = '';
-          let rankClass = '';
-
-          if (index === 0) {
-            rankBadge = '🥇';
-            rankClass = 'gold';
-          } else if (index === 1) {
-            rankBadge = '🥈';
-            rankClass = 'silver';
-          } else if (index === 2) {
-            rankBadge = '🥉';
-            rankClass = 'bronze';
-          } else {
-            rankBadge = `#${index + 1}`;
-          }
-
-          row.innerHTML = `
-        <div class="rank-badge ${rankClass}">${rankBadge}</div>
-        <div class="player-info">
-          <div class="player-name">${player.name}</div>
-          <div class="player-stats">2048: ${player.best2048} | Flappy: ${player.bestFlappy}</div>
-        </div>
-        <div class="player-rating">${player.rating}</div>
-      `;
-
-          elements.leaderboard.appendChild(row);
+          item.innerHTML = `
+            <div>${rankDisplay}</div>
+            <div style="display:flex; align-items:center; gap:0.75rem;">
+              <div class="user-avatar" style="width:32px; height:32px; background:#111;">
+                <img src="${player.photoURL || 'assets/img/default-avatar.png'}" 
+                     style="width:100%; height:100%; border-radius:50%; object-fit:cover;"
+                     onerror="this.src='assets/img/default-avatar.png'">
+              </div>
+              <div style="display:flex; flex-direction:column;">
+                <div style="font-weight:600; font-size:0.9rem;">${player.name}</div>
+                <div style="font-size:0.75rem; color:var(--text-secondary);">
+                  Streak: ${player.streak} 🔥
+                </div>
+              </div>
+            </div>
+            <div style="text-align:right; font-family:'Orbitron', sans-serif; font-weight:700; color:var(--primary);">
+              ${parseFloat(player.rating).toLocaleString()}
+            </div>
+          `;
+          elements.leaderboard.appendChild(item);
         });
       } catch (error) {
         console.error("Error loading leaderboard:", error);
