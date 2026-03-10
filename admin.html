@@ -582,8 +582,8 @@
                     <td style="padding:1rem">${data.best2048 || 0}</td>
                     <td style="padding:1rem">${data.bestFlappy || 0}</td>
                     <td style="padding:1rem; display: flex; gap: 0.5rem; flex-wrap: wrap;">
-                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetUserData('${docSnap.id}')">Reset Scores</button>
-                        <button class="btn ${data.banned ? 'btn-primary' : 'btn-secondary'}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="toggleBanUser('${docSnap.id}', ${data.banned ? true : false})">${data.banned ? 'Unban' : 'Ban'}</button>
+                        <button class="btn btn-danger" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="resetUserData('${data.id}')">Reset Scores</button>
+                        <button class="btn ${data.banned ? 'btn-primary' : 'btn-secondary'}" style="padding: 0.4rem 0.8rem; font-size: 0.8rem;" onclick="toggleBanUser('${data.id}', ${data.banned ? true : false})">${data.banned ? 'Unban' : 'Ban'}</button>
                     </td>
                   </tr>`;
                 });

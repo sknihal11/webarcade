@@ -668,6 +668,7 @@
             let score = 0, moves = 0, timeSeconds = 0, timerInterval = null;
             let selectedNode = null; // { pileType, pileIndex, cardIndex }
             let domCards = {}; // id -> HTMLElement
+            let isAutoCompleting = false;
 
             window.showDifficultyModal = () => {
                 document.getElementById('difficultyModal').style.display = 'flex';
@@ -717,6 +718,7 @@
                 Object.values(domCards).forEach(el => el.remove());
                 domCards = {};
                 selectedNode = null;
+                isAutoCompleting = false;
 
                 // Build Deck
                 const storedDiff = difficulty;
@@ -1077,6 +1079,7 @@
                 }
                 moves++;
                 checkWin();
+                checkAutoComplete();
             }
 
             function getPile(type, index) {
@@ -1084,6 +1087,55 @@
                 if (type === 'f') return foundations[index];
                 if (type === 't') return tableau[index];
                 return [];
+            }
+
+            function autoCompleteSequence() {
+                let win = foundations.every(f => f.length === 13);
+                if (win) {
+                    isAutoCompleting = false;
+                    return;
+                }
+
+                let moved = false;
+
+                // Try waste first
+                if (waste.length > 0) {
+                    if (attemptAutoMoveToFoundation('waste', 0, waste.length - 1)) {
+                        moved = true;
+                    }
+                }
+
+                // Then try tableau
+                if (!moved) {
+                    for (let i = 0; i < 7; i++) {
+                        let pile = tableau[i];
+                        if (pile.length > 0) {
+                            if (attemptAutoMoveToFoundation('t', i, pile.length - 1)) {
+                                moved = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (moved) {
+                    setTimeout(autoCompleteSequence, 100);
+                } else {
+                    isAutoCompleting = false;
+                }
+            }
+
+            function checkAutoComplete() {
+                if (isAutoCompleting) return;
+                if (stock.length > 0) return; // Still cards in deck
+
+                // Ensure all remaining tableau cards are face up
+                let allFaceUp = tableau.every(pile => pile.every(c => c.faceUp));
+                if (!allFaceUp) return;
+
+                // Fire the auto-completion sequence
+                isAutoCompleting = true;
+                setTimeout(autoCompleteSequence, 500);
             }
 
             function checkWin() {

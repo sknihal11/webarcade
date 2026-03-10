@@ -408,10 +408,6 @@
       transition: transform var(--transition-base);
     }
 
-    .user-profile:hover .chevron {
-      transform: rotate(180deg);
-    }
-
     /* ============================================
    ANNOUNCEMENT BANNER
    ============================================ */
@@ -2429,32 +2425,32 @@
           }
 
           const d2048 = await getDoc(doc(db, "scores_2048", user.uid));
-          const s2048 = d2048.exists() ? d2048.data().score : 0;
+          const s2048 = d2048.exists() ? d2048.data().score : (data.best2048 || 0);
           if (document.getElementById('statScore2048')) document.getElementById('statScore2048').innerText = s2048;
           if (document.getElementById('gameScore2048')) document.getElementById('gameScore2048').innerText = s2048;
 
           const df = await getDoc(doc(db, "scores_flappy", user.uid));
-          const sf = df.exists() ? df.data().score : 0;
+          const sf = df.exists() ? df.data().score : (data.bestFlappy || 0);
           if (document.getElementById('statScoreFlappy')) document.getElementById('statScoreFlappy').innerText = sf;
           if (document.getElementById('gameScoreFlappy')) document.getElementById('gameScoreFlappy').innerText = sf;
 
           const ds = await getDoc(doc(db, "scores_solitaire", user.uid));
-          const ss = ds.exists() ? ds.data().score : 0;
+          const ss = ds.exists() ? ds.data().score : (data.bestSolitaire || 0);
           if (document.getElementById('statScoreSolitaire')) document.getElementById('statScoreSolitaire').innerText = ss;
           if (document.getElementById('gameScoreSolitaire')) document.getElementById('gameScoreSolitaire').innerText = ss;
 
           const dpong = await getDoc(doc(db, "scores_pong", user.uid));
-          const spong = dpong.exists() ? dpong.data().score : 0;
+          const spong = dpong.exists() ? dpong.data().score : (data.bestPong || 0);
           if (document.getElementById('statScorePong')) document.getElementById('statScorePong').innerText = spong;
           if (document.getElementById('gameScorePong')) document.getElementById('gameScorePong').innerText = spong;
 
           const dsnake = await getDoc(doc(db, "scores_snake", user.uid));
-          const ssnake = dsnake.exists() ? dsnake.data().score : 0;
+          const ssnake = dsnake.exists() ? dsnake.data().score : (data.bestSnake || 0);
           if (document.getElementById('statScoreSnake')) document.getElementById('statScoreSnake').innerText = ssnake;
           if (document.getElementById('gameScoreSnake')) document.getElementById('gameScoreSnake').innerText = ssnake;
 
           const dtet = await getDoc(doc(db, "scores_tetris", user.uid));
-          const stet = dtet.exists() ? dtet.data().score : 0;
+          const stet = dtet.exists() ? dtet.data().score : (data.bestTetris || 0);
           if (document.getElementById('statScoreTetris')) document.getElementById('statScoreTetris').innerText = stet;
           if (document.getElementById('gameScoreTetris')) document.getElementById('gameScoreTetris').innerText = stet;
 
@@ -2500,30 +2496,30 @@
           if (d.banned || d.isActive === false) continue;
 
           const d2 = await getDoc(doc(db, "scores_2048", docSnap.id));
-          const s2 = d2.exists() ? d2.data().score : 0;
+          const s2 = d2.exists() ? d2.data().score : (d.best2048 || 0);
 
           const df = await getDoc(doc(db, "scores_flappy", docSnap.id));
-          const sf = df.exists() ? df.data().score : 0;
+          const sf = df.exists() ? df.data().score : (d.bestFlappy || 0);
 
           const ds = await getDoc(doc(db, "scores_solitaire", docSnap.id));
-          const ss = ds.exists() ? ds.data().score : 0;
+          const ss = ds.exists() ? ds.data().score : (d.bestSolitaire || 0);
 
           const dp = await getDoc(doc(db, "scores_pong", docSnap.id));
-          const sp = dp.exists() ? dp.data().score : 0;
+          const sp = dp.exists() ? dp.data().score : (d.bestPong || 0);
 
           const dsn = await getDoc(doc(db, "scores_snake", docSnap.id));
-          const ssn = dsn.exists() ? dsn.data().score : 0;
+          const ssn = dsn.exists() ? dsn.data().score : (d.bestSnake || 0);
 
           const dt = await getDoc(doc(db, "scores_tetris", docSnap.id));
-          const st = dt.exists() ? dt.data().score : 0;
+          const st = dt.exists() ? dt.data().score : (d.bestTetris || 0);
 
           const rating = s2 + (sf * 500) + (ss * 100) + (sp * 1000) + (ssn * 20) + st;
 
           if (rating > 0) {
             leaderData.push({
               id: docSnap.id,
-              name: d.name || 'Anonymous',
-              photoURL: d.photoURL || 'assets/img/default-avatar.png',
+              name: d.username || d.displayName || d.name || 'Anonymous',
+              photoURL: d.photoURL || 'https://i.imgur.com/8Km9tLL.png',
               streak: d.streak || 0,
               rating: rating
             });
@@ -2543,37 +2539,42 @@
 
         elements.leaderboard.innerHTML = "";
 
-        leaderData.forEach((player, index) => {
+        leaderData.slice(0, 5).forEach((player, index) => {
           let rankDisplay = '';
           if (index === 0) rankDisplay = '<span class="rank-badge rank-1">1</span>';
           else if (index === 1) rankDisplay = '<span class="rank-badge rank-2">2</span>';
           else if (index === 2) rankDisplay = '<span class="rank-badge rank-3">3</span>';
-          else rankDisplay = `<span class="rank-badge text-muted">${index + 1}</span>`;
+          else rankDisplay = `<span style="color:var(--text-muted); font-weight:bold; margin-right:1rem; width:24px; display:inline-block; text-align:center;">${index + 1}</span>`;
 
-          const item = document.createElement('div');
-          item.className = 'leaderboard-item fade-in';
-          item.style.animationDelay = `${index * 0.1}s`;
+          const pItem = document.createElement("div");
+          pItem.className = "leaderboard-item fade-in";
+          pItem.style.display = "flex";
+          pItem.style.alignItems = "center";
+          pItem.style.justifyContent = "space-between";
+          pItem.style.padding = "1rem 0";
+          pItem.style.borderBottom = index === 4 ? "none" : "1px solid var(--border-subtle)";
 
-          item.innerHTML = `
-            <div>${rankDisplay}</div>
-            <div style="display:flex; align-items:center; gap:0.75rem;">
-              <div class="user-avatar" style="width:32px; height:32px; background:#111;">
-                <img src="${player.photoURL || 'assets/img/default-avatar.png'}" 
-                     style="width:100%; height:100%; border-radius:50%; object-fit:cover;"
-                     onerror="this.src='assets/img/default-avatar.png'">
-              </div>
-              <div style="display:flex; flex-direction:column;">
-                <div style="font-weight:600; font-size:0.9rem;">${player.name}</div>
-                <div style="font-size:0.75rem; color:var(--text-secondary);">
-                  Streak: ${player.streak} 🔥
+          pItem.innerHTML = `
+            <div style="min-width:40px; text-align:center;">${rankDisplay}</div>
+            <div style="display:flex; align-items:center; gap:1rem; flex:1;">
+                <img src="${player.photoURL || 'https://i.imgur.com/8Km9tLL.png'}" 
+                     class="player-avatar" 
+                     onerror="this.src='https://i.imgur.com/8Km9tLL.png'">
+                <div style="display:flex; flex-direction:column;">
+                  <span class="player-name">
+                    ${player.name}
+                    ${player.id === (currentUser ? currentUser.uid : null) ? ' <span style="color:var(--accent); font-size:0.8rem;">(You)</span>' : ''}
+                  </span>
+                  <span style="font-size:0.75rem; color:var(--text-muted);">
+                    Total Rating: ${player.rating.toLocaleString()}
+                  </span>
                 </div>
-              </div>
             </div>
             <div style="text-align:right; font-family:'Orbitron', sans-serif; font-weight:700; color:var(--primary);">
               ${parseFloat(player.rating).toLocaleString()}
             </div>
           `;
-          elements.leaderboard.appendChild(item);
+          elements.leaderboard.appendChild(pItem);
         });
       } catch (error) {
         console.error("Error loading leaderboard:", error);
@@ -2599,6 +2600,15 @@
     window.closeDrawer = () => {
       elements.drawer.classList.remove('open');
       elements.drawerOverlay.classList.remove('active');
+    };
+
+    window.logoutUser = async () => {
+      try {
+        await signOut(auth);
+        window.location.href = "index.html";
+      } catch (e) {
+        console.error("Logout Error: ", e);
+      }
     };
 
     // ============================================
