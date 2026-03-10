@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -40,9 +40,9 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.8.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
 const app = initializeApp({ apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA", authDomain: "webarcade-d4c3d.firebaseapp.com", projectId: "webarcade-d4c3d" });
 const auth = getAuth(app);
@@ -97,7 +97,13 @@ window.leaveRoom = async () => {
     const snap = await getDoc(doc(db, "matches", currentRoom));
     if(snap.exists()){
         const p = snap.data().players.filter(x => x.uid !== user.uid);
-        if(p.length === 0) /* delete? */; else await updateDoc(doc(db, "matches", currentRoom), { players: p });
+        const roomRef = doc(db, "matches", currentRoom);
+        if(p.length === 0) {
+            // No players left: clean up the match document
+            await deleteDoc(roomRef);
+        } else {
+            await updateDoc(roomRef, { players: p });
+        }
     }
     location.reload();
 };

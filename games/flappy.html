@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -451,16 +451,17 @@
     const BIRD_HITBOX_MARGIN_LEFT = 2;
     const BIRD_HITBOX_MARGIN_RIGHT = 2;
 
-    /* --- ASSET PRELOADER --- */
+    /* --- ASSET PRELOADER ---
+       Use CDN-hosted sprites so the game works without local assets. */
     const assets = {
-      bg: '../assets/img/flappy/bg.png',
-      ground: '../assets/img/flappy/ground.png',
-      msg: '../assets/img/flappy/msg.png',
-      pipe: '../assets/img/flappy/pipe.png',
-      bird1: '../assets/img/flappy/bird1.png',
-      bird2: '../assets/img/flappy/bird2.png',
-      bird3: '../assets/img/flappy/bird3.png',
-      over: '../assets/img/flappy/over.png'
+      bg: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/background-day.png',
+      ground: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/base.png',
+      msg: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/message.png',
+      pipe: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/pipe-green.png',
+      bird1: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/bluebird-downflap.png',
+      bird2: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/bluebird-midflap.png',
+      bird3: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/bluebird-upflap.png',
+      over: 'https://raw.githubusercontent.com/samuelcust/flappy-bird-assets/master/sprites/gameover.png'
     };
 
     const loader = document.getElementById("loader");
