@@ -1576,6 +1576,178 @@
         transform: rotate(360deg);
       }
     }
+
+    /* ── HEADER NAV ── */
+    .header-nav {
+      display: flex;
+      gap: clamp(15px, 3vw, 30px);
+      align-items: center;
+    }
+
+    .nav-link {
+      font-family: 'Space Grotesk', sans-serif;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: clamp(12px, 1.5vw, 15px);
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      position: relative;
+      transition: color 0.3s ease;
+      text-transform: uppercase;
+    }
+
+    .nav-link:hover,
+    .nav-link.active {
+      color: var(--text-primary);
+      text-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .nav-link::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 0%;
+      height: 2px;
+      background: var(--accent-primary);
+      transition: width 0.3s ease;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .nav-link:hover::after,
+    .nav-link.active::after {
+      width: 100%;
+    }
+
+    @media (max-width: 900px) {
+      .header-nav {
+        display: none;
+      }
+    }
+
+    /* ── FOOTER ── */
+    .cyber-footer {
+      position: relative;
+      z-index: 5;
+      background: rgba(4, 5, 15, 0.95);
+      border-top: 1px solid var(--border-medium);
+      padding: 60px 5% 30px;
+      margin-top: 80px;
+      overflow: hidden;
+    }
+
+    .cyber-footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent-primary), var(--accent-secondary), transparent);
+    }
+
+    .footer-content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: left;
+    }
+
+    .footer-brand-info p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      line-height: 1.6;
+      margin-top: 15px;
+      max-width: 300px;
+    }
+
+    .footer-links-col,
+    .footer-social-col {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .footer-links-col h3,
+    .footer-social-col h3 {
+      font-family: 'Orbitron', 'Inter', sans-serif;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .footer-links-col h3::after,
+    .footer-social-col h3::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 0;
+      width: 30px;
+      height: 2px;
+      background: var(--accent-secondary);
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .footer-links-col a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.95rem;
+      transition: color 0.3s, transform 0.3s;
+      width: fit-content;
+    }
+
+    .footer-links-col a:hover {
+      color: var(--accent-primary);
+      transform: translateX(5px);
+      text-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    .social-icons-row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .social-btn-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      background: var(--bg-card);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      color: var(--text-secondary);
+      transition: all 0.3s ease;
+    }
+
+    .social-btn-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .social-btn-link:hover {
+      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px var(--accent-glow);
+    }
+
+    .footer-bottom-bar {
+      text-align: center;
+      margin-top: 60px;
+      padding-top: 20px;
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      font-family: 'Orbitron', 'Inter', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.1em;
+    }
   </style>
 </head>
 
@@ -1594,10 +1766,17 @@
   <!-- Header -->
   <header id="header">
     <div class="header-container">
-      <a href="#" class="logo">
+      <a href="index.html" class="logo">
         <span class="logo-icon">&#x1F579;&#xFE0F;</span>
         <span>WebArcade</span>
       </a>
+
+      <nav class="header-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="blog.html" class="nav-link active">Games</a>
+        <a href="#" onclick="alert('Access Restricted'); return false;" class="nav-link"
+          style="opacity:0.5; pointer-events:none;">About Us</a>
+      </nav>
 
       <div class="header-actions">
         <div class="header-stats" id="headerStats">
@@ -1800,9 +1979,8 @@
         <!-- Flappy Bird -->
         <div class="game-card" onclick="window.location.href='games/flappy.html'">
           <div class="game-thumbnail-wrapper">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png"
-              alt="Flappy Bird" class="game-thumbnail">
+            <img src="https://upload.wikimedia.org/wikipedia/en/0/0a/Flappy_Bird_icon.png" alt="Flappy Bird"
+              class="game-thumbnail">
             <div class="game-overlay">
               <button class="play-overlay-btn">▶</button>
             </div>
@@ -2858,6 +3036,41 @@
       }
     });
   </script>
+
+  <!-- ── FOOTER ── -->
+  <footer class="cyber-footer">
+    <div class="footer-content-grid">
+      <div class="footer-brand-info">
+        <div class="logo"
+          style="font-size: 1.5rem; display: flex; align-items: center; gap: 0.75rem; font-family: 'Space Grotesk', sans-serif; font-weight: 800; color: white;">
+          <span class="logo-icon"
+            style="font-size: 2rem; color: var(--accent-primary);">&#x1F579;&#xFE0F;</span>WebArcade
+        </div>
+        <p>The ultimate retro arcade experience in the cyberpunk era. Play, compete, and conquer the leaderboards.</p>
+      </div>
+      <div class="footer-links-col">
+        <h3>Menu</h3>
+        <a href="index.html">Home</a>
+        <a href="blog.html">Games</a>
+        <a href="about.html">About Us</a>
+      </div>
+      <div class="footer-social-col">
+        <h3>Connect</h3>
+        <div class="social-icons-row">
+          <a href="https://www.instagram.com/sknihal11?igsh=MW9ybTA2dW4wNTl2cw==" target="_blank"
+            rel="noopener noreferrer" aria-label="Instagram" class="social-btn-link">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M12 2.163c3.204 0 3.584.012 4.85.07 1.366.062 2.633.344 3.608 1.319.975.975 1.257 2.242 1.319 3.608.058 1.266.069 1.646.069 4.85s-.012 3.584-.07 4.85c-.062 1.366-.344 2.633-1.319 3.608-.975.975-2.242 1.257-3.608 1.319-1.266.058-1.646.069-4.85.069s-3.584-.012-4.85-.069c-1.366-.062-2.633-.344-3.608-1.319-.975-.975-1.257-2.242-1.319-3.608-.058-1.266-.07-1.646-.07-4.85s.012-3.584.07-4.85c.062-1.366.344-2.633 1.319-3.608.975-.975 2.242-1.257 3.608-1.319 1.266-.058 1.646-.07 4.85-.07zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom-bar">
+      <p>&copy; 2026 WebArcade. All rights reserved.</p>
+    </div>
+  </footer>
 
 </body>
 
