@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hall of Fame | WebArcade</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet">
+  <style>
+    /* --- CSS VARIABLES --- */
+    :root {
+      --bg-primary: #05070a;
+      --bg-secondary: #0a0f1e;
+      --bg-tertiary: #141b2d;
+      --accent-primary: #00f0ff;
+      --accent-secondary: #b700ff;
+      --accent-glow: rgba(0, 240, 255, 0.4);
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --border-subtle: rgba(255, 255, 255, 0.05);
+      --border-medium: rgba(255, 255, 255, 0.1);
+      --gold: #fbbf24;
+      --silver: #94a3b8;
+      --bronze: #b45309;
+      --transition-base: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* --- ANIMATIONS --- */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes glow {
+      0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+      50% { box-shadow: 0 0 40px var(--accent-glow); }
+    }
+
+    /* --- HEADER --- */
+    .cyber-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 80px;
+      background: rgba(5, 7, 10, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border-medium);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 5%;
+    }
+
+    .logo {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: white;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .logo-icon {
+      font-size: 2rem;
+      color: var(--accent-primary);
+    }
+
+    .header-nav {
+      display: flex;
+      gap: 2rem;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      transition: color var(--transition-base);
+    }
+
+    .nav-link:hover, .nav-link.active {
+      color: var(--accent-primary);
+      text-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    /* --- MAIN CONTENT --- */
+    .main-container {
+      margin-top: 120px;
+      padding: 0 5% 100px;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .hero-section {
+      text-align: center;
+      margin-bottom: 4rem;
+      animation: fadeInUp 0.8s ease-out;
+    }
+
+    .hero-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(2.5rem, 6vw, 4.5rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      letter-spacing: 0.1em;
+    }
+
+    .hero-sub {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* --- CONTROLS --- */
+    .leaderboard-controls {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .filter-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      color: var(--text-secondary);
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      letter-spacing: 0.05em;
+    }
+
+    .filter-btn:hover, .filter-btn.active {
+      background: rgba(0, 240, 255, 0.1);
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+    }
+
+    /* --- LEADERBOARD LIST --- */
+    .leaderboard-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-medium);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+      animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    .leaderboard-table-header {
+      display: grid;
+      grid-template-columns: 80px 1fr 150px 150px;
+      padding: 1.5rem 2rem;
+      background: rgba(255, 255, 255, 0.02);
+      border-bottom: 1px solid var(--border-medium);
+      color: var(--text-muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.1em;
+    }
+
+    .leaderboard-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 150px 150px;
+      padding: 1.25rem 2rem;
+      align-items: center;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: all var(--transition-base);
+    }
+
+    .leaderboard-row:hover {
+      background: rgba(255, 255, 255, 0.03);
+      transform: scale(1.005);
+    }
+
+    .leaderboard-row.current-user {
+      background: rgba(0, 240, 255, 0.05);
+      border-left: 4px solid var(--accent-primary);
+    }
+
+    .rank-cell {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+    }
+
+    .player-cell {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+
+    .player-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      object-fit: cover;
+      border: 2px solid var(--border-medium);
+      background: var(--bg-tertiary);
+    }
+
+    .player-name {
+      font-weight: 700;
+      font-size: 1.1rem;
+    }
+
+    .streak-cell {
+      color: #ff4d4d;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .rating-cell {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 800;
+      font-size: 1.25rem;
+      color: var(--accent-primary);
+      text-align: right;
+    }
+
+    /* --- RANK BADGES --- */
+    .row-1 .rank-cell { color: var(--gold); text-shadow: 0 0 10px rgba(251, 191, 36, 0.5); }
+    .row-2 .rank-cell { color: var(--silver); text-shadow: 0 0 10px rgba(148, 163, 184, 0.5); }
+    .row-3 .rank-cell { color: var(--bronze); text-shadow: 0 0 10px rgba(180, 83, 9, 0.5); }
+
+    .row-1 .player-avatar { border-color: var(--gold); box-shadow: 0 0 15px rgba(251, 191, 36, 0.2); }
+    .row-2 .player-avatar { border-color: var(--silver); }
+    .row-3 .player-avatar { border-color: var(--bronze); }
+
+    /* --- STICKY USER BAR --- */
+    .user-rank-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 90px;
+      background: var(--bg-secondary);
+      border-top: 2px solid var(--accent-primary);
+      box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      padding: 0 10%;
+      transform: translateY(100%);
+      transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .user-rank-bar.active {
+      transform: translateY(0);
+    }
+
+    .user-rank-content {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* --- RESPONSIVE --- */
+    @media (max-width: 768px) {
+      .leaderboard-table-header, .leaderboard-row {
+        grid-template-columns: 60px 1fr 100px;
+      }
+      .streak-cell {
+        display: none;
+      }
+      .leaderboard-table-header :nth-child(3) { display: none; }
+      .hero-title { font-size: 3rem; }
+      .player-avatar { width: 40px; height: 40px; }
+      .nav-link { display: none; }
+      .nav-link.active { display: block; }
+    }
+
+    /* --- FOOTER --- */
+    footer {
+      padding: 3rem 2rem;
+      text-align: center;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border-subtle);
+      margin-top: 50px;
+    }
+
+    .loading-spinner {
+      margin: 5rem auto;
+      text-align: center;
+      font-family: 'Orbitron', sans-serif;
+      color: var(--accent-primary);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Header -->
+  <header class="cyber-header">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">🕹️</span>
+      <span>WebArcade</span>
+    </a>
+    <nav class="header-nav">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="blog.html" class="nav-link">Dashboard</a>
+      <a href="leaderboard.html" class="nav-link active">Leaderboard</a>
+      <a href="about.html" class="nav-link">About</a>
+    </nav>
+  </header>
+
+  <main class="main-container">
+    <!-- Hero -->
+    <section class="hero-section">
+      <h1 class="hero-title">HALL OF FAME</h1>
+      <p class="hero-sub">The elite performance records of the WebArcade community.</p>
+    </section>
+
+    <!-- Controls -->
+    <div class="leaderboard-controls">
+      <button class="filter-btn active" onclick="switchFilter('global')">GLOBAL RATING</button>
+      <button class="filter-btn" onclick="switchFilter('2048')">2048 SUPREMACY</button>
+      <button class="filter-btn" onclick="switchFilter('flappy')">FLAPPY MASTERS</button>
+    </div>
+
+    <!-- Leaderboard Card -->
+    <div class="leaderboard-card">
+      <div class="leaderboard-table-header">
+        <span>Rank</span>
+        <span>Player</span>
+        <span>🔥 Streak</span>
+        <span style="text-align: right;">Rating</span>
+      </div>
+      <div id="leaderboardListing">
+        <div class="loading-spinner">SYNCING WITH MAINFRAME...</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Sticky Bottom Bar -->
+  <div class="user-rank-bar" id="userRankBar">
+    <div class="user-rank-content">
+      <div style="display:flex; align-items:center; gap:1.5rem;">
+        <span class="rank-cell" id="myRank">#--</span>
+        <div class="player-cell">
+          <img src="" id="myAvatar" class="player-avatar">
+          <span class="player-name" id="myName">-</span>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:2rem;">
+        <div class="streak-cell">🔥 <span id="myStreak">0</span></div>
+        <div class="rating-cell" id="myRating">0</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>&copy; 2026 WebArcade. High scores computed via distributed neural nodes.</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import { getFirestore, collection, getDocs, doc, getDoc, query, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+      authDomain: "webarcade-d4c3d.firebaseapp.com",
+      projectId: "webarcade-d4c3d"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentFilter = 'global';
+    let allUsersData = [];
+    let currentUser = null;
+
+    const listEl = document.getElementById('leaderboardListing');
+
+    // UI elements for sticky bar
+    const userBar = document.getElementById('userRankBar');
+    const myRankEl = document.getElementById('myRank');
+    const myNameEl = document.getElementById('myName');
+    const myAvatarEl = document.getElementById('myAvatar');
+    const myStreakEl = document.getElementById('myStreak');
+    const myRatingEl = document.getElementById('myRating');
+
+    window.switchFilter = (type) => {
+      currentFilter = type;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if(btn.innerText.toLowerCase().includes(type)) btn.classList.add('active');
+        if(type === 'global' && btn.innerText.includes('GLOBAL')) btn.classList.add('active');
+      });
+      renderLeaderboard();
+    };
+
+    onAuthStateChanged(auth, u => {
+      currentUser = u;
+      loadData();
+    });
+
+    async function loadData() {
+      try {
+        const querySnapshot = await getDocs(query(collection(db, "users"), limit(100)));
+        const users = [];
+
+        for (const docSnap of querySnapshot.docs) {
+          const d = docSnap.data();
+          if (d.banned) continue;
+
+          // Fetch only 2048 and Flappy as requested
+          const d2048 = await getDoc(doc(db, "scores_2048", docSnap.id));
+          const s2048 = d2048.exists() ? d2048.data().score : (d.best2048 || 0);
+
+          const dFlappy = await getDoc(doc(db, "scores_flappy", docSnap.id));
+          const sFlappy = dFlappy.exists() ? dFlappy.data().score : (d.bestFlappy || 0);
+
+          const globalRating = s2048 + (sFlappy * 500);
+
+          users.push({
+            id: docSnap.id,
+            name: d.username || d.displayName || 'Anonymous',
+            avatar: d.photoURL || 'https://i.imgur.com/8Km9tLL.png',
+            streak: d.streak || 0,
+            score2048: s2048,
+            scoreFlappy: sFlappy,
+            globalRating: globalRating
+          });
+        }
+
+        allUsersData = users;
+        renderLeaderboard();
+      } catch (e) {
+        console.error("Data load failed", e);
+        listEl.innerHTML = '<div class="loading-spinner" style="color:#ff4d4d">CONNECTION TRUNCATED. RETRY LATER.</div>';
+      }
+    }
+
+    function renderLeaderboard() {
+      // Sort based on filter
+      let sorted = [...allUsersData];
+      if (currentFilter === 'global') sorted.sort((a, b) => b.globalRating - a.globalRating);
+      else if (currentFilter === '2048') sorted.sort((a, b) => b.score2048 - a.score2048);
+      else if (currentFilter === 'flappy') sorted.sort((a, b) => b.scoreFlappy - a.scoreFlappy);
+
+      listEl.innerHTML = '';
+      
+      sorted.forEach((player, index) => {
+        const row = document.createElement('div');
+        row.className = `leaderboard-row row-${index + 1} ${player.id === (currentUser?.uid) ? 'current-user' : ''}`;
+        
+        let scoreDisplay = 0;
+        if (currentFilter === 'global') scoreDisplay = player.globalRating;
+        else if (currentFilter === '2048') scoreDisplay = player.score2048;
+        else if (currentFilter === 'flappy') scoreDisplay = player.scoreFlappy;
+
+        row.innerHTML = `
+          <div class="rank-cell">#${index + 1}</div>
+          <div class="player-cell">
+            <img src="${player.avatar}" class="player-avatar" onerror="this.src='https://i.imgur.com/8Km9tLL.png'">
+            <span class="player-name">${player.name}</span>
+          </div>
+          <div class="streak-cell">🔥 ${player.streak}</div>
+          <div class="rating-cell">${scoreDisplay.toLocaleString()}</div>
+        `;
+        listEl.appendChild(row);
+
+        // Update sticky bar if this is current user
+        if(currentUser && player.id === currentUser.uid) {
+          myRankEl.innerText = `#${index + 1}`;
+          myNameEl.innerText = player.name;
+          myAvatarEl.src = player.avatar;
+          myStreakEl.innerText = player.streak;
+          myRatingEl.innerText = scoreDisplay.toLocaleString();
+          userBar.classList.add('active');
+        }
+      });
+    }
+  </script>
+</body>
+
+</html>

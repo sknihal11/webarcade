@@ -2927,9 +2927,9 @@
           if (document.getElementById('gameScoreTetris')) document.getElementById('gameScoreTetris').innerText = stet;
 
           // Multiplier scaling:
-          // Using 2048 (x1), Flappy (x500), Solitaire (x100), Pong (x1000), Snake (x20), Tetris (x1)
-          const totalRating = s2048 + (sf * 500) + (ss * 100) + (spong * 1000) + (ssnake * 20) + stet;
-          if (elements.statTotalRating) elements.statTotalRating.innerText = totalRating.toLocaleString();
+          // 2048 point = 0.01 rating, Flappy = 0.1 rating
+          const globalRating = (s2048 * 0.01) + (sFlappy * 0.1);
+          if (elements.statTotalRating) elements.statTotalRating.innerText = globalRating.toLocaleString(undefined, {minimumFractionDigits: 2});
 
           const streakCount = data.streak || 1;
 
@@ -2973,19 +2973,9 @@
           const df = await getDoc(doc(db, "scores_flappy", docSnap.id));
           const sf = df.exists() ? df.data().score : (d.bestFlappy || 0);
 
-          const ds = await getDoc(doc(db, "scores_solitaire", docSnap.id));
-          const ss = ds.exists() ? ds.data().score : (d.bestSolitaire || 0);
-
-          const dp = await getDoc(doc(db, "scores_pong", docSnap.id));
-          const sp = dp.exists() ? dp.data().score : (d.bestPong || 0);
-
-          const dsn = await getDoc(doc(db, "scores_snake", docSnap.id));
-          const ssn = dsn.exists() ? dsn.data().score : (d.bestSnake || 0);
-
-          const dt = await getDoc(doc(db, "scores_tetris", docSnap.id));
-          const st = dt.exists() ? dt.data().score : (d.bestTetris || 0);
-
-          const rating = s2 + (sf * 500) + (ss * 100) + (sp * 1000) + (ssn * 20) + st;
+          // Only 2048 and Flappy Bird are used for rating
+          // 2048 point = 0.01 rating, Flappy = 0.1 rating
+          const rating = (s2 * 0.01) + (sf * 0.1);
 
           if (rating > 0) {
             leaderData.push({
@@ -3029,7 +3019,7 @@
           pItem.innerHTML = `
             <div style="min-width:40px; text-align:center;">${rankDisplay}</div>
             <div style="display:flex; align-items:center; gap:1rem; flex:1;">
-                <img src="${player.photoURL || 'https://i.imgur.com/8Km9tLL.png'}" 
+                <img src="${player.photoURL}" 
                      class="player-avatar" 
                      onerror="this.src='https://i.imgur.com/8Km9tLL.png'">
                 <div style="display:flex; flex-direction:column;">
@@ -3038,7 +3028,7 @@
                     ${player.id === (currentUser ? currentUser.uid : null) ? ' <span style="color:var(--accent); font-size:0.8rem;">(You)</span>' : ''}
                   </span>
                   <span style="font-size:0.75rem; color:var(--text-muted);">
-                    Total Rating: ${player.rating.toLocaleString()}
+                    🔥 Streak: ${player.streak} | Score: ${player.rating.toLocaleString()}
                   </span>
                 </div>
             </div>
@@ -3314,6 +3304,7 @@
         <h3>Menu</h3>
         <a href="index.html">Home</a>
         <a href="blog.html">Games</a>
+        <a href="leaderboard.html">Leaderboard</a>
         <a href="about.html">About Us</a>
       </div>
       <div class="footer-social-col">
