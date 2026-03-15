@@ -276,20 +276,26 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+        // Firebase Configuration (Synced with blog.html)
         const firebaseConfig = {
             apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
             authDomain: "webarcade-d4c3d.firebaseapp.com",
-            projectId: "webarcade-d4c3d"
+            databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com",
+            projectId: "webarcade-d4c3d",
+            storageBucket: "webarcade-d4c3d.firebasestorage.app",
+            messagingSenderId: "918209461327",
+            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a",
+            measurementId: "G-72L7N36DLB"
         };
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const firestore = getFirestore(app);
 
-        // Core Game Logic
+        // Core Game Logic Variables
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const nextCanvas = document.getElementById('nextCanvas');
@@ -297,26 +303,18 @@
 
         const COLS = 10;
         const ROWS = 20;
+        let BLOCK_SIZE = 30;
 
-        let BLOCK_SIZE = 30; // Will be scaled dynamically on mobile
-
-        const resizeCanvas = () => {
-            let maxH = window.innerHeight * 0.6;
-            let availableH = Math.floor(maxH / ROWS) * ROWS;
-            BLOCK_SIZE = availableH / ROWS;
-
-            // Bounds check
-            if (BLOCK_SIZE > 35) BLOCK_SIZE = 35;
-            if (BLOCK_SIZE < 20) BLOCK_SIZE = 20;
-
-            canvas.width = COLS * BLOCK_SIZE;
-            canvas.height = ROWS * BLOCK_SIZE;
-
-            if (board) render();
-        };
-
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        let piece = null;
+        let nextPiece = null;
+        let dropCounter = 0;
+        let dropInterval = 1000;
+        let lastTime = 0;
+        let score = 0;
+        let lines = 0;
+        let level = 1;
+        let gameRunning = false;
 
         const TETROMINOS = [
             [], // Empty
@@ -340,16 +338,22 @@
             '#ff0000'  // Z
         ];
 
-        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
-        let piece = null;
-        let nextPiece = null;
-        let dropCounter = 0;
-        let dropInterval = 1000;
-        let lastTime = 0;
-        let score = 0;
-        let lines = 0;
-        let level = 1;
-        let gameRunning = false;
+        const resizeCanvas = () => {
+            let maxH = window.innerHeight * 0.6;
+            let availableH = Math.floor(maxH / ROWS) * ROWS;
+            BLOCK_SIZE = availableH / ROWS;
+
+            if (BLOCK_SIZE > 35) BLOCK_SIZE = 35;
+            if (BLOCK_SIZE < 20) BLOCK_SIZE = 20;
+
+            canvas.width = COLS * BLOCK_SIZE;
+            canvas.height = ROWS * BLOCK_SIZE;
+
+            if (board) render();
+        };
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
         function createPiece() {
             const type = Math.floor(Math.random() * 7) + 1;
