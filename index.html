@@ -247,7 +247,9 @@
     @media (max-width: 600px) {
       .header-nav {
         display: none;
-        /* Can add a hamburger menu later if needed, hiding on very small mobile for now to keep logo+login visible */
+      }
+      .logo {
+        font-size: 1.2rem;
       }
     }
 
@@ -761,6 +763,21 @@
       outline: none;
     }
 
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 8vw, 5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    @media (max-width: 480px) {
+      .hero-title {
+        font-size: 1.8rem;
+      }
+    }
+
     .modal-title {
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(1.1rem, 5vw, 1.5rem);
@@ -1185,7 +1202,6 @@
       .hero-title {
         font-size: 8.5rem;
       }
-
       .hero-sub {
         max-width: 600px;
       }
@@ -1258,13 +1274,13 @@
 
     /* Reduce motion */
     @media (prefers-reduced-motion:reduce) {
-
       *,
       *::before,
       *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: .01ms !important;
+        transition-delay: 0s !important;
       }
     }
   </style>
