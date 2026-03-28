@@ -23,9 +23,6 @@ async function scan() {
         if (msg.type() === 'error') {
             const game = page.url().split('/').pop();
             const text = msg.text();
-            // Ignore expected AdSense 400 Bad Request
-            if (text.includes('adsbygoogle') || text.includes('400 (Bad Request)')) return;
-            if (text.includes('net::ERR_FAILED') && text.includes('googleads')) return;
             
             if (!allErrors[game]) allErrors[game] = [];
             allErrors[game].push(`[Console Error] ${text}`);
@@ -35,8 +32,7 @@ async function scan() {
     page.on('requestfailed', request => {
         const game = page.url().split('/').pop();
         const url = request.url();
-        if (url.includes('googleads') || url.includes('doubleclick')) return;
-        
+
         if (!allErrors[game]) allErrors[game] = [];
         allErrors[game].push(`[Network Failure] ${request.failure().errorText} ${url}`);
     });
@@ -58,7 +54,7 @@ async function scan() {
     console.log("QA SCAN RESULTS:");
     console.log("=================\n");
     if (Object.keys(allErrors).length === 0) {
-        console.log("No critical errors found! (AdSense errors hidden)");
+        console.log("No critical errors found.");
     } else {
         for (const [game, errors] of Object.entries(allErrors)) {
             console.log(`\n--- ${game} ---`);

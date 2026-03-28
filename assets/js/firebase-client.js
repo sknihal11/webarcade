@@ -29,6 +29,11 @@ import {
   updateDoc,
   where
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import {
+  get as getDatabaseValue,
+  getDatabase,
+  ref as databaseRef
+} from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
 export const ADMIN_EMAIL = "nihalsk2022@gmail.com";
 export const DEFAULT_AVATAR_URL = "https://i.imgur.com/8Km9tLL.png";
@@ -46,6 +51,7 @@ export const firebaseConfig = {
 export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const rtdb = getDatabase(app);
 
 let persistencePromise;
 
@@ -96,6 +102,21 @@ export function getDeviceId() {
   }
 
   return id;
+}
+
+export async function getServerTimeOffset(timeoutMs = 2500) {
+  try {
+    const offsetSnapshot = await Promise.race([
+      getDatabaseValue(databaseRef(rtdb, ".info/serverTimeOffset")),
+      new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("server-timeout")), timeoutMs);
+      })
+    ]);
+
+    return Number(offsetSnapshot.val()) || 0;
+  } catch {
+    return 0;
+  }
 }
 
 export function calculateGlobalRating(best2048 = 0, bestFlappy = 0) {

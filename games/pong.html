@@ -485,17 +485,6 @@
 
         <div id="overScreen" class="screen hidden interactive">
             <h1 id="winMsg">WINNER</h1>
-
-            <!-- AdSense Banner Start -->
-            <div style="margin: 20px 0; width: 100%; max-width: 300px; text-align: center;">
-                <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-0000000000000000"
-                    data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
-            </div>
-            <!-- AdSense Banner End -->
-
             <button class="btn-cyan" onclick="window.location.reload()">PLAY AGAIN</button>
             <a href="../blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">â†
                 DASHBOARD</a>
@@ -506,25 +495,12 @@
     <script src="https://cdn.jsdelivr.net/npm/pixi-filters@5.3.0/dist/browser/pixi-filters.min.js"></script>
 
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, update, remove, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+        import { getDatabase, ref, set, onValue, update, remove, get, onDisconnect, off } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
+        import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { app, auth, db as firestore } from "../assets/js/firebase-client.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-            authDomain: "webarcade-d4c3d.firebaseapp.com",
-            databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com",
-            projectId: "webarcade-d4c3d",
-            storageBucket: "webarcade-d4c3d.firebasestorage.app",
-            messagingSenderId: "918209461327",
-            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-        };
-
-        const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const firestore = getFirestore(app);
-        const auth = getAuth(app);
 
         // Game Constants - LOCKED to prevent tampering
         const W = 800, H = 600;
@@ -1483,7 +1459,25 @@
                 }
             }
 
+            requireMultiplayerAuth() {
+                if (!this.authReady) {
+                    this.showError('Checking your session. Please try again.');
+                    return false;
+                }
+
+                if (this.currentUser) {
+                    return true;
+                }
+
+                this.showError('Sign in to create or join online rooms.');
+                setTimeout(() => {
+                    window.location.href = '../login.html';
+                }, 1200);
+                return false;
+            }
+
             showLobby() {
+                if (!this.requireMultiplayerAuth()) return;
                 document.getElementById('menuScreen').classList.add('hidden');
                 document.getElementById('lobbyScreen').classList.remove('hidden');
             }
@@ -1856,6 +1850,7 @@
             }
 
             async host() {
+                if (!this.requireMultiplayerAuth()) return;
                 this.state.playerName = await this.getPlayerName();
                 const btn = document.getElementById('btnHost');
                 if (btn.disabled) return;
@@ -1925,6 +1920,7 @@
             }
 
             async join() {
+                if (!this.requireMultiplayerAuth()) return;
                 this.state.playerName = await this.getPlayerName();
                 const codeInput = document.getElementById('codeIn');
                 const code = codeInput.value.trim();
