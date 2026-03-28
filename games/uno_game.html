@@ -326,6 +326,7 @@
             getDoc,
             onAuthStateChanged,
             onSnapshot,
+            safelyReloadUser,
             updateDoc
         } from "../assets/js/firebase-client.js";
 
@@ -345,13 +346,20 @@
 
         document.getElementById('roomCodeDisplay').innerText = `ROOM: ${roomId}`;
 
-        onAuthStateChanged(auth, u => {
-            if (u) {
-                currentUser = u; myId = u.uid;
-                listenToGame();
-            } else {
+        onAuthStateChanged(auth, async u => {
+            if (!u) {
                 window.location.href = loginRedirect;
+                return;
             }
+
+            currentUser = await safelyReloadUser(u);
+            if (!currentUser.emailVerified) {
+                window.location.href = `../verify-email.html?next=${encodeURIComponent(`games/uno_game.html${window.location.search}`)}`;
+                return;
+            }
+
+            myId = currentUser.uid;
+            listenToGame();
         });
 
         function showToast(msg) {

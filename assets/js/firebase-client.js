@@ -1,14 +1,21 @@
 import { getApp, getApps, initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
 import {
   browserLocalPersistence,
+  browserSessionPersistence,
   createUserWithEmailAndPassword,
   deleteUser,
+  EmailAuthProvider,
   getAuth,
   onAuthStateChanged,
+  reauthenticateWithCredential,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
-  updateProfile
+  updatePassword,
+  updateProfile,
+  verifyBeforeUpdateEmail
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
 import {
   addDoc,
@@ -37,6 +44,13 @@ import {
 
 export const ADMIN_EMAIL = "nihalsk2022@gmail.com";
 export const DEFAULT_AVATAR_URL = "https://i.imgur.com/8Km9tLL.png";
+export const AUTH_EMAIL_POLICY = {
+  gmailOnly: true,
+  allowedDomain: "gmail.com"
+};
+export const UNVERIFIED_ACCOUNT_GRACE_HOURS = 48;
+export const EMAIL_VALIDATION_LIMITATION =
+  "Format checks can reject obvious mistakes, but only email verification proves the mailbox can actually receive mail.";
 
 export const firebaseConfig = {
   apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
@@ -54,19 +68,73 @@ export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
 
 let persistencePromise;
+let persistenceMode = "local";
 
 export function ensureBrowserPersistence() {
+  return setAuthPersistence("local");
+}
+
+export function setAuthPersistence(mode = "local") {
+  const resolvedMode = mode === "session" ? "session" : "local";
+  const persistence = resolvedMode === "session" ? browserSessionPersistence : browserLocalPersistence;
+
+  if (persistencePromise && persistenceMode === resolvedMode) {
+    return persistencePromise;
+  }
+
+  persistenceMode = resolvedMode;
+
   if (!persistencePromise) {
-    persistencePromise = setPersistence(auth, browserLocalPersistence).catch(error => {
+    persistencePromise = Promise.resolve();
+  }
+
+  persistencePromise = persistencePromise
+    .then(() => setPersistence(auth, persistence))
+    .catch(error => {
       console.warn("Auth persistence setup failed:", error);
     });
-  }
 
   return persistencePromise;
 }
 
 export function isAdminEmail(email) {
   return Boolean(email) && email.toLowerCase() === ADMIN_EMAIL;
+}
+
+function createVerificationDeadline() {
+  return new Date(Date.now() + UNVERIFIED_ACCOUNT_GRACE_HOURS * 60 * 60 * 1000);
+}
+
+function getPasswordBlacklist() {
+  return new Set([
+    "12345678",
+    "123456789",
+    "1234567890",
+    "password",
+    "password1",
+    "password123",
+    "qwerty123",
+    "letmein123",
+    "admin123",
+    "welcome123"
+  ]);
+}
+
+function buildUserAuthStateFields(user, previousData = {}) {
+  const verified = Boolean(user?.emailVerified);
+  const authProviders = Array.isArray(user?.providerData)
+    ? user.providerData.map(provider => provider?.providerId).filter(Boolean)
+    : [];
+
+  return {
+    email: user?.email || previousData.email || "",
+    emailVerified: verified,
+    verificationStatus: verified ? "verified" : "pending",
+    verificationDeadlineAt: verified ? null : previousData.verificationDeadlineAt || createVerificationDeadline(),
+    verifiedAt: verified ? previousData.verifiedAt || new Date() : null,
+    authProviders: authProviders.length ? authProviders : previousData.authProviders || ["password"],
+    lastAuthSyncAt: new Date()
+  };
 }
 
 function sanitizeUsernameFragment(value) {
@@ -91,6 +159,36 @@ function buildFallbackUsername(user) {
 
 export function normalizeUsername(username) {
   return String(username || "").trim().toLowerCase();
+}
+
+export function normalizeEmail(email) {
+  return String(email || "").trim().toLowerCase();
+}
+
+export function sanitizeNextPath(nextPath, fallback = "blog.html") {
+  const cleanedNext = String(nextPath || "").replace(/^\//, "");
+  if (
+    !cleanedNext ||
+    cleanedNext.includes("..") ||
+    /^https?:/i.test(cleanedNext) ||
+    cleanedNext.startsWith("//") ||
+    /^login\.html(?:$|\?)/i.test(cleanedNext) ||
+    /^signup\.html(?:$|\?)/i.test(cleanedNext)
+  ) {
+    return fallback;
+  }
+
+  return cleanedNext;
+}
+
+export function buildLoginRedirect(nextPath = "blog.html", loginPath = "login.html") {
+  const safeNext = sanitizeNextPath(nextPath);
+  return `${loginPath}?next=${encodeURIComponent(safeNext)}`;
+}
+
+export function buildVerificationRedirect(nextPath = "blog.html", verifyPath = "verify-email.html") {
+  const safeNext = sanitizeNextPath(nextPath);
+  return `${verifyPath}?next=${encodeURIComponent(safeNext)}`;
 }
 
 export function getDeviceId() {
@@ -154,50 +252,107 @@ export function validateUsername(username) {
   return null;
 }
 
-export function validateEmail(email) {
-  if (!email) return "Email is required";
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Invalid email format";
+export function validateEmail(email, options = {}) {
+  const gmailOnly = options.gmailOnly ?? AUTH_EMAIL_POLICY.gmailOnly;
+  const rawEmail = String(email || "");
 
-  const blockedDomains = [
-    "test.com",
-    "fake.com",
-    "example.com",
-    "tempmail.com",
-    "10minutemail.com",
-    "guerrillamail.com",
-    "mailinator.com",
-    "throwaway.email",
-    "temp-mail.org",
-    "fakeinbox.com",
-    "yopmail.com"
-  ];
+  if (!rawEmail.trim()) return "Email is required";
+  if (rawEmail !== rawEmail.trim()) return "Email cannot start or end with spaces";
+  if (/\s/.test(rawEmail)) return "Email cannot contain spaces";
 
-  const domain = email.split("@")[1]?.toLowerCase();
-  if (blockedDomains.includes(domain)) return "Please use a real email";
+  const normalizedEmail = normalizeEmail(rawEmail);
+  if (normalizedEmail.length > 254) return "Email is too long";
 
-  const suspiciousPatterns = [/^test\d*@/i, /^fake\d*@/i, /^demo\d*@/i, /^admin@/i, /^sample@/i, /^user\d+@/i];
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(email)) return "Please use a real email";
+  const parts = normalizedEmail.split("@");
+  if (parts.length !== 2) return "Enter a valid email address";
+
+  const [localPart, domain] = parts;
+  if (!localPart || !domain) return "Enter a valid email address";
+  if (localPart.length > 64) return "Enter a valid email address";
+  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+    return "Enter a valid email address";
+  }
+  if (!/^[a-z0-9._%+-]+$/i.test(localPart)) return "Enter a valid email address";
+  if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain)) return "Enter a valid email address";
+
+  if (gmailOnly && domain !== AUTH_EMAIL_POLICY.allowedDomain) {
+    return "Use a valid Gmail address ending in @gmail.com";
+  }
+
+  if (!gmailOnly) {
+    const blockedDomains = [
+      "test.com",
+      "fake.com",
+      "example.com",
+      "tempmail.com",
+      "10minutemail.com",
+      "guerrillamail.com",
+      "mailinator.com",
+      "throwaway.email",
+      "temp-mail.org",
+      "fakeinbox.com",
+      "yopmail.com"
+    ];
+
+    if (blockedDomains.includes(domain)) return "Please use a real email address";
   }
 
   return null;
 }
 
-export function validatePassword(password) {
-  if (!password || password.length < 8) return "Password must be at least 8 characters";
-  if (!/[a-zA-Z]/.test(password)) return "Password must contain letters";
-  if (!/\d/.test(password)) return "Password must contain at least one number";
+export function isAllowedEmailAddress(email, options = {}) {
+  return !validateEmail(email, options);
+}
+
+export function isAllowedGmailAddress(email) {
+  return !validateEmail(email, { gmailOnly: true });
+}
+
+export function getPasswordRuleState(password) {
+  const value = String(password || "");
+  return {
+    minLength: value.length >= 10,
+    hasLower: /[a-z]/.test(value),
+    hasUpper: /[A-Z]/.test(value),
+    hasNumber: /\d/.test(value),
+    hasSymbol: /[^a-zA-Z0-9]/.test(value)
+  };
+}
+
+export function validatePassword(password, options = {}) {
+  const value = String(password || "");
+  const username = String(options.username || "").trim().toLowerCase();
+  const email = normalizeEmail(options.email || "");
+  const rules = getPasswordRuleState(value);
+  const blacklist = getPasswordBlacklist();
+
+  if (!value) return "Password is required";
+  if (!rules.minLength) return "Password must be at least 10 characters";
+  if (!rules.hasLower || !rules.hasUpper) return "Password must include both uppercase and lowercase letters";
+  if (!rules.hasNumber) return "Password must include at least one number";
+  if (blacklist.has(value.toLowerCase())) return "Choose a password that is harder to guess";
+
+  if (username && value.toLowerCase().includes(username)) {
+    return "Password should not contain your username";
+  }
+
+  const localPart = email.split("@")[0];
+  if (localPart && value.toLowerCase().includes(localPart)) {
+    return "Password should not contain your email name";
+  }
+
   return null;
 }
 
 export function calculatePasswordStrength(password) {
+  const rules = getPasswordRuleState(password);
   let strength = 0;
 
-  if (password.length >= 8) strength++;
+  if (rules.minLength) strength++;
   if (password.length >= 12) strength++;
-  if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-  if (/\d/.test(password)) strength++;
-  if (/[^a-zA-Z0-9]/.test(password)) strength++;
+  if (rules.hasLower && rules.hasUpper) strength++;
+  if (rules.hasNumber) strength++;
+  if (rules.hasSymbol) strength++;
 
   return strength;
 }
@@ -263,8 +418,16 @@ export async function syncUsernameReservation(userId, username) {
 }
 
 export async function checkEmailExists(email) {
-  const domain = email.split("@")[1];
+  const validationError = validateEmail(email);
+  if (validationError) return false;
+
+  const normalizedEmail = normalizeEmail(email);
+  const domain = normalizedEmail.split("@")[1];
   if (!domain) return false;
+
+  if (AUTH_EMAIL_POLICY.gmailOnly && domain === AUTH_EMAIL_POLICY.allowedDomain) {
+    return true;
+  }
 
   try {
     const mxResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
@@ -281,13 +444,15 @@ export async function checkEmailExists(email) {
 
 function buildUserProfileData(user, deviceId, username, extraFields = {}) {
   const resolvedUsername = String(username || buildFallbackUsername(user)).trim();
+  const authStateFields = buildUserAuthStateFields(user);
 
   return {
     username: resolvedUsername,
     usernameLower: normalizeUsername(resolvedUsername),
-    email: user?.email || "",
+    ...authStateFields,
     photoURL: user?.photoURL || DEFAULT_AVATAR_URL,
     createdAt: new Date(),
+    updatedAt: new Date(),
     best2048: 0,
     bestFlappy: 0,
     bestSolitaire: 0,
@@ -351,12 +516,15 @@ export async function registerSession(user, deviceId = getDeviceId(), options = 
   const activeSessions = Array.isArray(userData.activeSessions) ? [...userData.activeSessions] : [];
   const maxSessions = typeof userData.maxSessions === "number" ? userData.maxSessions : 2;
   const updates = {
-    lastActivity: new Date()
+    lastActivity: new Date(),
+    updatedAt: new Date()
   };
 
   if (typeof user !== "string") {
+    const authStateFields = buildUserAuthStateFields(user, userData);
     updates.email = user.email || userData.email || "";
     updates.photoURL = user.photoURL || userData.photoURL || DEFAULT_AVATAR_URL;
+    Object.assign(updates, authStateFields);
   }
 
   const resolvedUsername = userData.username || userData.displayName || (typeof user !== "string" ? buildFallbackUsername(user) : "");
@@ -406,6 +574,120 @@ export async function registerSession(user, deviceId = getDeviceId(), options = 
   return { ...userData, ...updates };
 }
 
+export async function syncUserProfileAuthState(user) {
+  if (!user?.uid) return null;
+
+  const userRef = doc(db, "users", user.uid);
+  const snapshot = await getDoc(userRef);
+  if (!snapshot.exists()) return null;
+
+  const patch = {
+    ...buildUserAuthStateFields(user, snapshot.data()),
+    updatedAt: new Date()
+  };
+
+  await updateDoc(userRef, patch);
+  return { ...snapshot.data(), ...patch };
+}
+
+export async function markVerificationEmailSent(userId) {
+  if (!userId) return;
+
+  try {
+    await updateDoc(doc(db, "users", userId), {
+      verificationEmailSentAt: new Date(),
+      updatedAt: new Date()
+    });
+  } catch {
+    // Ignore metadata sync failures so verification still works.
+  }
+}
+
+function buildVerificationContinueUrl(nextPath = "blog.html") {
+  const safeNext = sanitizeNextPath(nextPath);
+  const relativePath = `login.html?verified=1&next=${encodeURIComponent(safeNext)}`;
+
+  if (typeof window === "undefined") {
+    return relativePath;
+  }
+
+  return new URL(relativePath, window.location.href).toString();
+}
+
+export async function sendAppVerificationEmail(user, nextPath = "blog.html") {
+  if (!user) {
+    throw new Error("A signed-in user is required to send a verification email.");
+  }
+
+  await sendEmailVerification(user, {
+    url: buildVerificationContinueUrl(nextPath),
+    handleCodeInApp: false
+  });
+
+  await markVerificationEmailSent(user.uid);
+}
+
+export async function safelyReloadUser(user = auth.currentUser) {
+  if (!user) return null;
+
+  try {
+    await user.reload();
+  } catch (error) {
+    console.warn("User reload failed:", error);
+  }
+
+  return auth.currentUser || user;
+}
+
+function getStoredAttemptLog(storageKey) {
+  try {
+    const raw = localStorage.getItem(storageKey);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function getRateLimitState(key, options = {}) {
+  const maxAttempts = options.maxAttempts ?? 5;
+  const windowMs = options.windowMs ?? 60_000;
+  const storageKey = `webarcade-rate-limit:${key}`;
+  const now = Date.now();
+
+  const attempts = getStoredAttemptLog(storageKey).filter(timestamp => now - Number(timestamp) < windowMs);
+  localStorage.setItem(storageKey, JSON.stringify(attempts));
+
+  const allowed = attempts.length < maxAttempts;
+  const retryAfterMs = allowed || !attempts.length ? 0 : Math.max(windowMs - (now - attempts[0]), 0);
+
+  return {
+    allowed,
+    retryAfterMs
+  };
+}
+
+export function recordRateLimitAttempt(key, options = {}) {
+  const windowMs = options.windowMs ?? 60_000;
+  const storageKey = `webarcade-rate-limit:${key}`;
+  const now = Date.now();
+  const attempts = getStoredAttemptLog(storageKey).filter(timestamp => now - Number(timestamp) < windowMs);
+  attempts.push(now);
+  localStorage.setItem(storageKey, JSON.stringify(attempts));
+}
+
+export function clearRateLimitState(key) {
+  localStorage.removeItem(`webarcade-rate-limit:${key}`);
+}
+
+export function getCooldownRemaining(key) {
+  const until = Number(localStorage.getItem(`webarcade-cooldown:${key}`) || 0);
+  return Math.max(until - Date.now(), 0);
+}
+
+export function startCooldown(key, cooldownMs) {
+  localStorage.setItem(`webarcade-cooldown:${key}`, String(Date.now() + cooldownMs));
+}
+
 export async function unregisterSession(userId, deviceId) {
   try {
     await updateDoc(doc(db, "users", userId), {
@@ -418,6 +700,7 @@ export async function unregisterSession(userId, deviceId) {
 }
 
 export {
+  EmailAuthProvider,
   addDoc,
   arrayRemove,
   arrayUnion,
@@ -433,11 +716,16 @@ export {
   onSnapshot,
   orderBy,
   query,
+  reauthenticateWithCredential,
   serverTimestamp,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   setDoc,
   signInWithEmailAndPassword,
   signOut,
   updateDoc,
+  updatePassword,
   updateProfile,
+  verifyBeforeUpdateEmail,
   where
 };

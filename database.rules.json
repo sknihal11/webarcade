@@ -4,8 +4,8 @@
     ".write": false,
     "rooms": {
       "$roomId": {
-        ".read": "auth != null",
-        ".write": "auth != null"
+        ".read": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[A-Za-z0-9._%+-]+@gmail\\.com$/)",
+        ".write": "auth != null && auth.token.email_verified === true && auth.token.email.matches(/^[A-Za-z0-9._%+-]+@gmail\\.com$/)"
       }
     },
     "users": {

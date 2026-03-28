@@ -50,6 +50,7 @@ import {
     getDoc,
     onAuthStateChanged,
     onSnapshot,
+    safelyReloadUser,
     setDoc,
     updateDoc
 } from "../assets/js/firebase-client.js";
@@ -58,7 +59,17 @@ await ensureBrowserPersistence();
 
 let user, currentRoom, isHost = false;
 
-onAuthStateChanged(auth, u => { if(u) user = u; else location.href="../login.html?next=games/multiplayer.html"; });
+onAuthStateChanged(auth, async u => {
+    if (!u) {
+        location.href = "../login.html?next=games/multiplayer.html";
+        return;
+    }
+
+    user = await safelyReloadUser(u);
+    if (!user.emailVerified) {
+        location.href = "../verify-email.html?next=games/multiplayer.html";
+    }
+});
 
 window.createRoom = async () => {
     const id = Math.floor(100000 + Math.random() * 900000).toString();

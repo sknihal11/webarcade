@@ -301,7 +301,9 @@
             onAuthStateChanged,
             orderBy,
             query,
+            safelyReloadUser,
             serverTimestamp,
+            syncUserProfileAuthState,
             updateDoc
         } from "./assets/js/firebase-client.js";
 
@@ -319,11 +321,19 @@
         };
 
         // Auth Guard
-        onAuthStateChanged(auth, user => {
-            if (user && isAdminEmail(user.email)) {
+        onAuthStateChanged(auth, async user => {
+            const trustedUser = user ? await safelyReloadUser(user) : null;
+            if (trustedUser) {
+                await syncUserProfileAuthState(trustedUser).catch(() => {});
+            }
+
+            if (trustedUser && trustedUser.emailVerified && isAdminEmail(trustedUser.email)) {
                 document.getElementById("authCheck").style.display = "none";
                 loadCurrentAnnouncement();
                 loadAnalytics();
+            } else if (trustedUser && !trustedUser.emailVerified) {
+                alert("Please verify your email before continuing.");
+                window.location.href = "verify-email.html?next=admin.html";
             } else {
                 alert("Access Denied. You must be an administrator.");
                 window.location.href = "index.html";

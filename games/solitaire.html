@@ -595,26 +595,35 @@
             let personalBestScore = 0;
 
             onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    currentUser = user;
-                    try {
-                        const s = await getDoc(doc(db, "users", user.uid));
-                        if (s.exists()) {
-                            const data = s.data();
-                            if (data.banned) {
-                                alert("Your account has been banned by an administrator.");
-                                await signOut(auth);
-                                location.replace("../index.html");
-                                return;
-                            }
-                            personalBestScore = data.bestSolitaire || 0;
-                        }
-                    } catch (e) {
-                        console.error("Firebase fetch error", e);
-                    }
-                } else {
+                if (!user) {
                     location.replace("../login.html?next=games/solitaire.html");
                     return;
+                }
+
+                try {
+                    await user.reload();
+                } catch { }
+
+                currentUser = auth.currentUser || user;
+                if (!currentUser.emailVerified) {
+                    location.replace("../verify-email.html?next=games/solitaire.html");
+                    return;
+                }
+
+                try {
+                    const s = await getDoc(doc(db, "users", currentUser.uid));
+                    if (s.exists()) {
+                        const data = s.data();
+                        if (data.banned) {
+                            alert("Your account has been banned by an administrator.");
+                            await signOut(auth);
+                            location.replace("../index.html");
+                            return;
+                        }
+                        personalBestScore = data.bestSolitaire || 0;
+                    }
+                } catch (e) {
+                    console.error("Firebase fetch error", e);
                 }
             });
 

@@ -195,13 +195,19 @@
     </div>
 
     <script type="module">
-        import { auth, ensureBrowserPersistence, onAuthStateChanged } from "../assets/js/firebase-client.js";
+        import { auth, ensureBrowserPersistence, onAuthStateChanged, safelyReloadUser } from "../assets/js/firebase-client.js";
 
         await ensureBrowserPersistence();
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (!user) {
                 location.replace("../login.html?next=games/minesweeper.html");
+                return;
+            }
+
+            const refreshedUser = await safelyReloadUser(user);
+            if (!refreshedUser.emailVerified) {
+                location.replace("../verify-email.html?next=games/minesweeper.html");
             }
         });
     </script>

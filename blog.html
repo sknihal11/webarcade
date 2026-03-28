@@ -2527,8 +2527,10 @@
       registerSession,
       releaseUsername,
       reserveUsername,
+      safelyReloadUser,
       setDoc,
       signOut,
+      syncUserProfileAuthState,
       unregisterSession,
       updateDoc,
       updateProfile,
@@ -2731,14 +2733,20 @@
         return;
       }
 
-      currentUser = user;
+      currentUser = await safelyReloadUser(user);
+      await syncUserProfileAuthState(currentUser).catch(() => {});
+
+      if (!currentUser.emailVerified) {
+        location.replace("verify-email.html?next=blog.html");
+        return;
+      }
 
       // Register session
       try {
         currentDeviceId = getDeviceId();
-        await registerSession(user, currentDeviceId, { trackStreak: true });
+        await registerSession(currentUser, currentDeviceId, { trackStreak: true });
 
-        window.GameProtection.currentUser = user;
+        window.GameProtection.currentUser = currentUser;
         window.GameProtection.deviceId = currentDeviceId;
       } catch (error) {
         console.error("Session error:", error);
@@ -2751,25 +2759,25 @@
       }
 
       // Update UI with user info
-      const displayName = user.displayName || "Player";
+      const displayName = currentUser.displayName || "Player";
       elements.userName.textContent = displayName;
       elements.welcomeName.textContent = displayName;
       elements.drawerName.textContent = displayName;
-      elements.drawerEmail.textContent = user.email || "";
+      elements.drawerEmail.textContent = `${currentUser.email || ""} • Verified`;
 
-      const photoURL = user.photoURL || DEFAULT_AVATAR_URL;
+      const photoURL = currentUser.photoURL || DEFAULT_AVATAR_URL;
       elements.userAvatar.src = photoURL;
       elements.drawerAvatar.src = photoURL;
 
       // Check admin
-      if (isAdminEmail(user.email)) {
+      if (isAdminEmail(currentUser.email)) {
         const adminBtn = document.getElementById("adminBtn");
         if (adminBtn) adminBtn.style.display = "flex";
       }
 
       // Load user scores
       try {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
+        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
         if (userDoc.exists()) {
           const data = userDoc.data();
 
@@ -2788,22 +2796,22 @@
           if (document.getElementById('statScoreFlappy')) document.getElementById('statScoreFlappy').innerText = sf;
           if (document.getElementById('gameScoreFlappy')) document.getElementById('gameScoreFlappy').innerText = sf;
 
-          const ds = await getDoc(doc(db, "scores_solitaire", user.uid));
+          const ds = await getDoc(doc(db, "scores_solitaire", currentUser.uid));
           const ss = ds.exists() ? ds.data().score : (data.bestSolitaire || 0);
           if (document.getElementById('statScoreSolitaire')) document.getElementById('statScoreSolitaire').innerText = ss;
           if (document.getElementById('gameScoreSolitaire')) document.getElementById('gameScoreSolitaire').innerText = ss;
 
-          const dpong = await getDoc(doc(db, "scores_pong", user.uid));
+          const dpong = await getDoc(doc(db, "scores_pong", currentUser.uid));
           const spong = dpong.exists() ? dpong.data().score : (data.bestPong || 0);
           if (document.getElementById('statScorePong')) document.getElementById('statScorePong').innerText = spong;
           if (document.getElementById('gameScorePong')) document.getElementById('gameScorePong').innerText = spong;
 
-          const dsnake = await getDoc(doc(db, "scores_snake", user.uid));
+          const dsnake = await getDoc(doc(db, "scores_snake", currentUser.uid));
           const ssnake = dsnake.exists() ? dsnake.data().score : (data.bestSnake || 0);
           if (document.getElementById('statScoreSnake')) document.getElementById('statScoreSnake').innerText = ssnake;
           if (document.getElementById('gameScoreSnake')) document.getElementById('gameScoreSnake').innerText = ssnake;
 
-          const dtet = await getDoc(doc(db, "scores_tetris", user.uid));
+          const dtet = await getDoc(doc(db, "scores_tetris", currentUser.uid));
           const stet = dtet.exists() ? dtet.data().score : (data.bestTetris || 0);
           if (document.getElementById('statScoreTetris')) document.getElementById('statScoreTetris').innerText = stet;
           if (document.getElementById('gameScoreTetris')) document.getElementById('gameScoreTetris').innerText = stet;

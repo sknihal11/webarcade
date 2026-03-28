@@ -3,207 +3,411 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>Login – WebArcade</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#040710">
+  <title>Login | WebArcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700;800&display=swap"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
     rel="stylesheet">
-
-  <style>
-    :root {
-      /* Neon Cyberpunk Theme */
-      --bg-primary: #050814;
-      --bg-secondary: #0a0d20;
-      --bg-tertiary: #131732;
-      --bg-card: rgba(10, 13, 32, 0.4);
-
-      --text-primary: #ffffff;
-      --text-secondary: #aab8d2;
-
-      --accent-primary: #00f0ff;
-      --accent-secondary: #00b3ff;
-      --accent-glow: rgba(0, 240, 255, 0.4);
-
-      --error: #ff0055;
-      --border-medium: rgba(0, 240, 255, 0.2);
-      --shadow-md: 0 4px 16px rgba(0, 240, 255, 0.2);
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-primary);
-      background-image: radial-gradient(circle at top, var(--bg-tertiary), var(--bg-primary));
-      color: var(--text-primary);
-    }
-
-    .card {
-      width: 100%;
-      max-width: 380px;
-      background: var(--bg-card);
-      border-radius: 18px;
-      padding: 32px;
-      box-shadow: var(--shadow-md);
-      border: 1px solid var(--border-medium);
-      backdrop-filter: blur(24px) saturate(150%);
-      animation: fade .8s ease;
-    }
-
-    h1 {
-      margin: 0 0 8px;
-      text-align: center;
-      font-family: 'Space Grotesk', sans-serif;
-      font-weight: 700;
-      text-shadow: 0 0 10px var(--accent-glow);
-    }
-
-    p {
-      text-align: center;
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-bottom: 24px;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      margin-bottom: 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      outline: none;
-      background: rgba(0, 0, 0, 0.3);
-      color: var(--text-primary);
-      font-size: 14px;
-      transition: .3s;
-    }
-
-    input:focus {
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 10px var(--accent-glow);
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      border: none;
-      border-radius: 12px;
-      background: var(--accent-primary);
-      color: #050814;
-      font-size: 15px;
-      font-weight: 800;
-      font-family: 'Space Grotesk', sans-serif;
-      cursor: pointer;
-      transition: .25s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 0 15px var(--accent-glow);
-      opacity: 0.9;
-    }
-
-    .footer {
-      margin-top: 18px;
-      text-align: center;
-      font-size: 14px;
-    }
-
-    .footer a {
-      color: var(--accent-primary);
-      text-decoration: none;
-      font-weight: 600;
-    }
-
-    .error {
-      color: var(--error);
-      font-size: 13px;
-      margin-top: 8px;
-      text-align: center;
-    }
-
-    @keyframes fade {
-      from {
-        opacity: 0;
-        transform: translateY(20px)
-      }
-
-      to {
-        opacity: 1;
-        transform: none
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="assets/css/auth-portal.css">
 </head>
 
-<body>
+<body class="auth-page">
+  <main class="auth-shell">
+    <section class="brand-panel">
+      <div class="panel-top">
+        <a href="index.html" class="back-link">Return to Home</a>
+        <span class="eyebrow" style="margin-top: 1.5rem;">Secure Player Access</span>
+        <h1 class="brand-title">Access the arcade safely.</h1>
+        <p class="brand-copy">
+          Sign in with your verified Gmail account to unlock games, leaderboards, multiplayer rooms, and protected
+          account tools.
+        </p>
 
-  <div class="card">
-    <h1>Welcome back 🎮</h1>
-    <p>Login to continue to WebArcade</p>
+        <div class="destination-card">
+          <span class="destination-label">Queued destination</span>
+          <span class="destination-value" id="destinationLabel">Games Dashboard</span>
+        </div>
 
-    <input type="email" id="email" placeholder="Email">
-    <input type="password" id="password" placeholder="Password">
+        <div class="trust-grid">
+          <div class="metric-card">
+            <strong>Verified sessions</strong>
+            <span>Protected pages now require an authenticated and verified email before they continue.</span>
+          </div>
+          <div class="metric-card">
+            <strong>Recovery built in</strong>
+            <span>Password reset stays available here with generic responses to reduce account-enumeration risk.</span>
+          </div>
+          <div class="metric-card">
+            <strong>Session choice</strong>
+            <span>Choose whether this browser keeps your session or signs out when the browser session ends.</span>
+          </div>
+        </div>
+      </div>
 
-    <button onclick="login()">Login</button>
+      <div class="panel-bottom">
+        <div class="feature-list">
+          <div class="feature-item">
+            <strong>Gmail-only access</strong>
+            <span>WebArcade currently accepts only properly formatted <code>@gmail.com</code> addresses.</span>
+          </div>
+          <div class="feature-item">
+            <strong>Verification required</strong>
+            <span>Format checks reject obvious mistakes, but verification is what proves the inbox can actually receive mail.</span>
+          </div>
+          <div class="feature-item">
+            <strong>Route-safe redirects</strong>
+            <span>If you were sent here from a protected page, you will return there automatically after a trusted sign-in.</span>
+          </div>
+        </div>
 
-    <div class="error" id="error"></div>
+        <div class="trust-strip">
+          A professional login flow should be clear, calm, and safe. This page keeps redirects predictable, slows down
+          repeated failures, and blocks protected routes until the email has been verified.
+        </div>
+      </div>
+    </section>
 
-    <div class="footer">
-      New here?
-      <a href="signup.html">Create account</a>
-    </div>
-  </div>
+    <section class="form-panel">
+      <div class="auth-card">
+        <div class="card-header">
+          <span class="eyebrow">Player Login</span>
+          <h2>Welcome back</h2>
+          <p class="card-copy">Use the Gmail address attached to your WebArcade account to continue.</p>
+        </div>
+
+        <form class="auth-form" id="loginForm" novalidate>
+          <div class="field-shell" id="emailShell" data-state="default">
+            <div class="field-label-row">
+              <label class="field-label" for="email">Gmail address</label>
+            </div>
+            <input class="field-input" id="email" name="email" type="email" placeholder="name@gmail.com"
+              autocomplete="email" spellcheck="false" inputmode="email">
+            <div class="field-note" id="emailNote">Use the same verified Gmail address you registered with.</div>
+          </div>
+
+          <div class="field-shell" id="passwordShell" data-state="default">
+            <div class="field-label-row">
+              <label class="field-label" for="password">Password</label>
+              <button class="utility-link" id="resetToggle" type="button">Forgot password?</button>
+            </div>
+            <div class="password-shell">
+              <input class="field-input" id="password" name="password" type="password"
+                placeholder="Enter your password" autocomplete="current-password">
+              <button class="password-toggle" type="button" data-password-toggle="password">Show</button>
+            </div>
+            <div class="caps-warning" id="loginCapsWarning" hidden>Caps Lock is on.</div>
+          </div>
+
+          <label class="toggle-line" for="rememberMe">
+            <input id="rememberMe" type="checkbox" checked>
+            <span>Keep me signed in on this device</span>
+          </label>
+
+          <div class="status-banner" id="loginStatus" aria-live="polite"></div>
+
+          <button class="primary-btn" id="loginButton" type="submit">Enter WebArcade</button>
+        </form>
+
+        <div class="footer-links">
+          <span>New to WebArcade? <a class="inline-link" id="signupLink" href="signup.html">Create your account</a></span>
+          <a class="utility-link" href="index.html">Back to public pages</a>
+        </div>
+
+        <div class="legal-inline">
+          By continuing, you acknowledge the WebArcade <a class="inline-link" href="terms.html">Terms</a> and
+          <a class="inline-link" href="privacy.html">Privacy Policy</a>.
+        </div>
+      </div>
+
+      <div class="support-card" id="resetCard">
+        <h3>Password recovery</h3>
+        <p class="section-copy">
+          Enter your Gmail address and we will send a password reset link. For safety, the response stays generic even
+          if the address is not recognized.
+        </p>
+
+        <form class="reset-form" id="resetForm" novalidate>
+          <div class="field-shell" id="resetEmailShell" data-state="default">
+            <label class="field-label" for="resetEmail">Recovery Gmail</label>
+            <input class="field-input" id="resetEmail" type="email" placeholder="name@gmail.com" autocomplete="email"
+              spellcheck="false" inputmode="email">
+            <div class="field-note" id="resetEmailNote">Use the Gmail address you normally use to sign in.</div>
+          </div>
+
+          <div class="status-banner" id="resetStatus" aria-live="polite"></div>
+
+          <div class="split-row">
+            <button class="secondary-btn" id="resetCancel" type="button">Close</button>
+            <button class="primary-btn" id="resetButton" type="submit">Send reset link</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </main>
 
   <script type="module">
     import {
       auth,
+      buildVerificationRedirect,
+      clearRateLimitState,
       ensureBrowserPersistence,
+      getRateLimitState,
       onAuthStateChanged,
-      signInWithEmailAndPassword
+      recordRateLimitAttempt,
+      safelyReloadUser,
+      sanitizeNextPath,
+      sendPasswordResetEmail,
+      setAuthPersistence,
+      signInWithEmailAndPassword,
+      syncUserProfileAuthState,
+      validateEmail
     } from "./assets/js/firebase-client.js";
 
     await ensureBrowserPersistence();
+
     const params = new URLSearchParams(window.location.search);
-    const rawNext = params.get("next");
-    const cleanedNext = rawNext ? rawNext.replace(/^\//, "") : "";
-    const nextPath = cleanedNext
-      && !cleanedNext.includes("..")
-      && !/^https?:/i.test(cleanedNext)
-      && !cleanedNext.startsWith("//")
-      && !/^login\.html(?:$|\?)/i.test(cleanedNext)
-      && !/^signup\.html(?:$|\?)/i.test(cleanedNext)
-      ? cleanedNext
-      : "blog.html";
-    const signupLink = document.querySelector(".footer a");
+    const nextPath = sanitizeNextPath(params.get("next"));
+    const verificationCompleted = params.get("verified") === "1";
+
+    const destinationLabel = document.getElementById("destinationLabel");
+    const signupLink = document.getElementById("signupLink");
+    const loginForm = document.getElementById("loginForm");
+    const loginButton = document.getElementById("loginButton");
+    const resetButton = document.getElementById("resetButton");
+    const rememberMe = document.getElementById("rememberMe");
+    const resetCard = document.getElementById("resetCard");
+    const resetToggle = document.getElementById("resetToggle");
+    const resetCancel = document.getElementById("resetCancel");
+    const resetForm = document.getElementById("resetForm");
+
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const resetEmailInput = document.getElementById("resetEmail");
+
+    const emailShell = document.getElementById("emailShell");
+    const passwordShell = document.getElementById("passwordShell");
+    const resetEmailShell = document.getElementById("resetEmailShell");
+
+    const emailNote = document.getElementById("emailNote");
+    const resetEmailNote = document.getElementById("resetEmailNote");
+    const loginStatus = document.getElementById("loginStatus");
+    const resetStatus = document.getElementById("resetStatus");
+    const capsWarning = document.getElementById("loginCapsWarning");
+
+    let loginInFlight = false;
+
+    destinationLabel.textContent = formatDestinationLabel(nextPath);
     signupLink.href = `signup.html?next=${encodeURIComponent(nextPath)}`;
 
-    onAuthStateChanged(auth, user => {
-      if (user) {
-        window.location.href = nextPath;
+    if (verificationCompleted) {
+      showStatus(loginStatus, "success", "Email verified. If your session is still active, we will continue automatically.");
+    }
+
+    onAuthStateChanged(auth, async rawUser => {
+      if (!rawUser || loginInFlight) return;
+
+      const user = await safelyReloadUser(rawUser);
+      await syncUserProfileAuthState(user).catch(() => {});
+
+      if (user.emailVerified) {
+        window.location.replace(nextPath);
+        return;
+      }
+
+      window.location.replace(buildVerificationRedirect(nextPath));
+    });
+
+    loginForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearStatus(loginStatus);
+      setFieldState(emailShell, emailNote, "default", "Use the same verified Gmail address you registered with.");
+      setFieldState(passwordShell, null, "default");
+
+      const rateLimit = getRateLimitState("login", { maxAttempts: 6, windowMs: 60_000 });
+      if (!rateLimit.allowed) {
+        showStatus(loginStatus, "error", `Too many attempts. Try again in ${Math.ceil(rateLimit.retryAfterMs / 1000)} seconds.`);
+        return;
+      }
+
+      const email = emailInput.value.trim().toLowerCase();
+      const password = passwordInput.value;
+      const emailError = validateEmail(email);
+
+      if (emailError) {
+        setFieldState(emailShell, emailNote, "error", emailError);
+        return;
+      }
+
+      if (!password) {
+        setFieldState(passwordShell, null, "error");
+        showStatus(loginStatus, "error", "Enter your password to continue.");
+        return;
+      }
+
+      loginInFlight = true;
+      setLoading(loginButton, true, "Authenticating...");
+
+      try {
+        await setAuthPersistence(rememberMe.checked ? "local" : "session");
+        const credential = await signInWithEmailAndPassword(auth, email, password);
+        const user = await safelyReloadUser(credential.user);
+
+        clearRateLimitState("login");
+        await syncUserProfileAuthState(user).catch(() => {});
+
+        if (!user.emailVerified) {
+          showStatus(loginStatus, "info", "Please verify your email before continuing.");
+          window.location.replace(buildVerificationRedirect(nextPath));
+          return;
+        }
+
+        showStatus(loginStatus, "success", "Login successful. Redirecting you now.");
+        window.location.replace(nextPath);
+      } catch (error) {
+        recordRateLimitAttempt("login", { windowMs: 60_000 });
+        showStatus(loginStatus, "error", mapLoginError(error));
+      } finally {
+        loginInFlight = false;
+        setLoading(loginButton, false, "Enter WebArcade");
       }
     });
 
-    window.login = function () {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      const error = document.getElementById("error");
+    resetToggle.addEventListener("click", () => {
+      const isOpen = resetCard.classList.toggle("open");
+      resetToggle.textContent = isOpen ? "Hide recovery" : "Forgot password?";
+      resetEmailInput.value = emailInput.value.trim();
+      if (isOpen) {
+        resetEmailInput.focus();
+      } else {
+        clearStatus(resetStatus);
+        setFieldState(resetEmailShell, resetEmailNote, "default", "Use the Gmail address you normally use to sign in.");
+      }
+    });
 
-      error.textContent = "";
+    resetCancel.addEventListener("click", () => {
+      resetCard.classList.remove("open");
+      resetToggle.textContent = "Forgot password?";
+      clearStatus(resetStatus);
+      setFieldState(resetEmailShell, resetEmailNote, "default", "Use the Gmail address you normally use to sign in.");
+    });
 
-      signInWithEmailAndPassword(auth, email, password)
-        .then(() => {
-          window.location.href = nextPath;
-        })
-        .catch(err => {
-          error.textContent = err.message;
-        });
-    };
+    resetForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearStatus(resetStatus);
+      setFieldState(resetEmailShell, resetEmailNote, "default", "Use the Gmail address you normally use to sign in.");
+
+      const email = resetEmailInput.value.trim().toLowerCase();
+      const emailError = validateEmail(email);
+
+      if (emailError) {
+        setFieldState(resetEmailShell, resetEmailNote, "error", emailError);
+        return;
+      }
+
+      setLoading(resetButton, true, "Sending...");
+
+      try {
+        await sendPasswordResetEmail(auth, email);
+      } catch {
+        // Keep the user-facing message generic to avoid account enumeration.
+      } finally {
+        setLoading(resetButton, false, "Send reset link");
+      }
+
+      setFieldState(resetEmailShell, resetEmailNote, "success", "If this Gmail is registered, a reset link is on the way.");
+      showStatus(resetStatus, "success", "Check your inbox and spam folder for the reset link.");
+    });
+
+    document.querySelectorAll("[data-password-toggle]").forEach(toggle => {
+      toggle.addEventListener("click", () => {
+        const target = document.getElementById(toggle.dataset.passwordToggle);
+        const nextType = target.type === "password" ? "text" : "password";
+        target.type = nextType;
+        toggle.textContent = nextType === "password" ? "Show" : "Hide";
+      });
+    });
+
+    passwordInput.addEventListener("keyup", event => {
+      capsWarning.hidden = !event.getModifierState("CapsLock");
+    });
+    passwordInput.addEventListener("keydown", event => {
+      capsWarning.hidden = !event.getModifierState("CapsLock");
+    });
+    passwordInput.addEventListener("blur", () => {
+      capsWarning.hidden = true;
+    });
+
+    function formatDestinationLabel(path) {
+      if (path === "blog.html") return "Games Dashboard";
+      if (path === "leaderboard.html") return "Leaderboard";
+      if (path === "request_game.html") return "Request a Game";
+      if (path === "account.html") return "Account & Security";
+
+      if (path.startsWith("games/")) {
+        const gameName = path.split("?")[0].split("/").pop().replace(".html", "");
+        const labelMap = {
+          "2048": "2048",
+          flappy: "Flappy Bird",
+          ludo: "Ludo",
+          minesweeper: "Minesweeper",
+          multiplayer: "UNO Lobby",
+          pong: "Pong",
+          snake: "Snake",
+          solitaire: "Solitaire",
+          tetris: "Tetris",
+          tictactoe: "Tic-Tac-Toe",
+          uno_game: "UNO Match"
+        };
+        return labelMap[gameName] || "Protected game route";
+      }
+
+      return "Protected destination";
+    }
+
+    function setFieldState(shell, note, state, message = "") {
+      shell.dataset.state = state;
+      if (note) {
+        note.textContent = message || note.textContent;
+        note.className = "field-note";
+        if (state === "error") note.classList.add("is-error");
+        if (state === "success") note.classList.add("is-success");
+        if (state === "warning") note.classList.add("is-warning");
+      }
+    }
+
+    function showStatus(element, type, message) {
+      element.textContent = message;
+      element.className = `status-banner show ${type}`;
+    }
+
+    function clearStatus(element) {
+      element.textContent = "";
+      element.className = "status-banner";
+    }
+
+    function setLoading(button, loading, label) {
+      button.disabled = loading;
+      button.textContent = label;
+    }
+
+    function mapLoginError(error) {
+      switch (error?.code) {
+        case "auth/too-many-requests":
+          return "Too many attempts were detected. Wait a moment, then try again.";
+        case "auth/user-disabled":
+          return "This account has been disabled. Contact support if you believe this is a mistake.";
+        case "auth/user-not-found":
+        case "auth/wrong-password":
+        case "auth/invalid-credential":
+          return "The Gmail address and password combination did not match our records.";
+        default:
+          return "We could not complete the login request right now. Please try again.";
+      }
+    }
   </script>
-
 </body>
 
 </html>

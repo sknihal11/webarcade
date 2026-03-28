@@ -573,29 +573,38 @@
     let worldRecord = 0;
 
     onAuthStateChanged(auth, async (u) => {
-      currentUser = u;
-      if (u) {
-        fetchGlobalBest();
-        try {
-          const s = await getDoc(doc(db, "users", u.uid));
-          if (s.exists()) {
-            const data = s.data();
-            if (data.banned) {
-              alert("Your account has been banned by an administrator.");
-              await signOut(auth);
-              location.replace("../index.html");
-              return;
-            }
-            personalBest = data.bestFlappy || 0;
-          }
-        } catch (e) {
-          console.error("Failed to fetch personal best:", e);
-        }
-        document.getElementById('worldRecordPanel').style.display = 'block';
-      } else {
+      if (!u) {
         location.replace("../login.html?next=games/flappy.html");
         return;
       }
+
+      try {
+        await u.reload();
+      } catch { }
+
+      currentUser = auth.currentUser || u;
+      if (!currentUser.emailVerified) {
+        location.replace("../verify-email.html?next=games/flappy.html");
+        return;
+      }
+
+      fetchGlobalBest();
+      try {
+        const s = await getDoc(doc(db, "users", currentUser.uid));
+        if (s.exists()) {
+          const data = s.data();
+          if (data.banned) {
+            alert("Your account has been banned by an administrator.");
+            await signOut(auth);
+            location.replace("../index.html");
+            return;
+          }
+          personalBest = data.bestFlappy || 0;
+        }
+      } catch (e) {
+        console.error("Failed to fetch personal best:", e);
+      }
+      document.getElementById('worldRecordPanel').style.display = 'block';
     });
 
     async function fetchGlobalBest() {

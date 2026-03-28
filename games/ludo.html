@@ -218,13 +218,23 @@
 
         let user = null;
 
-        onAuthStateChanged(auth, u => {
-            user = u;
-            if (u) {
-                console.log("Logged in as", u.displayName || u.email);
-            } else {
+        onAuthStateChanged(auth, async u => {
+            if (!u) {
                 location.replace("../login.html?next=games/ludo.html");
+                return;
             }
+
+            try {
+                await u.reload();
+            } catch { }
+
+            user = auth.currentUser || u;
+            if (!user.emailVerified) {
+                location.replace("../verify-email.html?next=games/ludo.html");
+                return;
+            }
+
+            console.log("Logged in as", user.displayName || user.email);
         });
 
         window.reportLudoWin = async () => {

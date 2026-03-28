@@ -5,8 +5,22 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isAdmin() {
+    function isAllowedEmail() {
       return isSignedIn()
+        && request.auth.token.email is string
+        && request.auth.token.email.matches('^[A-Za-z0-9._%+-]+@gmail\\.com$');
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isTrustedUser() {
+      return isAllowedEmail() && isVerifiedUser();
+    }
+
+    function isAdmin() {
+      return isTrustedUser()
         && request.auth.token.email == "nihalsk2022@gmail.com";
     }
 
@@ -53,7 +67,7 @@ service cloud.firestore {
 
     match /usernames/{usernameLower} {
       allow read: if true;
-      allow create: if isSignedIn()
+      allow create: if isAllowedEmail()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.usernameLower == usernameLower
         && !exists(/databases/$(database)/documents/usernames/$(usernameLower));
@@ -61,13 +75,16 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow get, list: if isSignedIn();
+      allow get: if isAdmin() || isOwner(userId) || isTrustedUser();
+      allow list: if isTrustedUser();
       allow create: if isOwner(userId)
+        && isAllowedEmail()
         && request.resource.data.email == request.auth.token.email
         && requestedUsernameReserved();
       allow update: if isAdmin()
         || (
           isOwner(userId)
+          && request.resource.data.email == request.auth.token.email
           && (
             usernameUnchanged()
             || requestedUsernameReserved()
@@ -82,53 +99,53 @@ service cloud.firestore {
     }
 
     match /game_requests/{requestId} {
-      allow create: if isSignedIn()
+      allow create: if isTrustedUser()
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.email == request.auth.token.email;
-      allow read: if isAdmin() || (isSignedIn() && resource.data.uid == request.auth.uid);
+      allow read: if isAdmin() || (isTrustedUser() && resource.data.uid == request.auth.uid);
       allow update, delete: if isAdmin();
     }
 
     match /matches/{matchId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn()
+      allow read: if isTrustedUser();
+      allow create: if isTrustedUser()
         && request.resource.data.host == request.auth.uid
         && request.resource.data.status == "waiting"
         && validParticipantIds(request.resource.data.participantIds)
         && request.resource.data.participantIds.size() == 1
         && request.resource.data.participantIds[0] == request.auth.uid;
-      allow update: if isAdmin() || isMatchParticipant() || isJoiningWaitingRoom();
-      allow delete: if isAdmin() || isMatchParticipant();
+      allow update: if isAdmin() || (isTrustedUser() && (isMatchParticipant() || isJoiningWaitingRoom()));
+      allow delete: if isAdmin() || (isTrustedUser() && isMatchParticipant());
     }
 
     match /scores_2048/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
 
     match /scores_flappy/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
 
     match /scores_solitaire/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
 
     match /scores_pong/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
 
     match /scores_snake/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
 
     match /scores_tetris/{userId} {
-      allow read: if isSignedIn();
-      allow create, update, delete: if isAdmin() || isOwner(userId);
+      allow read: if isTrustedUser();
+      allow create, update, delete: if isAdmin() || (isTrustedUser() && isOwner(userId));
     }
   }
 }

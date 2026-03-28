@@ -260,7 +260,9 @@
             getDocs,
             onAuthStateChanged,
             query,
+            safelyReloadUser,
             serverTimestamp,
+            syncUserProfileAuthState,
             where
         } from "./assets/js/firebase-client.js";
 
@@ -273,21 +275,31 @@
         const backLink = document.querySelector(".back-link");
         const loginRedirect = `login.html?next=${encodeURIComponent("request_game.html")}`;
 
-        onAuthStateChanged(auth, user => {
+        onAuthStateChanged(auth, async user => {
             authCheck.style.display = "none";
-            currentUser = user || null;
+            currentUser = user ? await safelyReloadUser(user) : null;
 
-            if (user) {
+            if (currentUser) {
+                await syncUserProfileAuthState(currentUser).catch(() => {});
+            }
+
+            if (currentUser && currentUser.emailVerified) {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Submit Request";
                 backLink.href = "blog.html";
-                backLink.innerText = "← Back to Dashboard";
+                backLink.innerText = "Back to Dashboard";
                 loadMyRequests();
+            } else if (currentUser) {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Verify Email to Submit";
+                backLink.href = "verify-email.html?next=request_game.html";
+                backLink.innerText = "Verify Email";
+                pastRequestsList.innerHTML = "Please verify your email before submitting requests or viewing request history.";
             } else {
                 submitBtn.disabled = false;
                 submitBtn.innerText = "Login to Submit";
                 backLink.href = "index.html";
-                backLink.innerText = "← Back to Home";
+                backLink.innerText = "Back to Home";
                 pastRequestsList.innerHTML = "Login to view your previous requests and admin replies.";
             }
         });
@@ -348,6 +360,11 @@
         document.getElementById('submitBtn').addEventListener('click', async () => {
             if (!currentUser) {
                 window.location.href = loginRedirect;
+                return;
+            }
+
+            if (!currentUser.emailVerified) {
+                window.location.href = "verify-email.html?next=request_game.html";
                 return;
             }
 

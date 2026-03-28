@@ -1256,12 +1256,21 @@
             }
 
             initAuth() {
-                onAuthStateChanged(auth, (user) => {
-                    this.currentUser = user;
-                    this.authReady = true;
-
+                onAuthStateChanged(auth, async (user) => {
                     if (!user) {
                         location.replace('../login.html?next=games/pong.html');
+                        return;
+                    }
+
+                    try {
+                        await user.reload();
+                    } catch { }
+
+                    this.currentUser = auth.currentUser || user;
+                    this.authReady = true;
+
+                    if (!this.currentUser.emailVerified) {
+                        location.replace('../verify-email.html?next=games/pong.html');
                     }
                 });
             }

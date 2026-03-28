@@ -378,25 +378,35 @@
     const gameOverEl = document.getElementById("game-over");
 
     onAuthStateChanged(auth, async (u) => {
-      user = u;
-      if (user) {
-        try {
-          const s = await getDoc(doc(db, "users", user.uid));
-          if (s.exists()) {
-            const data = s.data();
-            if (data.banned) {
-              alert("Your account has been banned by an administrator.");
-              await signOut(auth);
-              location.replace("../index.html");
-              return;
-            }
-            best = data.best2048 || 0;
-          }
-        } catch (e) { }
-      } else {
+      if (!u) {
         location.replace("../login.html?next=games/2048.html");
         return;
       }
+
+      try {
+        await u.reload();
+      } catch { }
+
+      user = auth.currentUser || u;
+      if (!user.emailVerified) {
+        location.replace("../verify-email.html?next=games/2048.html");
+        return;
+      }
+
+      try {
+        const s = await getDoc(doc(db, "users", user.uid));
+        if (s.exists()) {
+          const data = s.data();
+          if (data.banned) {
+            alert("Your account has been banned by an administrator.");
+            await signOut(auth);
+            location.replace("../index.html");
+            return;
+          }
+          best = data.best2048 || 0;
+        }
+      } catch (e) { }
+
       updateUI();
       loadLeaderboard();
     });
