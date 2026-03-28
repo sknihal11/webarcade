@@ -394,7 +394,8 @@
           }
         } catch (e) { }
       } else {
-        best = Number(localStorage.getItem("best2048") || 0);
+        location.replace("../login.html?next=games/2048.html");
+        return;
       }
       updateUI();
       loadLeaderboard();

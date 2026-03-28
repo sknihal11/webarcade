@@ -2727,7 +2727,7 @@
     // ============================================
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
-        location.replace("index.html");
+        location.replace("login.html?next=blog.html");
         return;
       }
 

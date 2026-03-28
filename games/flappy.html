@@ -593,9 +593,8 @@
         }
         document.getElementById('worldRecordPanel').style.display = 'block';
       } else {
-        // Guest mode
-        personalBest = Number(localStorage.getItem("bestFlappy") || 0);
-        document.getElementById('worldRecordPanel').style.display = 'none';
+        location.replace("../login.html?next=games/flappy.html");
+        return;
       }
     });
 
@@ -888,11 +887,7 @@
 
     document.getElementById('backBtn').addEventListener('click', (e) => {
       e.preventDefault();
-      if (currentUser) {
-        window.location.href = '../blog.html';
-      } else {
-        window.location.href = '../index.html';
-      }
+      window.location.href = '../blog.html';
     });
 
     // START LOADING

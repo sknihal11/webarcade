@@ -162,10 +162,30 @@
     import {
       auth,
       ensureBrowserPersistence,
+      onAuthStateChanged,
       signInWithEmailAndPassword
     } from "./assets/js/firebase-client.js";
 
     await ensureBrowserPersistence();
+    const params = new URLSearchParams(window.location.search);
+    const rawNext = params.get("next");
+    const cleanedNext = rawNext ? rawNext.replace(/^\//, "") : "";
+    const nextPath = cleanedNext
+      && !cleanedNext.includes("..")
+      && !/^https?:/i.test(cleanedNext)
+      && !cleanedNext.startsWith("//")
+      && !/^login\.html(?:$|\?)/i.test(cleanedNext)
+      && !/^signup\.html(?:$|\?)/i.test(cleanedNext)
+      ? cleanedNext
+      : "blog.html";
+    const signupLink = document.querySelector(".footer a");
+    signupLink.href = `signup.html?next=${encodeURIComponent(nextPath)}`;
+
+    onAuthStateChanged(auth, user => {
+      if (user) {
+        window.location.href = nextPath;
+      }
+    });
 
     window.login = function () {
       const email = document.getElementById("email").value;
@@ -176,7 +196,7 @@
 
       signInWithEmailAndPassword(auth, email, password)
         .then(() => {
-          window.location.href = "blog.html";
+          window.location.href = nextPath;
         })
         .catch(err => {
           error.textContent = err.message;

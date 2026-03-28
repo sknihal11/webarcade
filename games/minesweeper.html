@@ -194,6 +194,18 @@
         <button class="btn" onclick="initGame()">Play Again</button>
     </div>
 
+    <script type="module">
+        import { auth, ensureBrowserPersistence, onAuthStateChanged } from "../assets/js/firebase-client.js";
+
+        await ensureBrowserPersistence();
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                location.replace("../login.html?next=games/minesweeper.html");
+            }
+        });
+    </script>
+
     <script>
         const ROWS = 10;
         const COLS = 10;

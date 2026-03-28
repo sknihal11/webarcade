@@ -267,15 +267,28 @@
         await ensureBrowserPersistence();
 
         let currentUser = null;
+        const authCheck = document.getElementById("authCheck");
+        const submitBtn = document.getElementById("submitBtn");
+        const pastRequestsList = document.getElementById("pastRequestsList");
+        const backLink = document.querySelector(".back-link");
+        const loginRedirect = `login.html?next=${encodeURIComponent("request_game.html")}`;
 
         onAuthStateChanged(auth, user => {
+            authCheck.style.display = "none";
+            currentUser = user || null;
+
             if (user) {
-                currentUser = user;
-                document.getElementById("authCheck").style.display = "none";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Submit Request";
+                backLink.href = "blog.html";
+                backLink.innerText = "← Back to Dashboard";
                 loadMyRequests();
             } else {
-                alert("You must be logged in to request a game.");
-                window.location.href = "login.html";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Login to Submit";
+                backLink.href = "index.html";
+                backLink.innerText = "← Back to Home";
+                pastRequestsList.innerHTML = "Login to view your previous requests and admin replies.";
             }
         });
 
@@ -333,7 +346,10 @@
         }
 
         document.getElementById('submitBtn').addEventListener('click', async () => {
-            if (!currentUser) return;
+            if (!currentUser) {
+                window.location.href = loginRedirect;
+                return;
+            }
 
             const title = document.getElementById('gameTitle').value.trim();
             const desc = document.getElementById('gameDesc').value.trim();

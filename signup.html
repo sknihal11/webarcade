@@ -219,10 +219,31 @@
     createUserProfile,
     ensureBrowserPersistence,
     isUsernameTaken,
+    onAuthStateChanged,
     updateProfile
   } from "./assets/js/firebase-client.js";
 
   await ensureBrowserPersistence();
+  const params = new URLSearchParams(window.location.search);
+  const rawNext = params.get("next");
+  const cleanedNext = rawNext ? rawNext.replace(/^\//, "") : "";
+  const nextPath = cleanedNext
+    && !cleanedNext.includes("..")
+    && !/^https?:/i.test(cleanedNext)
+    && !cleanedNext.startsWith("//")
+    && !/^login\.html(?:$|\?)/i.test(cleanedNext)
+    && !/^signup\.html(?:$|\?)/i.test(cleanedNext)
+    ? cleanedNext
+    : "blog.html";
+  const loginLink = document.querySelector(".link a");
+  loginLink.href = `login.html?next=${encodeURIComponent(nextPath)}`;
+  let isCreatingAccount = false;
+
+  onAuthStateChanged(auth, user => {
+    if (user && !isCreatingAccount) {
+      window.location.href = nextPath;
+    }
+  });
 
   // --- VALIDATION HELPERS ---
   
@@ -481,6 +502,7 @@
     document.querySelector(".card").classList.add("loading");
 
     try {
+      isCreatingAccount = true;
       
       // Create Firebase Auth account
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -499,9 +521,10 @@
       // If something went wrong, try once more
 
       alert("Account created! 🎉");
-      window.location.href = "index.html";
+      window.location.href = nextPath;
 
     } catch (error) {
+      isCreatingAccount = false;
       btn.disabled = false;
       btn.textContent = "Sign Up";
       document.querySelector(".card").classList.remove("loading");

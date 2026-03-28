@@ -286,6 +286,18 @@
             MENU</button>
     </div>
 
+    <script type="module">
+        import { auth, ensureBrowserPersistence, onAuthStateChanged } from "../assets/js/firebase-client.js";
+
+        await ensureBrowserPersistence();
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                location.replace("../login.html?next=games/tictactoe.html");
+            }
+        });
+    </script>
+
     <script>
         const cells = document.querySelectorAll('.cell');
         const boardEl = document.getElementById('board');

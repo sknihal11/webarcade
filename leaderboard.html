@@ -437,12 +437,14 @@
     };
 
     onAuthStateChanged(auth, u => {
+      currentUser = u || null;
+      userBar.classList.remove('active');
+
       if (!u) {
-        location.replace("index.html");
+        listEl.innerHTML = '<div class="loading-spinner">SIGN IN TO VIEW LIVE RANKINGS AND YOUR PERSONAL PLACEMENT.<br><br><a href="login.html?next=leaderboard.html" style="color:var(--accent-primary); text-decoration:none;">LOGIN</a></div>';
         return;
       }
 
-      currentUser = u;
       loadData();
     });
 

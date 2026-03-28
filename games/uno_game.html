@@ -339,6 +339,7 @@
         let myId = null;
         let myTurnIndex = -1;
         let pendingWildCard = null;
+        const loginRedirect = `../login.html?next=${encodeURIComponent(`games/uno_game.html${window.location.search}`)}`;
 
         if (!roomId) window.location.href = '../blog.html';
 
@@ -349,7 +350,7 @@
                 currentUser = u; myId = u.uid;
                 listenToGame();
             } else {
-                window.location.href = '../index.html';
+                window.location.href = loginRedirect;
             }
         });
 

@@ -613,7 +613,8 @@
                         console.error("Firebase fetch error", e);
                     }
                 } else {
-                    personalBestScore = Number(localStorage.getItem('bestSolitaire') || 0);
+                    location.replace("../login.html?next=games/solitaire.html");
+                    return;
                 }
             });
 

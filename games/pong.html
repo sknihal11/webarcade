@@ -1261,7 +1261,7 @@
                     this.authReady = true;
 
                     if (!user) {
-                        console.warn('No user logged in - username will default to "Player"');
+                        location.replace('../login.html?next=games/pong.html');
                     }
                 });
             }

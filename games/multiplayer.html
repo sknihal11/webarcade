@@ -58,7 +58,7 @@ await ensureBrowserPersistence();
 
 let user, currentRoom, isHost = false;
 
-onAuthStateChanged(auth, u => { if(u) user = u; else location.href="../index.html"; });
+onAuthStateChanged(auth, u => { if(u) user = u; else location.href="../login.html?next=games/multiplayer.html"; });
 
 window.createRoom = async () => {
     const id = Math.floor(100000 + Math.random() * 900000).toString();

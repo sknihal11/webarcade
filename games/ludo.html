@@ -222,6 +222,8 @@
             user = u;
             if (u) {
                 console.log("Logged in as", u.displayName || u.email);
+            } else {
+                location.replace("../login.html?next=games/ludo.html");
             }
         });
 

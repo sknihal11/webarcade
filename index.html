@@ -1453,7 +1453,6 @@
           const snap = await getDoc(doc(db, "users", user.uid));
           document.getElementById('usernameDisplay').textContent =
             (snap.exists() ? snap.data().username : null) || user.displayName || 'PLAYER_1';
-          window.location.href = "blog.html";
         } catch (err) {
           console.error(err);
           if (err.message.includes("Session limit")) { alert(err.message); await signOut(auth); }
