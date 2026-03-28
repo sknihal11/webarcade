@@ -4,10 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Downloads | WebArcade</title>
+    <meta name="theme-color" content="#050814">
+    <meta name="description"
+        content="Browse official WebArcade downloads including asset packs, artwork, and extra files published for the browser arcade community.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://webarcade.in/downloads.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="WebArcade">
+    <meta property="og:title" content="Downloads Hub | WebArcade Assets and Media">
+    <meta property="og:description"
+        content="Download official WebArcade asset packs, promo artwork, and extra files from the browser arcade platform.">
+    <meta property="og:url" content="https://webarcade.in/downloads.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Downloads Hub | WebArcade Assets and Media">
+    <meta name="twitter:description"
+        content="Official WebArcade downloads for artwork, bundled assets, and platform extras.">
+    <title>Downloads Hub | WebArcade Assets and Media</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@500;700&display=swap"
         rel="stylesheet">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "CollectionPage",
+            "name": "WebArcade Downloads Hub",
+            "url": "https://webarcade.in/downloads.html",
+            "description": "A collection of official WebArcade downloads including asset bundles and artwork.",
+            "isPartOf": {
+                "@type": "WebSite",
+                "name": "WebArcade",
+                "url": "https://webarcade.in/"
+            }
+        }
+    </script>
     <style>
         :root {
             /* Neon Cyberpunk Theme */
@@ -74,6 +103,54 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.8rem;
+        }
+
+        .summary-card {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .summary-card strong {
+            display: block;
+            margin-bottom: 0.4rem;
+            color: var(--text-primary);
+        }
+
+        .summary-card span {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .summary-card a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem 1rem;
+            margin: 1.4rem 0 1.8rem;
+        }
+
+        .link-row a {
+            color: var(--accent-primary);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .link-row a:hover {
+            color: var(--text-primary);
         }
 
         .download-item {
@@ -185,7 +262,33 @@
 
     <div class="container">
         <h2 style="text-shadow: 0 0 10px var(--accent-glow)">Downloads Hub</h2>
-        <p>Access and download exclusive files, game resources, and assets provided by the WebArcade team.</p>
+        <p>Access official WebArcade files, artwork, and bundled game resources published for the browser arcade
+            community.</p>
+
+        <div class="summary-grid">
+            <div class="summary-card">
+                <strong>Official assets</strong>
+                <span>These downloads are maintained by the WebArcade team and connect directly to the live site
+                    experience.</span>
+            </div>
+            <div class="summary-card">
+                <strong>Browser-first platform</strong>
+                <span>WebArcade games run in the browser, while this page collects the extra packs, media, and reusable
+                    files around them.</span>
+            </div>
+            <div class="summary-card">
+                <strong>Useful public links</strong>
+                <span>Explore the <a href="leaderboard.html">leaderboard</a>, read more <a href="about.html">about the
+                        platform</a>, or <a href="request_game.html">request a new game</a>.</span>
+            </div>
+        </div>
+
+        <div class="link-row" aria-label="Public navigation links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="request_game.html">Request a Game</a>
+        </div>
 
         <div class="download-list">
             
@@ -233,7 +336,7 @@
 
         </div>
 
-        <a href="index.html" class="back-link">← Back to Dashboard</a>
+        <a href="index.html" class="back-link">← Back to Home</a>
     </div>
 
 </body>

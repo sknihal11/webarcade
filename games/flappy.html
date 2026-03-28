@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Flappy Bird – WebArcade</title>
+  <meta name="robots" content="noindex,nofollow">
+  <title>Flappy Bird - WebArcade</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=Orbitron:wght@700;900&display=swap"
     rel="stylesheet">
@@ -588,6 +589,12 @@
         return;
       }
 
+      try {
+        await currentUser.getIdToken(true);
+      } catch (error) {
+        console.warn("Token refresh failed:", error);
+      }
+
       fetchGlobalBest();
       try {
         const s = await getDoc(doc(db, "users", currentUser.uid));
@@ -609,7 +616,7 @@
 
     async function fetchGlobalBest() {
       try {
-        const q = query(collection(db, "users"), orderBy("bestFlappy", "desc"), limit(1));
+        const q = query(collection(db, "public_profiles"), orderBy("bestFlappy", "desc"), limit(1));
         const snap = await getDocs(q);
         if (!snap.empty) {
           worldRecord = snap.docs[0].data().bestFlappy || 0;
@@ -773,7 +780,14 @@
         localStorage.setItem("bestFlappy", personalBest);
 
         if (currentUser) {
-          setDoc(doc(db, "users", currentUser.uid), { bestFlappy: newBest }, { merge: true })
+          Promise.all([
+            setDoc(doc(db, "users", currentUser.uid), { bestFlappy: newBest }, { merge: true }),
+            setDoc(doc(db, "public_profiles", currentUser.uid), {
+              username: currentUser.displayName || "Player",
+              bestFlappy: newBest,
+              photoURL: currentUser.photoURL || ""
+            }, { merge: true })
+          ])
             .then(() => {
               fetchGlobalBest();
             })

@@ -4,6 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
   <meta name="theme-color" content="#040710">
   <title>Create Account | WebArcade</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -161,6 +162,7 @@
       auth,
       calculatePasswordStrength,
       checkPasswordBreach,
+      cleanupFailedSignup,
       clearRateLimitState,
       createUserProfile,
       createUserWithEmailAndPassword,
@@ -374,25 +376,47 @@
       showStatus(signupStatus, "info", "Creating your account and sending a verification email...");
 
       try {
+        let credential;
         await setAuthPersistence(rememberMe.checked ? "local" : "session");
 
-        const credential = await createUserWithEmailAndPassword(auth, email, password);
+        credential = await createUserWithEmailAndPassword(auth, email, password);
         await updateProfile(credential.user, { displayName: username });
 
-        await createUserProfile(credential.user, {
-          username,
-          email,
-          extraFields: {
-            verificationStatus: "pending",
-            verificationEmailSentAt: new Date()
-          }
-        });
+        try {
+          await createUserProfile(credential.user, {
+            username,
+            email,
+            extraFields: {
+              verificationStatus: "pending",
+              verificationEmailSentAt: new Date()
+            }
+          });
+        } catch (profileError) {
+          await cleanupFailedSignup(credential.user, username).catch(() => {});
+          throw profileError;
+        }
 
-        await sendAppVerificationEmail(credential.user, nextPath);
+        let verificationSendFailed = false;
+        try {
+          await sendAppVerificationEmail(credential.user, nextPath);
+        } catch (verificationError) {
+          console.warn("Verification email send failed:", verificationError);
+          verificationSendFailed = true;
+        }
+
         await syncUserProfileAuthState(await safelyReloadUser(credential.user)).catch(() => {});
         clearRateLimitState("signup");
 
-        showStatus(signupStatus, "success", "Account created. Check your Gmail inbox for the verification link.");
+        if (verificationSendFailed) {
+          showStatus(
+            signupStatus,
+            "info",
+            "Account created. We could not send the verification email yet, but you can resend it on the next screen."
+          );
+        } else {
+          showStatus(signupStatus, "success", "Account created. Check your Gmail inbox for the verification link.");
+        }
+
         window.location.replace(`verify-email.html?next=${encodeURIComponent(nextPath)}&new=1`);
       } catch (error) {
         recordRateLimitAttempt("signup", { windowMs: 60_000 });

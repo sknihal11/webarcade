@@ -1,9 +1,10 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex,nofollow">
     <title>Neon Pong - WebRTC Edition (Secure)</title>
     <style>
         * {
@@ -433,7 +434,7 @@
     <div class="ui-layer">
         <div class="hud hidden" id="gameHud">
             <button class="btn-exit interactive" id="btnExit">EXIT</button>
-            <a href="../blog.html" class="back-btn-link">â† DASH</a>
+            <a href="../blog.html" class="back-btn-link">← DASH</a>
             <div id="connectionStatus" class="connection-status"></div>
             <div id="latencyDisplay" class="latency-display">RTT: --ms</div>
             <div class="score-row">
@@ -457,7 +458,7 @@
             <h1>NEON PONG</h1>
             <button class="btn-cyan" id="btnAI">SINGLE PLAYER</button>
             <button class="btn-pink" id="btnOnline">MULTIPLAYER</button>
-            <a href="../blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">â†
+            <a href="../blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">←
                 DASHBOARD</a>
             <div id="connectionError" class="error-notice hidden"></div>
         </div>
@@ -486,7 +487,7 @@
         <div id="overScreen" class="screen hidden interactive">
             <h1 id="winMsg">WINNER</h1>
             <button class="btn-cyan" onclick="window.location.reload()">PLAY AGAIN</button>
-            <a href="../blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">â†
+            <a href="../blog.html" class="btn-back" style="text-decoration:none; display:inline-block;">←
                 DASHBOARD</a>
         </div>
     </div>
@@ -1264,6 +1265,7 @@
 
                     try {
                         await user.reload();
+                        await user.getIdToken(true);
                     } catch { }
 
                     this.currentUser = auth.currentUser || user;

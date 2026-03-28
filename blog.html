@@ -11,6 +11,7 @@
   </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex,nofollow">
   <title>WebArcade | Dashboard</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Space+Grotesk:wght@500;700&display=swap"
@@ -2530,6 +2531,7 @@
       safelyReloadUser,
       setDoc,
       signOut,
+      syncPublicProfile,
       syncUserProfileAuthState,
       unregisterSession,
       updateDoc,
@@ -2850,24 +2852,20 @@
     // ============================================
     async function loadLeaderboard() {
       try {
-        const snapshot = await getDocs(query(collection(db, "users"), limit(100)));
+        const snapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
         const leaderData = [];
 
         for (const docSnap of snapshot.docs) {
           const d = docSnap.data();
-          if (d.banned || d.isActive === false) continue;
-
-          const s2 = d.best2048 || 0;
-          const sf = d.bestFlappy || 0;
-          const rating = calculateGlobalRating(s2, sf);
+          const rating = Number(d.globalRating) || calculateGlobalRating(d.best2048 || 0, d.bestFlappy || 0);
 
           if (rating > 0) {
             leaderData.push({
               id: docSnap.id,
-              name: d.username || d.displayName || d.name || 'Anonymous',
+              name: d.username || 'Anonymous',
               photoURL: d.photoURL || DEFAULT_AVATAR_URL,
               streak: d.streak || 0,
-              rating: rating
+              rating
             });
           }
         }
@@ -3002,6 +3000,12 @@
             username: newName,
             usernameLower: newName.toLowerCase()
           });
+          await syncPublicProfile(currentUser.uid, {
+            ...userDoc.data(),
+            username: newName,
+            usernameLower: newName.toLowerCase(),
+            photoURL: currentUser.photoURL || DEFAULT_AVATAR_URL
+          }, currentUser).catch(() => {});
         } else {
           await createUserProfile(currentUser, { username: newName, deviceId: currentDeviceId || getDeviceId() });
         }
@@ -3041,6 +3045,10 @@
       try {
         await updateProfile(currentUser, { photoURL: newUrl });
         await updateDoc(doc(db, "users", currentUser.uid), { photoURL: newUrl });
+        await syncPublicProfile(currentUser.uid, {
+          username: elements.userName.textContent || currentUser.displayName || "Player",
+          photoURL: newUrl
+        }, currentUser).catch(() => {});
         elements.userAvatar.src = newUrl;
         elements.drawerAvatar.src = newUrl;
         alert("✅ Avatar updated successfully!");
@@ -3088,6 +3096,7 @@
         try {
           await releaseUsername(usernameToRelease, userId).catch(() => {});
           await deleteDoc(doc(db, "users", userId));
+          await deleteDoc(doc(db, "public_profiles", userId)).catch(() => {});
         } catch (error) {
           console.error("Error deleting user document:", error);
         }

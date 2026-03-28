@@ -4,10 +4,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Hall of Fame | WebArcade</title>
+  <meta name="theme-color" content="#05070a">
+  <meta name="description"
+    content="Explore the public WebArcade leaderboard, compare player ratings, and follow top scores across featured browser-based arcade games.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://webarcade.in/leaderboard.html">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WebArcade">
+  <meta property="og:title" content="Hall of Fame | WebArcade Leaderboard">
+  <meta property="og:description"
+    content="See the WebArcade community rankings for global rating, 2048, and Flappy score performance.">
+  <meta property="og:url" content="https://webarcade.in/leaderboard.html">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Hall of Fame | WebArcade Leaderboard">
+  <meta name="twitter:description"
+    content="Public WebArcade player rankings across featured browser arcade score categories.">
+  <title>Hall of Fame | WebArcade Leaderboard</title>
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap"
     rel="stylesheet">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "WebArcade Hall of Fame",
+      "url": "https://webarcade.in/leaderboard.html",
+      "description": "The public leaderboard for WebArcade player performance across global rating and featured game categories.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "WebArcade",
+        "url": "https://webarcade.in/"
+      }
+    }
+  </script>
   <style>
     /* --- CSS VARIABLES --- */
     :root {
@@ -140,6 +169,36 @@
       font-size: 1.1rem;
       max-width: 600px;
       margin: 0 auto;
+    }
+
+    .hero-copy-card {
+      margin: 2rem auto 0;
+      max-width: 860px;
+      padding: 1.4rem 1.5rem;
+      border-radius: 20px;
+      border: 1px solid var(--border-medium);
+      background: rgba(10, 15, 30, 0.78);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+      color: var(--text-secondary);
+    }
+
+    .hero-copy-card p {
+      margin: 0;
+      line-height: 1.8;
+    }
+
+    .hero-links {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.75rem 1rem;
+      margin-top: 1rem;
+    }
+
+    .hero-links a {
+      color: var(--accent-primary);
+      text-decoration: none;
+      font-weight: 700;
     }
 
     /* --- CONTROLS --- */
@@ -351,6 +410,17 @@
     <section class="hero-section">
       <h1 class="hero-title">HALL OF FAME</h1>
       <p class="hero-sub">The elite performance records of the WebArcade community.</p>
+      <div class="hero-copy-card">
+        <p>These public rankings spotlight top WebArcade players across the global rating table and featured score
+          categories. Players can explore the leaderboard without signing in, while verified accounts unlock protected
+          game sessions, saved performance, and multiplayer access inside the main dashboard.</p>
+        <div class="hero-links" aria-label="Public navigation links">
+          <a href="index.html">Home</a>
+          <a href="about.html">About</a>
+          <a href="downloads.html">Downloads</a>
+          <a href="request_game.html">Request a Game</a>
+        </div>
+      </div>
     </section>
 
     <!-- Controls -->
@@ -439,31 +509,23 @@
     onAuthStateChanged(auth, u => {
       currentUser = u || null;
       userBar.classList.remove('active');
-
-      if (!u) {
-        listEl.innerHTML = '<div class="loading-spinner">SIGN IN TO VIEW LIVE RANKINGS AND YOUR PERSONAL PLACEMENT.<br><br><a href="login.html?next=leaderboard.html" style="color:var(--accent-primary); text-decoration:none;">LOGIN</a></div>';
-        return;
-      }
-
       loadData();
     });
 
     async function loadData() {
       try {
-        const querySnapshot = await getDocs(query(collection(db, "users"), limit(100)));
+        const querySnapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
         const users = [];
 
         for (const docSnap of querySnapshot.docs) {
           const d = docSnap.data();
-          if (d.banned) continue;
-
           const s2048 = d.best2048 || 0;
           const sFlappy = d.bestFlappy || 0;
-          const globalRating = calculateGlobalRating(s2048, sFlappy);
+          const globalRating = Number(d.globalRating) || calculateGlobalRating(s2048, sFlappy);
 
           users.push({
             id: docSnap.id,
-            name: d.username || d.displayName || 'Anonymous',
+            name: d.username || 'Anonymous',
             avatar: d.photoURL || DEFAULT_AVATAR_URL,
             streak: d.streak || 0,
             score2048: s2048,
@@ -488,6 +550,12 @@
       else if (currentFilter === 'flappy') sorted.sort((a, b) => b.scoreFlappy - a.scoreFlappy);
 
       listEl.innerHTML = '';
+      userBar.classList.remove('active');
+
+      if (!sorted.length) {
+        listEl.innerHTML = '<div class="loading-spinner">NO PUBLIC RANKINGS YET. PLAY A FEW GAMES AND COME BACK SOON.</div>';
+        return;
+      }
       
       sorted.forEach((player, index) => {
         const row = document.createElement('div');

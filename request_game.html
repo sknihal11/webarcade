@@ -4,10 +4,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#050814">
+    <meta name="description"
+        content="Request new browser games for WebArcade, suggest formats you want added, and follow the status of your submitted ideas.">
+    <meta name="robots" content="index,follow">
+    <link rel="canonical" href="https://webarcade.in/request_game.html">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="WebArcade">
+    <meta property="og:title" content="Request a Game | WebArcade">
+    <meta property="og:description"
+        content="Tell WebArcade which browser game or challenge mode should be added next.">
+    <meta property="og:url" content="https://webarcade.in/request_game.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Request a Game | WebArcade">
+    <meta name="twitter:description"
+        content="Suggest new browser games and track request status on WebArcade.">
     <title>Request a Game | WebArcade</title>
     <link
         href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Space+Grotesk:wght@500;700&display=swap"
         rel="stylesheet">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebPage",
+            "name": "Request a Game",
+            "url": "https://webarcade.in/request_game.html",
+            "description": "Suggest new browser games and track request activity on WebArcade.",
+            "isPartOf": {
+                "@type": "WebSite",
+                "name": "WebArcade",
+                "url": "https://webarcade.in/"
+            }
+        }
+    </script>
     <style>
         :root {
             /* Neon Cyberpunk Theme */
@@ -214,6 +243,53 @@
             color: var(--accent-primary);
             margin-bottom: 0.25rem;
         }
+
+        .info-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .info-card {
+            background: rgba(0, 0, 0, 0.28);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .info-card strong {
+            display: block;
+            margin-bottom: 0.45rem;
+        }
+
+        .info-card span {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.6;
+        }
+
+        .info-card a {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        .link-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem 1rem;
+            margin-bottom: 1.6rem;
+        }
+
+        .link-row a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .link-row a:hover {
+            color: var(--text-primary);
+        }
     </style>
 </head>
 
@@ -223,7 +299,31 @@
 
     <div class="container">
         <h2 style="text-shadow: 0 0 10px var(--accent-glow)">Request a Game</h2>
-        <p>Got a favorite game you want to see on WebArcade? Let us know!</p>
+        <p>Got a favorite browser game or challenge mode you want to see on WebArcade? Tell us what should join the
+            lineup next.</p>
+
+        <div class="info-strip">
+            <div class="info-card">
+                <strong>Public page</strong>
+                <span>Anyone can view this page and learn how the request flow works.</span>
+            </div>
+            <div class="info-card">
+                <strong>Verified submission</strong>
+                <span>Signing in with a verified Gmail account unlocks request submission and request history.</span>
+            </div>
+            <div class="info-card">
+                <strong>Helpful next steps</strong>
+                <span>Check the <a href="leaderboard.html">leaderboard</a> or read more <a href="about.html">about
+                        WebArcade</a> while you explore.</span>
+            </div>
+        </div>
+
+        <div class="link-row" aria-label="Public navigation links">
+            <a href="index.html">Home</a>
+            <a href="about.html">About</a>
+            <a href="leaderboard.html">Leaderboard</a>
+            <a href="downloads.html">Downloads</a>
+        </div>
 
         <div class="req-status" id="successMsg">Your game request has been submitted!</div>
 

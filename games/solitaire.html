@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Solitaire – WebArcade</title>
+  <meta name="robots" content="noindex,nofollow">
+    <title>Solitaire - WebArcade</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
         /* Google Solitaire Inspired Theme */
@@ -602,6 +603,7 @@
 
                 try {
                     await user.reload();
+                    await user.getIdToken(true);
                 } catch { }
 
                 currentUser = auth.currentUser || user;

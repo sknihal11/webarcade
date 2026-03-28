@@ -4,7 +4,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>2048 â€“ WebArcade</title>
+  <meta name="robots" content="noindex,nofollow">
+  <title>2048 - WebArcade</title>
 
   <style>
     :root {
@@ -394,6 +395,10 @@
       }
 
       try {
+        await user.getIdToken(true);
+      } catch { }
+
+      try {
         const s = await getDoc(doc(db, "users", user.uid));
         if (s.exists()) {
           const data = s.data();
@@ -485,7 +490,15 @@
         if (score > best) {
           best = score;
           localStorage.setItem("best2048", best);
-          if (user) setDoc(doc(db, "users", user.uid), { best2048: best }, { merge: true }).then(loadLeaderboard);
+          if (user) {
+            Promise.all([
+              setDoc(doc(db, "users", user.uid), { best2048: best }, { merge: true }),
+              setDoc(doc(db, "public_profiles", user.uid), {
+                username: user.displayName || "Player",
+                best2048: best
+              }, { merge: true })
+            ]).then(loadLeaderboard);
+          }
         }
         checkGameOver();
       }
@@ -512,7 +525,7 @@
 
     async function loadLeaderboard() {
       try {
-        const s = await getDocs(collection(db, "users"));
+        const s = await getDocs(collection(db, "public_profiles"));
         let d = [];
         s.forEach(doc => {
           const dd = doc.data();

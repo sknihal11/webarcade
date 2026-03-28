@@ -101,6 +101,18 @@ a {
   align-items: stretch;
 }
 
+.auth-shell--compact {
+  max-width: 620px;
+  grid-template-columns: minmax(0, 1fr);
+  justify-content: center;
+}
+
+.auth-shell--compact .form-panel {
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+}
+
 .brand-panel,
 .auth-card,
 .support-card,
@@ -305,6 +317,23 @@ a {
 .support-card {
   border-radius: 30px;
   padding: clamp(22px, 3vw, 32px);
+}
+
+.auth-card--compact {
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-card--compact .card-header {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.quick-note {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin-top: 0.15rem;
 }
 
 .card-header h1,

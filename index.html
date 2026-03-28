@@ -5,12 +5,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="theme-color" content="#04050f">
-  <title>WebArcade</title>
+  <meta name="description"
+    content="WebArcade is a browser-based arcade gaming platform where you can play classic games online, follow leaderboards, and unlock competitive features without installing downloads.">
+  <meta name="robots" content="index,follow">
+  <link rel="canonical" href="https://webarcade.in/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="WebArcade">
+  <meta property="og:title" content="WebArcade | Play Browser Arcade Games Online">
+  <meta property="og:description"
+    content="Play browser-based arcade games online, track scores, and compete on WebArcade leaderboards from one cyberpunk-inspired hub.">
+  <meta property="og:url" content="https://webarcade.in/">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="WebArcade | Play Browser Arcade Games Online">
+  <meta name="twitter:description"
+    content="Classic games, online leaderboards, and a browser-first arcade platform built for quick play.">
+  <title>WebArcade | Play Browser Arcade Games Online</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@500;700;900&display=swap"
     rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/tsparticles-preset-stars@2/tsparticles.preset.stars.bundle.min.js"></script>
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "name": "WebArcade",
+          "url": "https://webarcade.in/",
+          "description": "A browser-based arcade gaming platform for playing retro-inspired games online, following leaderboards, and accessing multiplayer experiences."
+        },
+        {
+          "@type": "Organization",
+          "name": "WebArcade",
+          "url": "https://webarcade.in/",
+          "sameAs": [
+            "https://github.com/sknihal11/webarcade",
+            "https://www.instagram.com/sknihal11?igsh=MW9ybTA2dW4wNTl2cw=="
+          ]
+        }
+      ]
+    }
+  </script>
 
   <style>
     :root {
@@ -1281,6 +1317,94 @@
         transition-delay: 0s !important;
       }
     }
+
+    .seo-panel {
+      width: min(1120px, calc(100% - 32px));
+      margin: 32px auto 72px;
+      padding: 28px;
+      border-radius: 24px;
+      border: 1px solid rgba(0, 240, 255, 0.16);
+      background: linear-gradient(180deg, rgba(10, 13, 32, 0.86), rgba(5, 8, 20, 0.92));
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.32);
+      display: grid;
+      gap: 24px;
+    }
+
+    .seo-copy h2 {
+      font-size: clamp(1.6rem, 3vw, 2.4rem);
+      margin-bottom: 14px;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .seo-copy p {
+      color: var(--text-secondary);
+      line-height: 1.8;
+      max-width: 760px;
+      font-size: 1rem;
+    }
+
+    .seo-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      color: var(--accent-primary);
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .seo-kicker::before {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: var(--accent-primary);
+      box-shadow: 0 0 12px var(--accent-glow);
+    }
+
+    .seo-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .seo-link-card {
+      padding: 18px 20px;
+      border-radius: 18px;
+      border: 1px solid rgba(0, 240, 255, 0.12);
+      background: rgba(9, 12, 26, 0.8);
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .seo-link-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .seo-link-card span {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      line-height: 1.6;
+    }
+
+    .seo-link-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(0, 240, 255, 0.35);
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.22);
+    }
+
+    @media (max-width: 640px) {
+      .seo-panel {
+        padding: 22px 18px;
+        margin-bottom: 48px;
+      }
+    }
   </style>
 </head>
 
@@ -1326,8 +1450,8 @@
       <span class="line"><span>COMPETE.</span></span>
       <span class="line"><span>CONQUER.</span></span>
     </h1>
-    <p class="hero-sub">Your personal retro arcade dashboard. Save scores, climb the leaderboard, and challenge friends
-      across classic games.</p>
+    <p class="hero-sub">WebArcade is a browser-based arcade gaming platform for fast online play, score chasing, and
+      retro-inspired competition across classic game styles.</p>
     <div class="hero-warning">AUTHENTICATION REQUIRED TO ACCESS ARCADE</div>
   </div>
 
@@ -1337,6 +1461,35 @@
     <div class="stat"><span class="stat-num" id="cnt-games">0</span><span class="stat-label">Games Played</span></div>
     <div class="stat"><span class="stat-num" id="cnt-scores">0</span><span class="stat-label">High Scores</span></div>
   </div>
+
+  <section class="seo-panel" aria-labelledby="platformOverview">
+    <div class="seo-copy">
+      <p class="seo-kicker">Browser Arcade Platform</p>
+      <h2 id="platformOverview">Play online without downloads, then go deeper when you want the full arcade.</h2>
+      <p>WebArcade brings classic-style games into the browser so players can jump into quick sessions from desktop or
+        mobile without installing anything. Public pages let visitors explore the platform, rankings, downloads, and
+        community tools, while verified accounts unlock the protected game dashboard, score saving, and multiplayer
+        features.</p>
+    </div>
+    <div class="seo-links">
+      <a class="seo-link-card" href="about.html">
+        <strong>About WebArcade</strong>
+        <span>See how the platform blends browser gaming, cyberpunk presentation, and competitive community systems.</span>
+      </a>
+      <a class="seo-link-card" href="leaderboard.html">
+        <strong>Leaderboard</strong>
+        <span>Track public rankings across the global hall of fame and featured score categories.</span>
+      </a>
+      <a class="seo-link-card" href="downloads.html">
+        <strong>Downloads Hub</strong>
+        <span>Grab official asset packs, artwork, and extra downloadable files published by the WebArcade team.</span>
+      </a>
+      <a class="seo-link-card" href="request_game.html">
+        <strong>Request a Game</strong>
+        <span>Suggest the next browser game, challenge format, or arcade idea you want added to the site.</span>
+      </a>
+    </div>
+  </section>
 
   <!-- ── MODAL ── -->
   <div class="modal-backdrop" id="modal" onclick="closeModal(event)">
@@ -1411,205 +1564,7 @@
   </footer>
 
   <!-- ── FIREBASE MODULE ── -->
-  <script type="module" src="./assets/js/public-auth-modal.js"></script><!--
-    import {
-      auth,
-      calculatePasswordStrength as calcStrength,
-      checkEmailExists,
-      checkPasswordBreach,
-      createUserProfile,
-      createUserWithEmailAndPassword,
-      db,
-      doc,
-      ensureBrowserPersistence,
-      getDeviceId,
-      getDoc,
-      isUsernameTaken,
-      onAuthStateChanged,
-      registerSession,
-      signInWithEmailAndPassword,
-      signOut,
-      unregisterSession,
-      updateProfile,
-      validateEmail,
-      validatePassword,
-      validateUsername
-    } from "./assets/js/firebase-client.js";
-
-    await ensureBrowserPersistence();
-
-    let currentUser = null, currentDeviceId = null, isSigningUp = false;
-
-    onAuthStateChanged(auth, async user => {
-      const loginBtn = document.getElementById('loginBtn');
-      const userInfo = document.getElementById('userInfo');
-      if (user) {
-        if (isSigningUp) return;
-        try {
-          currentUser = user; currentDeviceId = getDeviceId();
-          await registerSession(user, currentDeviceId);
-          loginBtn.style.display = 'none';
-          userInfo.classList.add('visible');
-          const snap = await getDoc(doc(db, "users", user.uid));
-          document.getElementById('usernameDisplay').textContent =
-            (snap.exists() ? snap.data().username : null) || user.displayName || 'PLAYER_1';
-        } catch (err) {
-          console.error(err);
-          if (err.message.includes("Session limit")) { alert(err.message); await signOut(auth); }
-        }
-      } else {
-        currentUser = null;
-        loginBtn.style.display = '';
-        userInfo.classList.remove('visible');
-      }
-    });
-
-    window.logout = async function () {
-      if (currentUser && currentDeviceId) await unregisterSession(currentUser.uid, currentDeviceId);
-      await signOut(auth); location.reload();
-    };
-
-    // UI refs
-    const inputs = {
-      username: document.getElementById('username'),
-      email: document.getElementById('email'),
-      password: document.getElementById('password')
-    };
-    const errs = {
-      username: document.getElementById('usernameError'),
-      email: document.getElementById('emailError'),
-      password: document.getElementById('passwordError')
-    };
-    const passwordWarning = document.getElementById('passwordWarning');
-    const strengthBar = document.getElementById('strengthBar');
-    const strengthContainer = document.getElementById('strengthContainer');
-    let mode = "login";
-
-    const showError = (f, m) => { inputs[f].classList.remove('valid', 'warning'); inputs[f].classList.add('invalid'); errs[f].textContent = m; errs[f].classList.add('show'); };
-    const showWarning = (f, m) => { inputs[f].classList.remove('valid', 'invalid'); inputs[f].classList.add('warning'); if (f === 'password') { passwordWarning.textContent = m; passwordWarning.classList.add('show'); } };
-    const clearError = f => { inputs[f].classList.remove('invalid', 'warning'); inputs[f].classList.add('valid'); errs[f].classList.remove('show'); if (f === 'password') passwordWarning.classList.remove('show'); };
-    const clearAll = () => { Object.keys(inputs).forEach(f => { inputs[f].classList.remove('valid', 'invalid', 'warning'); errs[f].classList.remove('show'); }); passwordWarning.classList.remove('show'); };
-
-    let uTimer, eTimer, pTimer, lastBreachPw = '';
-
-    inputs.username.addEventListener('input', async e => {
-      if (mode !== 'signup') return;
-      const v = e.target.value.trim(); const err = validateUsername(v);
-      if (err) { showError('username', err); return; }
-      clearTimeout(uTimer);
-      uTimer = setTimeout(async () => { (await isUsernameTaken(v)) ? showError('username', 'Username taken') : clearError('username'); }, 500);
-    });
-    inputs.email.addEventListener('input', e => {
-      if (mode !== 'signup') return;
-      const v = e.target.value.trim(); const err = validateEmail(v);
-      if (err) { showError('email', err); return; } clearError('email');
-      clearTimeout(eTimer);
-      eTimer = setTimeout(async () => { if (!(await checkEmailExists(v))) showError('email', 'Email domain invalid'); }, 800);
-    });
-    inputs.password.addEventListener('input', async e => {
-      if (mode !== 'signup') return;
-      const p = e.target.value; const s = calcStrength(p);
-      strengthBar.className = 'strength-bar';
-      if (s >= 4) strengthBar.classList.add('strong');
-      else if (s >= 2) strengthBar.classList.add('medium');
-      else if (p.length) strengthBar.classList.add('weak');
-      const err = validatePassword(p);
-      if (err) { showError('password', err); passwordWarning.classList.remove('show'); return; }
-      clearError('password');
-      clearTimeout(pTimer);
-      pTimer = setTimeout(async () => {
-        if (p === lastBreachPw) return; lastBreachPw = p;
-        const cnt = await checkPasswordBreach(p);
-        cnt > 0 ? showWarning('password', `⚠ Found in ${cnt.toLocaleString()} breaches — choose another`) : passwordWarning.classList.remove('show');
-      }, 1000);
-    });
-
-    const modal = document.getElementById('modal');
-    const statusEl = document.getElementById('status');
-    const actionBtn = document.getElementById('actionBtn');
-    const titleEl = document.getElementById('modalTitle');
-    const usernameField = document.getElementById('usernameField');
-    const breachInfo = document.getElementById('breachInfo');
-
-    window.openModal = () => {
-      modal.classList.add('open');
-      statusEl.textContent = ''; statusEl.className = 'status';
-      Object.values(inputs).forEach(i => i.value = ''); clearAll();
-      setTimeout(() => { (mode === 'signup' ? inputs.username : inputs.email).focus(); }, 150);
-    };
-
-    window.requireLogin = (e) => {
-      e.preventDefault();
-      if (!currentUser) {
-        alert("Login required to enter Games Dashboard!");
-        openModal();
-      } else {
-        window.location.href = "blog.html";
-      }
-    };
-
-    window.closeModal = e => {
-      if (!e || e.target === modal || e.target.classList.contains('close-btn')) modal.classList.remove('open');
-    };
-    document.addEventListener('keydown', e => { if (e.key === 'Escape' && modal.classList.contains('open')) modal.classList.remove('open'); });
-
-    window.toggleMode = () => {
-      mode = mode === 'login' ? 'signup' : 'login';
-      const isSU = mode === 'signup';
-      titleEl.textContent = isSU ? 'JOIN ARCADE' : 'LOGIN';
-      document.getElementById('switchText').innerHTML = isSU
-        ? 'Already have an account? <a>Login →</a>'
-        : 'New player? <a>Create account →</a>';
-      actionBtn.textContent = isSU ? 'CREATE ACCOUNT' : 'ENTER ARCADE';
-      usernameField.classList.toggle('hidden', !isSU);
-      strengthContainer.classList.toggle('hidden', !isSU);
-      breachInfo.classList.toggle('hidden', !isSU);
-      inputs.password.setAttribute('autocomplete', isSU ? 'new-password' : 'current-password');
-      clearAll(); statusEl.textContent = ''; statusEl.className = 'status';
-    };
-
-    actionBtn.onclick = async () => {
-      const emailVal = inputs.email.value.trim(), passVal = inputs.password.value, userVal = inputs.username.value.trim();
-      clearAll(); statusEl.textContent = ''; statusEl.className = 'status';
-      if (!emailVal || !passVal) { statusEl.textContent = '⚠ Fill all required fields'; statusEl.classList.add('error'); return; }
-      try {
-        if (mode === 'login') {
-          statusEl.textContent = 'Authenticating...';
-          actionBtn.disabled = true; actionBtn.classList.add('loading');
-          await signInWithEmailAndPassword(auth, emailVal, passVal);
-        } else {
-          const uE = validateUsername(userVal), eE = validateEmail(emailVal), pE = validatePassword(passVal);
-          if (uE) { showError('username', uE); return; }
-          if (eE) { showError('email', eE); return; }
-          if (pE) { showError('password', pE); return; }
-          if (await isUsernameTaken(userVal)) { showError('username', 'Username taken'); return; }
-          statusEl.textContent = 'Verifying email...';
-          if (!(await checkEmailExists(emailVal))) { showError('email', 'Email domain invalid'); statusEl.textContent = ''; return; }
-          statusEl.textContent = 'Checking security...';
-          const bc = await checkPasswordBreach(passVal);
-          if (bc > 0) { showWarning('password', `⚠ Found in ${bc.toLocaleString()} breaches`); statusEl.textContent = ''; alert(`Password found in ${bc.toLocaleString()} data breaches. Choose another.`); return; }
-          actionBtn.disabled = true; actionBtn.classList.add('loading'); statusEl.textContent = 'Creating account...';
-          isSigningUp = true;
-          const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
-          await updateProfile(cred.user, { displayName: userVal });
-          await createUserProfile(cred.user, { username: userVal, email: emailVal });
-          isSigningUp = false;
-          statusEl.textContent = '✓ Account created! Redirecting...'; statusEl.classList.add('success');
-          window.location.href = 'blog.html';
-        }
-      } catch (err) {
-        console.error(err); isSigningUp = false;
-        actionBtn.disabled = false; actionBtn.classList.remove('loading');
-        let msg = err.message;
-        if (err.code === 'auth/email-already-in-use') { msg = 'Email already registered. Try logging in.'; showError('email', 'Already in use'); }
-        else if (err.code === 'auth/invalid-email') { msg = 'Invalid email'; showError('email', 'Invalid format'); }
-        else if (err.code === 'auth/weak-password') { msg = 'Password too weak'; showError('password', 'Too weak'); }
-        else if (['auth/user-not-found', 'auth/wrong-password', 'auth/invalid-credential'].includes(err.code)) msg = 'Invalid email or password';
-        statusEl.textContent = msg.replace('Firebase: ', '').replace(/\(auth\/.*\)\.?/, '');
-        statusEl.classList.add('error');
-      }
-    };
-  -->
+  <script type="module" src="./assets/js/public-auth-modal.js"></script>
 
   <!-- ── VANILLA SCRIPTS ── -->
   <script>

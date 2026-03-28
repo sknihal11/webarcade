@@ -6,6 +6,7 @@ import {
   deleteUser,
   EmailAuthProvider,
   getAuth,
+  getIdToken,
   onAuthStateChanged,
   reauthenticateWithCredential,
   sendEmailVerification,
@@ -467,6 +468,52 @@ function buildUserProfileData(user, deviceId, username, extraFields = {}) {
   };
 }
 
+function buildPublicProfileData(userId, profileData = {}, user = null) {
+  const fallbackUser = user || {
+    uid: userId,
+    email: profileData.email || "",
+    displayName: profileData.displayName || profileData.username || ""
+  };
+
+  const resolvedUsername = String(
+    profileData.username
+    || profileData.displayName
+    || user?.displayName
+    || buildFallbackUsername(fallbackUser)
+  ).trim();
+
+  const best2048 = Number(profileData.best2048) || 0;
+  const bestFlappy = Number(profileData.bestFlappy) || 0;
+
+  return {
+    username: resolvedUsername,
+    usernameLower: normalizeUsername(resolvedUsername),
+    photoURL: profileData.photoURL || user?.photoURL || DEFAULT_AVATAR_URL,
+    best2048,
+    bestFlappy,
+    bestSolitaire: Number(profileData.bestSolitaire) || 0,
+    bestPong: Number(profileData.bestPong) || 0,
+    bestSnake: Number(profileData.bestSnake) || 0,
+    bestTetris: Number(profileData.bestTetris) || 0,
+    streak: Number(profileData.streak) || 0,
+    globalRating: calculateGlobalRating(best2048, bestFlappy),
+    updatedAt: new Date()
+  };
+}
+
+export async function syncPublicProfile(userId, profileData = {}, user = null) {
+  if (!userId) return null;
+
+  if (!user?.emailVerified) {
+    await deleteDoc(doc(db, "public_profiles", userId)).catch(() => {});
+    return null;
+  }
+
+  const publicProfile = buildPublicProfileData(userId, profileData, user);
+  await setDoc(doc(db, "public_profiles", userId), publicProfile, { merge: true });
+  return publicProfile;
+}
+
 export async function createUserProfile(user, options = {}) {
   const deviceId = options.deviceId || getDeviceId();
   const username = String(options.username || buildFallbackUsername(user)).trim();
@@ -478,6 +525,7 @@ export async function createUserProfile(user, options = {}) {
 
   try {
     await setDoc(doc(db, "users", user.uid), profile);
+    await syncPublicProfile(user.uid, profile, user).catch(() => {});
     return profile;
   } catch (error) {
     await releaseUsername(username, user.uid).catch(() => {});
@@ -571,7 +619,9 @@ export async function registerSession(user, deviceId = getDeviceId(), options = 
   }
 
   await updateDoc(userRef, updates);
-  return { ...userData, ...updates };
+  const mergedProfile = { ...userData, ...updates };
+  await syncPublicProfile(userId, mergedProfile, typeof user !== "string" ? user : null).catch(() => {});
+  return mergedProfile;
 }
 
 export async function syncUserProfileAuthState(user) {
@@ -587,7 +637,9 @@ export async function syncUserProfileAuthState(user) {
   };
 
   await updateDoc(userRef, patch);
-  return { ...snapshot.data(), ...patch };
+  const mergedProfile = { ...snapshot.data(), ...patch };
+  await syncPublicProfile(user.uid, mergedProfile, user).catch(() => {});
+  return mergedProfile;
 }
 
 export async function markVerificationEmailSent(userId) {
@@ -636,7 +688,32 @@ export async function safelyReloadUser(user = auth.currentUser) {
     console.warn("User reload failed:", error);
   }
 
-  return auth.currentUser || user;
+  const refreshedUser = auth.currentUser || user;
+
+  if (refreshedUser?.emailVerified) {
+    try {
+      await getIdToken(refreshedUser, true);
+    } catch (error) {
+      console.warn("Token refresh failed:", error);
+    }
+  }
+
+  return auth.currentUser || refreshedUser;
+}
+
+export async function cleanupFailedSignup(user, username = "") {
+  if (!user?.uid) return;
+
+  await releaseUsername(username, user.uid).catch(() => {});
+  await deleteDoc(doc(db, "users", user.uid)).catch(() => {});
+  await deleteDoc(doc(db, "public_profiles", user.uid)).catch(() => {});
+
+  try {
+    await deleteUser(user);
+  } catch (error) {
+    console.warn("Signup cleanup failed:", error);
+    throw error;
+  }
 }
 
 function getStoredAttemptLog(storageKey) {
