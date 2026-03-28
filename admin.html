@@ -225,10 +225,10 @@
     </div>
 
     <div class="tabs">
-        <button class="tab active" onclick="switchTab('analytics')">📊 Analytics</button>
-        <button class="tab" onclick="switchTab('announcements')">📢 Announcements</button>
-        <button class="tab" onclick="switchTab('requests')">📥 Game Requests</button>
-        <button class="tab" onclick="switchTab('users')">👥 Users</button>
+        <button class="tab active" onclick="switchTab(event, 'analytics')">📊 Analytics</button>
+        <button class="tab" onclick="switchTab(event, 'announcements')">📢 Announcements</button>
+        <button class="tab" onclick="switchTab(event, 'requests')">📥 Game Requests</button>
+        <button class="tab" onclick="switchTab(event, 'users')">👥 Users</button>
     </div>
 
     <!-- Analytics Tab -->
@@ -305,7 +305,7 @@
         const db = getFirestore(app);
 
         // Tab switching
-        window.switchTab = (tabId) => {
+        window.switchTab = (event, tabId) => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             event.target.classList.add('active');

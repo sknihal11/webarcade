@@ -1899,6 +1899,7 @@
         <a href="blog.html" class="nav-link active">Dashboard</a>
         <a href="leaderboard.html" class="nav-link">Leaderboard</a>
         <a href="about.html" class="nav-link">About Us</a>
+        <a href="downloads.html" class="nav-link">Downloads</a>
       </nav>
 
       <div class="header-actions">
@@ -2928,7 +2929,7 @@
 
           // Multiplier scaling:
           // 2048 point = 0.01 rating, Flappy = 0.1 rating
-          const globalRating = (s2048 * 0.01) + (sFlappy * 0.1);
+          const globalRating = (s2048 * 0.01) + (sf * 0.1);
           if (elements.statTotalRating) elements.statTotalRating.innerText = globalRating.toLocaleString(undefined, {minimumFractionDigits: 2});
 
           const streakCount = data.streak || 1;
@@ -3306,6 +3307,7 @@
         <a href="blog.html">Games</a>
         <a href="leaderboard.html">Leaderboard</a>
         <a href="about.html">About Us</a>
+        <a href="downloads.html">Downloads</a>
       </div>
       <div class="footer-social-col">
         <h3>Connect</h3>
