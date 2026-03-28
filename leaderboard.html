@@ -397,19 +397,20 @@
 
   <!-- Scripts -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, getDoc, query, limit } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+    import {
+      auth,
+      calculateGlobalRating,
+      collection,
+      db,
+      DEFAULT_AVATAR_URL,
+      ensureBrowserPersistence,
+      getDocs,
+      limit,
+      onAuthStateChanged,
+      query
+    } from "./assets/js/firebase-client.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-      authDomain: "webarcade-d4c3d.firebaseapp.com",
-      projectId: "webarcade-d4c3d"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    await ensureBrowserPersistence();
 
     let currentFilter = 'global';
     let allUsersData = [];
@@ -436,6 +437,11 @@
     };
 
     onAuthStateChanged(auth, u => {
+      if (!u) {
+        location.replace("index.html");
+        return;
+      }
+
       currentUser = u;
       loadData();
     });
@@ -449,19 +455,14 @@
           const d = docSnap.data();
           if (d.banned) continue;
 
-          // Fetch only 2048 and Flappy as requested
-          const d2048 = await getDoc(doc(db, "scores_2048", docSnap.id));
-          const s2048 = d2048.exists() ? d2048.data().score : (d.best2048 || 0);
-
-          const dFlappy = await getDoc(doc(db, "scores_flappy", docSnap.id));
-          const sFlappy = dFlappy.exists() ? dFlappy.data().score : (d.bestFlappy || 0);
-
-          const globalRating = s2048 + (sFlappy * 500);
+          const s2048 = d.best2048 || 0;
+          const sFlappy = d.bestFlappy || 0;
+          const globalRating = calculateGlobalRating(s2048, sFlappy);
 
           users.push({
             id: docSnap.id,
             name: d.username || d.displayName || 'Anonymous',
-            avatar: d.photoURL || 'https://i.imgur.com/8Km9tLL.png',
+            avatar: d.photoURL || DEFAULT_AVATAR_URL,
             streak: d.streak || 0,
             score2048: s2048,
             scoreFlappy: sFlappy,
@@ -494,15 +495,18 @@
         if (currentFilter === 'global') scoreDisplay = player.globalRating;
         else if (currentFilter === '2048') scoreDisplay = player.score2048;
         else if (currentFilter === 'flappy') scoreDisplay = player.scoreFlappy;
+        const formattedScore = currentFilter === 'global'
+          ? scoreDisplay.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+          : scoreDisplay.toLocaleString();
 
         row.innerHTML = `
           <div class="rank-cell">#${index + 1}</div>
           <div class="player-cell">
-            <img src="${player.avatar}" class="player-avatar" onerror="this.src='https://i.imgur.com/8Km9tLL.png'">
+            <img src="${player.avatar}" class="player-avatar" onerror="this.src='${DEFAULT_AVATAR_URL}'">
             <span class="player-name">${player.name}</span>
           </div>
           <div class="streak-cell">🔥 ${player.streak}</div>
-          <div class="rating-cell">${scoreDisplay.toLocaleString()}</div>
+          <div class="rating-cell">${formattedScore}</div>
         `;
         listEl.appendChild(row);
 
@@ -512,7 +516,7 @@
           myNameEl.innerText = player.name;
           myAvatarEl.src = player.avatar;
           myStreakEl.innerText = player.streak;
-          myRatingEl.innerText = scoreDisplay.toLocaleString();
+          myRatingEl.innerText = formattedScore;
           userBar.classList.add('active');
         }
       });

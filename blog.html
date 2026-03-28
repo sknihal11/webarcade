@@ -2510,156 +2510,41 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import {
-      getAuth,
-      onAuthStateChanged,
-      updateProfile,
-      deleteUser,
-      signOut
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      getDoc,
+      auth,
+      calculateGlobalRating,
       collection,
-      getDocs,
-      updateDoc,
-      arrayUnion,
-      arrayRemove,
+      createUserProfile,
+      db,
+      DEFAULT_AVATAR_URL,
       deleteDoc,
-      query,
+      deleteUser,
+      doc,
+      ensureBrowserPersistence,
+      getDeviceId,
+      getDoc,
+      getDocs,
+      isAdminEmail,
+      isUsernameTaken,
+      limit,
+      onAuthStateChanged,
       orderBy,
-      limit
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+      query,
+      registerSession,
+      releaseUsername,
+      reserveUsername,
+      setDoc,
+      signOut,
+      unregisterSession,
+      updateDoc,
+      updateProfile,
+      validateUsername
+    } from "./assets/js/firebase-client.js";
 
-    // Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-      authDomain: "webarcade-d4c3d.firebaseapp.com",
-      databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com",
-      projectId: "webarcade-d4c3d",
-      storageBucket: "webarcade-d4c3d.firebasestorage.app",
-      messagingSenderId: "918209461327",
-      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a",
-      measurementId: "G-72L7N36DLB"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+    await ensureBrowserPersistence();
 
     let currentUser = null;
     let currentDeviceId = null;
-
-    // ============================================
-    // DEVICE ID & SESSION MANAGEMENT
-    // ============================================
-    function getDeviceId() {
-      let deviceId = localStorage.getItem('deviceId');
-      if (!deviceId) {
-        deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('deviceId', deviceId);
-      }
-      return deviceId;
-    }
-
-    async function registerSession(userId, deviceId) {
-      try {
-        const userDocRef = doc(db, "users", userId);
-        const userDoc = await getDoc(userDocRef);
-
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          const activeSessions = userData.activeSessions || [];
-          const maxSessions = userData.maxSessions || 2;
-
-          const todayObj = new Date();
-          const todayDateStr = todayObj.toLocaleDateString('en-CA');
-          const yesterdayObj = new Date(todayObj);
-          yesterdayObj.setDate(yesterdayObj.getDate() - 1);
-          const yesterdayDateStr = yesterdayObj.toLocaleDateString('en-CA');
-
-          let streakCount = userData.streak || 0;
-          const lastLoginStr = userData.lastLoginDate;
-
-          if (lastLoginStr !== todayDateStr) {
-            if (lastLoginStr === yesterdayDateStr) {
-              streakCount += 1;
-            } else {
-              streakCount = 1;
-            }
-          }
-
-          if (!activeSessions.includes(deviceId)) {
-            if (activeSessions.length >= maxSessions) {
-              activeSessions.shift();
-              activeSessions.push(deviceId);
-              await updateDoc(userDocRef, {
-                activeSessions: activeSessions,
-                lastActivity: new Date(),
-                streak: streakCount,
-                lastLoginDate: todayDateStr
-              });
-            } else {
-              await updateDoc(userDocRef, {
-                activeSessions: arrayUnion(deviceId),
-                lastActivity: new Date(),
-                streak: streakCount,
-                lastLoginDate: todayDateStr
-              });
-            }
-          } else {
-            await updateDoc(userDocRef, {
-              lastActivity: new Date(),
-              streak: streakCount,
-              lastLoginDate: todayDateStr
-            });
-          }
-
-          if (!userData.hasOwnProperty('activeSessions')) {
-            await updateDoc(userDocRef, {
-              activeSessions: [deviceId],
-              maxSessions: 2,
-              currentGameSession: null,
-              streak: streakCount,
-              lastLoginDate: todayDateStr
-            });
-          }
-        } else {
-          const todayDateStr = new Date().toLocaleDateString('en-CA');
-          await setDoc(userDocRef, {
-            username: currentUser.displayName || "Player",
-            usernameLower: (currentUser.displayName || "Player").toLowerCase(),
-            email: currentUser.email,
-            createdAt: new Date(),
-            best2048: 0,
-            bestFlappy: 0,
-            activeSessions: [deviceId],
-            maxSessions: 2,
-            currentGameSession: null,
-            lastActivity: new Date(),
-            streak: 1,
-            lastLoginDate: new Date().toLocaleDateString('en-CA')
-          });
-        }
-      } catch (error) {
-        console.error("Session registration error:", error);
-        throw error;
-      }
-    }
-
-    async function unregisterSession(userId, deviceId) {
-      try {
-        const userDocRef = doc(db, "users", userId);
-        await updateDoc(userDocRef, {
-          activeSessions: arrayRemove(deviceId),
-          currentGameSession: null
-        });
-      } catch (error) {
-        console.error("Session unregister error:", error);
-      }
-    }
 
     // ============================================
     // GLOBAL GAME PROTECTION API
@@ -2835,6 +2720,10 @@
           if (alertBox) alertBox.style.display = "none";
         }
       } catch (error) {
+        if (reservedNewUsername) {
+          await releaseUsername(newName, currentUser.uid).catch(() => {});
+        }
+        await releaseUsername(newName, currentUser.uid).catch(() => {});
         console.error("Error loading announcements:", error);
       }
     }
@@ -2853,7 +2742,7 @@
       // Register session
       try {
         currentDeviceId = getDeviceId();
-        await registerSession(user.uid, currentDeviceId);
+        await registerSession(user, currentDeviceId, { trackStreak: true });
 
         window.GameProtection.currentUser = user;
         window.GameProtection.deviceId = currentDeviceId;
@@ -2874,12 +2763,12 @@
       elements.drawerName.textContent = displayName;
       elements.drawerEmail.textContent = user.email || "";
 
-      const photoURL = user.photoURL || "https://i.imgur.com/8Km9tLL.png";
+      const photoURL = user.photoURL || DEFAULT_AVATAR_URL;
       elements.userAvatar.src = photoURL;
       elements.drawerAvatar.src = photoURL;
 
       // Check admin
-      if (user.email === "nihalsk2022@gmail.com") {
+      if (isAdminEmail(user.email)) {
         const adminBtn = document.getElementById("adminBtn");
         if (adminBtn) adminBtn.style.display = "flex";
       }
@@ -2897,13 +2786,11 @@
             return;
           }
 
-          const d2048 = await getDoc(doc(db, "scores_2048", user.uid));
-          const s2048 = d2048.exists() ? d2048.data().score : (data.best2048 || 0);
+          const s2048 = data.best2048 || 0;
           if (document.getElementById('statScore2048')) document.getElementById('statScore2048').innerText = s2048;
           if (document.getElementById('gameScore2048')) document.getElementById('gameScore2048').innerText = s2048;
 
-          const df = await getDoc(doc(db, "scores_flappy", user.uid));
-          const sf = df.exists() ? df.data().score : (data.bestFlappy || 0);
+          const sf = data.bestFlappy || 0;
           if (document.getElementById('statScoreFlappy')) document.getElementById('statScoreFlappy').innerText = sf;
           if (document.getElementById('gameScoreFlappy')) document.getElementById('gameScoreFlappy').innerText = sf;
 
@@ -2929,7 +2816,7 @@
 
           // Multiplier scaling:
           // 2048 point = 0.01 rating, Flappy = 0.1 rating
-          const globalRating = (s2048 * 0.01) + (sf * 0.1);
+          const globalRating = calculateGlobalRating(s2048, sf);
           if (elements.statTotalRating) elements.statTotalRating.innerText = globalRating.toLocaleString(undefined, {minimumFractionDigits: 2});
 
           const streakCount = data.streak || 1;
@@ -2968,21 +2855,15 @@
           const d = docSnap.data();
           if (d.banned || d.isActive === false) continue;
 
-          const d2 = await getDoc(doc(db, "scores_2048", docSnap.id));
-          const s2 = d2.exists() ? d2.data().score : (d.best2048 || 0);
-
-          const df = await getDoc(doc(db, "scores_flappy", docSnap.id));
-          const sf = df.exists() ? df.data().score : (d.bestFlappy || 0);
-
-          // Only 2048 and Flappy Bird are used for rating
-          // 2048 point = 0.01 rating, Flappy = 0.1 rating
-          const rating = (s2 * 0.01) + (sf * 0.1);
+          const s2 = d.best2048 || 0;
+          const sf = d.bestFlappy || 0;
+          const rating = calculateGlobalRating(s2, sf);
 
           if (rating > 0) {
             leaderData.push({
               id: docSnap.id,
               name: d.username || d.displayName || d.name || 'Anonymous',
-              photoURL: d.photoURL || 'https://i.imgur.com/8Km9tLL.png',
+              photoURL: d.photoURL || DEFAULT_AVATAR_URL,
               streak: d.streak || 0,
               rating: rating
             });
@@ -3022,7 +2903,7 @@
             <div style="display:flex; align-items:center; gap:1rem; flex:1;">
                 <img src="${player.photoURL}" 
                      class="player-avatar" 
-                     onerror="this.src='https://i.imgur.com/8Km9tLL.png'">
+                     onerror="this.src='${DEFAULT_AVATAR_URL}'">
                 <div style="display:flex; flex-direction:column;">
                   <span class="player-name">
                     ${player.name}
@@ -3086,27 +2967,45 @@
     // ============================================
     window.saveName = async () => {
       const newName = elements.nameInput.value.trim();
+      let previousUsername = currentUser.displayName || "";
+      let reservedNewUsername = false;
 
-      if (!newName) {
-        alert("Name cannot be empty");
+      const validationError = validateUsername(newName);
+      if (validationError) {
+        alert(validationError);
         return;
       }
 
       try {
+        const userDocRef = doc(db, "users", currentUser.uid);
+        const userDoc = await getDoc(userDocRef);
+        previousUsername = userDoc.exists()
+          ? (userDoc.data().username || currentUser.displayName || "")
+          : (currentUser.displayName || "");
+
+        if (await isUsernameTaken(newName, currentUser.uid)) {
+          alert("That username is already taken.");
+          return;
+        }
+
+        if (userDoc.exists()) {
+          await reserveUsername(currentUser.uid, newName);
+          reservedNewUsername = previousUsername.toLowerCase() !== newName.toLowerCase();
+        }
+
         await updateProfile(currentUser, { displayName: newName });
 
-        try {
-          const userDocRef = doc(db, "users", currentUser.uid);
-          const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          await updateDoc(userDocRef, {
+            username: newName,
+            usernameLower: newName.toLowerCase()
+          });
+        } else {
+          await createUserProfile(currentUser, { username: newName, deviceId: currentDeviceId || getDeviceId() });
+        }
 
-          if (userDoc.exists()) {
-            await updateDoc(userDocRef, {
-              username: newName,
-              usernameLower: newName.toLowerCase()
-            });
-          }
-        } catch (error) {
-          console.error("Error updating Firestore username:", error);
+        if (previousUsername.toLowerCase() !== newName.toLowerCase()) {
+          await releaseUsername(previousUsername, currentUser.uid).catch(() => {});
         }
 
         elements.userName.textContent = newName;
@@ -3115,6 +3014,9 @@
         alert("✅ Name updated successfully!");
         loadLeaderboard();
       } catch (error) {
+        if (reservedNewUsername) {
+          await releaseUsername(newName, currentUser.uid).catch(() => {});
+        }
         alert("❌ Error updating name: " + error.message);
       }
     };
@@ -3136,6 +3038,7 @@
 
       try {
         await updateProfile(currentUser, { photoURL: newUrl });
+        await updateDoc(doc(db, "users", currentUser.uid), { photoURL: newUrl });
         elements.userAvatar.src = newUrl;
         elements.drawerAvatar.src = newUrl;
         alert("✅ Avatar updated successfully!");
@@ -3173,12 +3076,15 @@
 
       try {
         const userId = currentUser.uid;
+        const userDoc = await getDoc(doc(db, "users", userId));
+        const usernameToRelease = userDoc.exists() ? userDoc.data().username : "";
 
         if (currentDeviceId) {
           await unregisterSession(userId, currentDeviceId);
         }
 
         try {
+          await releaseUsername(usernameToRelease, userId).catch(() => {});
           await deleteDoc(doc(db, "users", userId));
         } catch (error) {
           console.error("Error deleting user document:", error);

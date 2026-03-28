@@ -251,22 +251,20 @@
 
     <!-- Firebase Scripts -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, query, where, orderBy, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+        import {
+            addDoc,
+            auth,
+            collection,
+            db,
+            ensureBrowserPersistence,
+            getDocs,
+            onAuthStateChanged,
+            query,
+            serverTimestamp,
+            where
+        } from "./assets/js/firebase-client.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-            authDomain: "webarcade-d4c3d.firebaseapp.com",
-            projectId: "webarcade-d4c3d",
-            storageBucket: "webarcade-d4c3d.firebasestorage.app",
-            messagingSenderId: "918209461327",
-            appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+        await ensureBrowserPersistence();
 
         let currentUser = null;
 

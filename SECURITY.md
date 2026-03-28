@@ -1,21 +1,20 @@
 # Security Policy
 
-## Supported Versions
+## Supported Version
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+The live `main` branch is the supported version of WebArcade.
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 5.1.x   | :white_check_mark: |
-| 5.0.x   | :x:                |
-| 4.0.x   | :white_check_mark: |
-| < 4.0   | :x:                |
+## Current Security Controls
+
+- Firestore rules are stored in `firestore.rules`.
+- Firebase project config for rules deployment is stored in `firebase.json` and `.firebaserc`.
+- Username reservations are enforced through the `usernames` collection to prevent duplicate public handles.
+
+## Deploying Rules
+
+1. Install the Firebase CLI.
+2. Run `firebase deploy --only firestore:rules` from the repo root.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Open a private security report through GitHub Security Advisories when possible. If that is not available, contact the maintainer before opening a public issue.

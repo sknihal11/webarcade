@@ -159,20 +159,13 @@
   </div>
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+    import {
+      auth,
+      ensureBrowserPersistence,
+      signInWithEmailAndPassword
+    } from "./assets/js/firebase-client.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-      authDomain: "webarcade-d4c3d.firebaseapp.com",
-      projectId: "webarcade-d4c3d",
-      storageBucket: "webarcade-d4c3d.firebasestorage.app",
-      messagingSenderId: "918209461327",
-      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
+    await ensureBrowserPersistence();
 
     window.login = function () {
       const email = document.getElementById("email").value;

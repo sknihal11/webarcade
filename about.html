@@ -1423,85 +1423,33 @@
 
   <!-- ── FIREBASE MODULE ── -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
     import {
-      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      updateProfile, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-    import {
-      getFirestore, doc, setDoc, getDoc, updateDoc, collection, query,
-      where, getDocs, arrayUnion, arrayRemove
-    } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+      auth,
+      calculatePasswordStrength as calcStrength,
+      checkEmailExists,
+      checkPasswordBreach,
+      createUserProfile,
+      createUserWithEmailAndPassword,
+      db,
+      doc,
+      ensureBrowserPersistence,
+      getDeviceId,
+      getDoc,
+      isUsernameTaken,
+      onAuthStateChanged,
+      registerSession,
+      signInWithEmailAndPassword,
+      signOut,
+      unregisterSession,
+      updateProfile,
+      validateEmail,
+      validatePassword,
+      validateUsername
+    } from "./assets/js/firebase-client.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-      authDomain: "webarcade-d4c3d.firebaseapp.com",
-      projectId: "webarcade-d4c3d",
-      storageBucket: "webarcade-d4c3d.firebasestorage.app",
-      messagingSenderId: "918209461327",
-      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    setPersistence(auth, browserLocalPersistence);
+    await ensureBrowserPersistence();
 
     let currentUser = null, currentDeviceId = null, isSigningUp = false;
-
-    function getDeviceId() {
-      let id = localStorage.getItem('deviceId');
-      if (!id) { id = 'device_' + Date.now() + '_' + Math.random().toString(36).slice(2, 15); localStorage.setItem('deviceId', id); }
-      return id;
-    }
-    async function registerSession(userId, deviceId) {
-      const ref = doc(db, "users", userId);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        let { activeSessions = [], maxSessions = 2 } = snap.data();
-        if (!activeSessions.includes(deviceId)) {
-          if (activeSessions.length >= maxSessions) {
-            // Fix: Evict the oldest ghost session instead of locking the user out
-            activeSessions.shift();
-            activeSessions.push(deviceId);
-            await updateDoc(ref, { activeSessions, lastActivity: new Date() });
-          } else {
-            await updateDoc(ref, { activeSessions: arrayUnion(deviceId), lastActivity: new Date() });
-          }
-        } else {
-          await updateDoc(ref, { lastActivity: new Date() });
-        }
-      } else {
-        // Fix: Auto-repair corrupted/orphaned profiles missing from Firestore
-        await setDoc(ref, {
-          username: currentUser.displayName || "Player",
-          usernameLower: (currentUser.displayName || "Player").toLowerCase(),
-          email: currentUser.email,
-          createdAt: new Date(),
-          best2048: 0,
-          bestFlappy: 0,
-          activeSessions: [deviceId],
-          maxSessions: 2,
-          currentGameSession: null,
-          lastActivity: new Date()
-        });
-      }
-    }
-    async function unregisterSession(userId, deviceId) {
-      try { await updateDoc(doc(db, "users", userId), { activeSessions: arrayRemove(deviceId), currentGameSession: null }); } catch (e) { }
-    }
-    async function checkPasswordBreach(pw) {
-      try {
-        const buf = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(pw));
-        const hex = Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-        const res = await fetch(`https://api.pwnedpasswords.com/range/${hex.slice(0, 5)}`);
-        for (const line of (await res.text()).split('\n')) {
-          const [s, c] = line.split(':');
-          if (s === hex.slice(5)) return parseInt(c);
-        }
-        return 0;
-      } catch { return 0; }
-    }
 
     onAuthStateChanged(auth, async user => {
       const loginBtn = document.getElementById('loginBtn');
@@ -1510,7 +1458,7 @@
         if (isSigningUp) return;
         try {
           currentUser = user; currentDeviceId = getDeviceId();
-          await registerSession(user.uid, currentDeviceId);
+          await registerSession(user, currentDeviceId);
           loginBtn.style.display = 'none';
           userInfo.classList.add('visible');
           const snap = await getDoc(doc(db, "users", user.uid));
@@ -1532,51 +1480,6 @@
       if (currentUser && currentDeviceId) await unregisterSession(currentUser.uid, currentDeviceId);
       await signOut(auth); location.reload();
     };
-
-    // Validation
-    const validateUsername = u => {
-      if (!u || u.length < 3) return "Min 3 characters";
-      if (u.length > 20) return "Max 20 characters";
-      if (!/^[a-zA-Z0-9_]+$/.test(u)) return "Letters, numbers, underscores only";
-      return null;
-    };
-    const validateEmail = e => {
-      if (!e) return "Email is required";
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return "Invalid email format";
-      const blocked = ['test.com', 'fake.com', 'example.com', 'tempmail.com', '10minutemail.com', 'guerrillamail.com', 'mailinator.com', 'throwaway.email', 'temp-mail.org', 'fakeinbox.com', 'yopmail.com'];
-      if (blocked.includes(e.split('@')[1]?.toLowerCase())) return "Please use a real email";
-      for (const p of [/^test\d*@/i, /^fake\d*@/i, /^demo\d*@/i, /^admin@/i, /^sample@/i, /^user\d+@/i])
-        if (p.test(e)) return "Please use a real email";
-      return null;
-    };
-    const validatePassword = p => {
-      if (!p || p.length < 8) return "Min 8 characters";
-      if (!/[a-zA-Z]/.test(p)) return "Must contain letters";
-      if (!/\d/.test(p)) return "Must contain a number";
-      return null;
-    };
-    const calcStrength = p => {
-      let s = 0;
-      if (p.length >= 8) s++; if (p.length >= 12) s++;
-      if (/[a-z]/.test(p) && /[A-Z]/.test(p)) s++;
-      if (/\d/.test(p)) s++; if (/[^a-zA-Z0-9]/.test(p)) s++;
-      return s;
-    };
-    async function isUsernameTaken(u) {
-      try {
-        const q = query(collection(db, "users"), where("usernameLower", "==", u.toLowerCase()));
-        return !(await getDocs(q)).empty;
-      } catch { return false; }
-    }
-    async function checkEmailExists(email) {
-      const domain = email.split('@')[1]; if (!domain) return false;
-      try {
-        const r = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
-        const d = await r.json(); if (d.Answer?.length) return true;
-        const r2 = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
-        return (await r2.json()).Answer?.length > 0;
-      } catch { return true; }
-    }
 
     // UI refs
     const inputs = {
@@ -1690,11 +1593,7 @@
           isSigningUp = true;
           const cred = await createUserWithEmailAndPassword(auth, emailVal, passVal);
           await updateProfile(cred.user, { displayName: userVal });
-          await setDoc(doc(db, "users", cred.user.uid), {
-            username: userVal, usernameLower: userVal.toLowerCase(), email: emailVal,
-            createdAt: new Date(), best2048: 0, bestFlappy: 0,
-            activeSessions: [getDeviceId()], maxSessions: 2, currentGameSession: null, lastActivity: new Date()
-          });
+          await createUserProfile(cred.user, { username: userVal, email: emailVal });
           isSigningUp = false;
           statusEl.textContent = '✓ Account created! Redirecting...'; statusEl.classList.add('success');
           window.location.href = 'blog.html';

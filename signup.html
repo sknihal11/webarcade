@@ -210,74 +210,19 @@
 
 <!-- FIREBASE -->
 <script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
   import {
-    getAuth,
+    auth,
+    calculatePasswordStrength,
+    checkEmailExists,
+    checkPasswordBreach,
     createUserWithEmailAndPassword,
+    createUserProfile,
+    ensureBrowserPersistence,
+    isUsernameTaken,
     updateProfile
-  } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-  import {
-    getFirestore,
-    doc,
-    setDoc,
-    collection,
-    query,
-    where,
-    getDocs
-  } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+  } from "./assets/js/firebase-client.js";
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
-    authDomain: "webarcade-d4c3d.firebaseapp.com",
-    projectId: "webarcade-d4c3d",
-    storageBucket: "webarcade-d4c3d.firebasestorage.app",
-    messagingSenderId: "918209461327",
-    appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
-  };
-
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-
-  // --- DEVICE ID ---
-  function getDeviceId() {
-    let deviceId = localStorage.getItem('deviceId');
-    if (!deviceId) {
-      deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('deviceId', deviceId);
-    }
-    return deviceId;
-  }
-
-  // --- PASSWORD BREACH CHECK (Have I Been Pwned API) ---
-  async function checkPasswordBreach(password) {
-    try {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(password);
-      const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
-      
-      const prefix = hashHex.substring(0, 5);
-      const suffix = hashHex.substring(5);
-      
-      const response = await fetch(`https://api.pwnedpasswords.com/range/${prefix}`);
-      const text = await response.text();
-      
-      const lines = text.split('\n');
-      for (let line of lines) {
-        const [hashSuffix, count] = line.split(':');
-        if (hashSuffix === suffix) {
-          return parseInt(count);
-        }
-      }
-      
-      return 0;
-    } catch (error) {
-      console.error("Breach check failed:", error);
-      return 0;
-    }
-  }
+  await ensureBrowserPersistence();
 
   // --- VALIDATION HELPERS ---
   
@@ -357,44 +302,6 @@
       return "Password must contain at least one number";
     }
     return null;
-  }
-
-  // --- CHECK USERNAME UNIQUENESS ---
-  
-  async function isUsernameTaken(username) {
-    try {
-      const usersRef = collection(db, "users");
-      const q = query(usersRef, where("usernameLower", "==", username.toLowerCase()));
-      const snapshot = await getDocs(q);
-      return !snapshot.empty;
-    } catch (error) {
-      console.error("Error checking username:", error);
-      return false;
-    }
-  }
-
-  // --- EMAIL EXISTENCE CHECK ---
-  
-  async function checkEmailExists(email) {
-    const domain = email.split('@')[1];
-    if (!domain) return false;
-    
-    try {
-      const response = await fetch(`https://dns.google/resolve?name=${domain}&type=MX`);
-      const data = await response.json();
-      
-      if (data.Answer && data.Answer.length > 0) {
-        return true;
-      }
-      
-      const aResponse = await fetch(`https://dns.google/resolve?name=${domain}&type=A`);
-      const aData = await aResponse.json();
-      
-      return aData.Answer && aData.Answer.length > 0;
-    } catch (error) {
-      console.error("Email domain check failed:", error);
-      return true;
-    }
   }
 
   // --- UI HELPERS ---
@@ -574,7 +481,6 @@
     document.querySelector(".card").classList.add("loading");
 
     try {
-      const deviceId = getDeviceId();
       
       // Create Firebase Auth account
       const cred = await createUserWithEmailAndPassword(auth, email, password);
@@ -587,38 +493,10 @@
       // FIX: Write Firestore doc with username guaranteed
       // Use the typed username directly — do NOT rely on cred.user.displayName
       // since updateProfile may not have propagated yet
-      await setDoc(doc(db, "users", cred.user.uid), {
-        username: username,
-        usernameLower: username.toLowerCase(),
-        email: email,
-        best2048: 0,
-        bestFlappy: 0,
-        createdAt: new Date(),
-        activeSessions: [deviceId],
-        maxSessions: 2,
-        currentGameSession: null,
-        lastActivity: new Date()
-      });
+      await createUserProfile(cred.user, { username, email });
 
       // Double-check: verify the doc was written with username
       // If something went wrong, try once more
-      const { getDoc } = await import("https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js");
-      const written = await getDoc(doc(db, "users", cred.user.uid));
-      if (!written.exists() || !written.data().username) {
-        // Retry the write
-        await setDoc(doc(db, "users", cred.user.uid), {
-          username: username,
-          usernameLower: username.toLowerCase(),
-          email: email,
-          best2048: 0,
-          bestFlappy: 0,
-          createdAt: new Date(),
-          activeSessions: [deviceId],
-          maxSessions: 2,
-          currentGameSession: null,
-          lastActivity: new Date()
-        });
-      }
 
       alert("Account created! 🎉");
       window.location.href = "index.html";

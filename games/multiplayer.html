@@ -40,13 +40,21 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+import {
+    auth,
+    db,
+    DEFAULT_AVATAR_URL,
+    deleteDoc,
+    doc,
+    ensureBrowserPersistence,
+    getDoc,
+    onAuthStateChanged,
+    onSnapshot,
+    setDoc,
+    updateDoc
+} from "../assets/js/firebase-client.js";
 
-const app = initializeApp({ apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA", authDomain: "webarcade-d4c3d.firebaseapp.com", projectId: "webarcade-d4c3d" });
-const auth = getAuth(app);
-const db = getFirestore(app);
+await ensureBrowserPersistence();
 
 let user, currentRoom, isHost = false;
 
@@ -55,7 +63,12 @@ onAuthStateChanged(auth, u => { if(u) user = u; else location.href="../index.htm
 window.createRoom = async () => {
     const id = Math.floor(100000 + Math.random() * 900000).toString();
     currentRoom = id; isHost = true;
-    await setDoc(doc(db, "matches", id), { host: user.uid, players: [{uid: user.uid, name: user.displayName, photo: user.photoURL}], status: "waiting" });
+    await setDoc(doc(db, "matches", id), {
+        host: user.uid,
+        players: [{ uid: user.uid, name: user.displayName || "Player", photo: user.photoURL || DEFAULT_AVATAR_URL }],
+        participantIds: [user.uid],
+        status: "waiting"
+    });
     showLobby();
 };
 
@@ -63,10 +76,19 @@ window.joinRoom = async () => {
     const id = document.getElementById("joinInput").value;
     const snap = await getDoc(doc(db, "matches", id));
     if(!snap.exists()) return alert("Room not found!");
-    const p = snap.data().players;
+    const data = snap.data();
+    const p = [...data.players];
     if(p.length >= 4) return alert("Full!");
-    p.push({uid: user.uid, name: user.displayName, photo: user.photoURL});
-    await updateDoc(doc(db, "matches", id), { players: p });
+    if ((data.participantIds || []).includes(user.uid)) {
+        currentRoom = id;
+        showLobby();
+        return;
+    }
+    p.push({uid: user.uid, name: user.displayName || "Player", photo: user.photoURL || DEFAULT_AVATAR_URL});
+    await updateDoc(doc(db, "matches", id), {
+        players: p,
+        participantIds: [...(data.participantIds || p.map(player => player.uid).slice(0, -1)), user.uid]
+    });
     currentRoom = id; showLobby();
 };
 
@@ -96,13 +118,19 @@ window.leaveRoom = async () => {
     if(!currentRoom) return;
     const snap = await getDoc(doc(db, "matches", currentRoom));
     if(snap.exists()){
-        const p = snap.data().players.filter(x => x.uid !== user.uid);
+        const data = snap.data();
+        const p = data.players.filter(x => x.uid !== user.uid);
+        const participantIds = (data.participantIds || []).filter(id => id !== user.uid);
         const roomRef = doc(db, "matches", currentRoom);
         if(p.length === 0) {
             // No players left: clean up the match document
             await deleteDoc(roomRef);
         } else {
-            await updateDoc(roomRef, { players: p });
+            const updates = { players: p, participantIds };
+            if (data.host === user.uid) {
+                updates.host = participantIds[0];
+            }
+            await updateDoc(roomRef, updates);
         }
     }
     location.reload();
@@ -125,9 +153,17 @@ window.startGame = async () => {
     deck.sort(() => Math.random() - 0.5);
     
     let hands = {}; players.forEach(p => hands[p.uid] = deck.splice(0, 7));
+    const participantIds = players.map(p => p.uid);
     await updateDoc(doc(db, "matches", currentRoom), {
-        status: "playing", players: players.map(p => p.uid), 
-        hands, deck, currentCard: deck.pop(), turnIndex: 0, direction: 1
+        status: "playing",
+        players: participantIds,
+        participantIds,
+        lobbyInfo: players,
+        hands,
+        deck,
+        currentCard: deck.pop(),
+        turnIndex: 0,
+        direction: 1
     });
 };
 </script>
