@@ -81,13 +81,13 @@ const ADMIN_REQUEST_MAX = clampNumber(
 );
 const BULK_EMAIL_BATCH_SIZE = clampNumber(
   process.env.BULK_EMAIL_BATCH_SIZE,
-  20,
+  3,
   1,
   100
 );
 const BULK_EMAIL_BATCH_DELAY_MS = clampNumber(
   process.env.BULK_EMAIL_BATCH_DELAY_MS,
-  400,
+  2000,
   0,
   5000
 );

@@ -13,6 +13,8 @@ import {
 } from "./helpers.js";
 import { buildAnnouncementEmail, sendEmail } from "./mail.js";
 
+const BULK_EMAIL_RETRY_MAX_ATTEMPTS = 3;
+
 async function listSuppressedEmails() {
   const suppressedEmails = new Set();
 
@@ -155,6 +157,63 @@ async function createCampaignLog({
   return campaignRef;
 }
 
+function isTemporaryRateLimitError(error) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = readableErrorMessage(error).toLowerCase();
+  const statusCode = Number(error?.statusCode || 0);
+
+  return (
+    statusCode === 429
+    || code.includes("rate_limit")
+    || code.includes("too_many_requests")
+    || message.includes("too many requests")
+    || message.includes("rate limit")
+  );
+}
+
+async function sendCampaignRecipientEmail({ campaignId, htmlMessage, recipient, subject, textMessage }) {
+  const mail = buildAnnouncementEmail({
+    htmlMessage,
+    subject,
+    textMessage
+  });
+
+  let attempt = 0;
+
+  while (attempt < BULK_EMAIL_RETRY_MAX_ATTEMPTS) {
+    try {
+      return await sendEmail({
+        to: recipient.email,
+        subject: mail.subject,
+        html: mail.html,
+        text: mail.text,
+        headers: {
+          "X-WebArcade-Campaign-ID": campaignId
+        }
+      }, {
+        idempotencyKey: `bulk-campaign/${campaignId}/${recipient.uid || recipient.email}`
+      });
+    } catch (error) {
+      attempt += 1;
+
+      if (!isTemporaryRateLimitError(error) || attempt >= BULK_EMAIL_RETRY_MAX_ATTEMPTS) {
+        throw error;
+      }
+
+      const retryDelayMs = BULK_EMAIL_BATCH_DELAY_MS * attempt;
+      console.warn("Bulk email retry scheduled after provider rate limit", {
+        attempt,
+        campaignId,
+        email: recipient.email,
+        retryDelayMs
+      });
+      await sleep(retryDelayMs);
+    }
+  }
+
+  throw new Error("Bulk email retry loop exited unexpectedly.");
+}
+
 async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, textMessage, audienceStats = null }) {
   let sentCount = 0;
   let failedCount = 0;
@@ -181,23 +240,13 @@ async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, 
   for (let index = 0; index < recipients.length; index += BULK_EMAIL_BATCH_SIZE) {
     const batch = recipients.slice(index, index + BULK_EMAIL_BATCH_SIZE);
     const results = await Promise.allSettled(
-      batch.map(recipient => {
-        const mail = buildAnnouncementEmail({
-          htmlMessage,
-          subject,
-          textMessage
-        });
-
-        return sendEmail({
-          to: recipient.email,
-          subject: mail.subject,
-          html: mail.html,
-          text: mail.text,
-          headers: {
-            "X-WebArcade-Campaign-ID": campaignRef.id
-          }
-        });
-      })
+      batch.map(recipient => sendCampaignRecipientEmail({
+        campaignId: campaignRef.id,
+        htmlMessage,
+        recipient,
+        subject,
+        textMessage
+      }))
     );
 
     results.forEach((result, batchIndex) => {
@@ -211,6 +260,7 @@ async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, 
       failedCount += 1;
       if (failures.length < 25) {
         failures.push({
+          code: result.reason?.code || "internal",
           email: batch[batchIndex].email,
           error: readableErrorMessage(result.reason)
         });
