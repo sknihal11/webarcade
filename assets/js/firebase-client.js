@@ -796,12 +796,17 @@ export async function requestCustomPasswordReset(email) {
 }
 
 export async function sendTestEmailCampaign(payload) {
+  const testEmails = Array.isArray(payload?.testEmails)
+    ? payload.testEmails.map(normalizeEmail).filter(Boolean)
+    : [];
+
   const response = await callBackendJson("/send-test-email", {
     authRequired: true,
     body: {
       htmlMessage: String(payload?.htmlMessage || ""),
       subject: String(payload?.subject || ""),
       testEmail: normalizeEmail(payload?.testEmail || ""),
+      testEmails,
       textMessage: String(payload?.textMessage || "")
     }
   });

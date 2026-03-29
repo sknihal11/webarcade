@@ -4,11 +4,12 @@ import { requireAdmin } from "../lib/auth.js";
 import { createCampaignLog } from "../lib/campaigns.js";
 import {
   ApiError,
+  cleanEmailList,
   hashValue,
-  isValidGmail,
   normalizeMailPayload,
   readableErrorMessage,
-  sanitizeErrorForLogs
+  sanitizeErrorForLogs,
+  sleep
 } from "../lib/helpers.js";
 import { runApiRoute, readJsonBody, requireMethod, sendJson } from "../lib/http.js";
 import { buildAnnouncementEmail, sendEmail } from "../lib/mail.js";
@@ -43,21 +44,35 @@ export default async function handler(req, res) {
     if (!payload.textMessage) {
       throw new ApiError(400, "invalid-argument", "Plain-text message is required.");
     }
-    if (!isValidGmail(payload.testEmail)) {
-      throw new ApiError(400, "invalid-argument", "Enter a valid Gmail address for test delivery.");
+
+    const cleanedRecipients = cleanEmailList(
+      [...payload.testEmails, payload.testEmail],
+      { gmailOnly: true }
+    );
+
+    if (!cleanedRecipients.emails.length) {
+      throw new ApiError(400, "invalid-argument", "Enter at least one valid Gmail address for test delivery.");
     }
 
     const campaignRef = await createCampaignLog({
       adminUser,
-      audience: "single-test-email",
+      audience: "test-email-list",
+      audienceStats: {
+        duplicatesRemovedCount: cleanedRecipients.duplicatesRemovedCount,
+        rawAudienceCount: cleanedRecipients.rawCount,
+        skippedInvalidEmailsCount: cleanedRecipients.skippedInvalidEmailsCount,
+        skippedSuppressedEmailsCount: 0,
+        uniqueRecipientsCount: cleanedRecipients.emails.length
+      },
       dryRun: false,
       htmlMessage: payload.htmlMessage,
       includeUnverified: false,
       mode: "test",
       subject: payload.subject,
-      testEmail: payload.testEmail,
+      testEmail: cleanedRecipients.emails[0] || null,
+      testEmails: cleanedRecipients.emails,
       textMessage: payload.textMessage,
-      totalRecipients: 1
+      totalRecipients: cleanedRecipients.emails.length
     });
 
     try {
@@ -68,41 +83,84 @@ export default async function handler(req, res) {
         textMessage: payload.textMessage
       });
 
-      await sendEmail({
-        to: payload.testEmail,
-        subject: mail.subject,
-        html: mail.html,
-        text: mail.text,
-        headers: {
-          "X-WebArcade-Campaign-ID": campaignRef.id
+      let processedCount = 0;
+      let sentCount = 0;
+      let failedCount = 0;
+      const failures = [];
+
+      for (let index = 0; index < cleanedRecipients.emails.length; index += 1) {
+        const email = cleanedRecipients.emails[index];
+
+        try {
+          await sendEmail({
+            to: email,
+            subject: mail.subject,
+            html: mail.html,
+            text: mail.text,
+            headers: {
+              "X-WebArcade-Campaign-ID": campaignRef.id
+            }
+          }, {
+            idempotencyKey: `test-email/${campaignRef.id}/${email}`
+          });
+
+          sentCount += 1;
+        } catch (error) {
+          failedCount += 1;
+          if (failures.length < 25) {
+            failures.push({
+              email,
+              code: error?.code || "internal",
+              error: readableErrorMessage(error)
+            });
+          }
         }
-      }, {
-        idempotencyKey: `test-email/${campaignRef.id}/${payload.testEmail}`
-      });
+
+        processedCount += 1;
+
+        await campaignRef.set({
+          failedCount,
+          failures,
+          processedCount,
+          sentCount,
+          status: "sending",
+          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+        }, { merge: true });
+
+        if (index + 1 < cleanedRecipients.emails.length) {
+          await sleep(350);
+        }
+      }
+
+      const finalStatus = failedCount ? "test-failed" : "test-sent";
 
       await campaignRef.set({
         finishedAt: admin.firestore.FieldValue.serverTimestamp(),
-        processedCount: 1,
-        sentCount: 1,
-        status: "test-sent",
+        processedCount,
+        sentCount,
+        failedCount,
+        failures,
+        status: finalStatus,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
       sendJson(res, 200, {
         ok: true,
         campaignId: campaignRef.id,
-        message: "Test email sent successfully."
+        message: failedCount
+          ? `Test send finished with ${sentCount} sent and ${failedCount} failed recipient(s).`
+          : `Test email sent to ${sentCount} recipient(s).`
       });
     } catch (error) {
       await campaignRef.set({
-        failedCount: 1,
+        failedCount: cleanedRecipients.emails.length || 1,
         failures: [{
-          email: payload.testEmail,
+          email: cleanedRecipients.emails[0] || null,
           code: error?.code || "internal",
           error: readableErrorMessage(error)
         }],
         finishedAt: admin.firestore.FieldValue.serverTimestamp(),
-        processedCount: 1,
+        processedCount: cleanedRecipients.emails.length || 1,
         providerCode: error?.code || "internal",
         providerStatusCode: Number(error?.statusCode) || 500,
         status: "test-failed",

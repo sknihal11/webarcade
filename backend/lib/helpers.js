@@ -16,6 +16,18 @@ function normalizeText(value) {
   return String(value || "").replace(/\r\n/g, "\n").trim();
 }
 
+function toEmailArray(value) {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    return value.split(/[\n,;\r]+/);
+  }
+
+  return [];
+}
+
 function normalizeAudienceType(value, includeUnverifiedFallback = false) {
   const normalized = String(value || "").trim().toLowerCase();
 
@@ -67,6 +79,44 @@ function isValidEmailAddress(email) {
   }
 
   return /^[a-z0-9._%+-]+$/i.test(localPart) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain);
+}
+
+function cleanEmailList(value, options = {}) {
+  const gmailOnly = Boolean(options.gmailOnly);
+  const source = toEmailArray(value);
+  const seen = new Set();
+  const emails = [];
+  let duplicatesRemovedCount = 0;
+  let skippedInvalidEmailsCount = 0;
+  let rawCount = 0;
+
+  source.forEach(entry => {
+    const email = normalizeEmail(entry);
+    if (!email) return;
+
+    rawCount += 1;
+
+    const isValid = gmailOnly ? isValidGmail(email) : isValidEmailAddress(email);
+    if (!isValid) {
+      skippedInvalidEmailsCount += 1;
+      return;
+    }
+
+    if (seen.has(email)) {
+      duplicatesRemovedCount += 1;
+      return;
+    }
+
+    seen.add(email);
+    emails.push(email);
+  });
+
+  return {
+    duplicatesRemovedCount,
+    emails,
+    rawCount,
+    skippedInvalidEmailsCount
+  };
 }
 
 function extractBearerToken(headerValue) {
@@ -122,6 +172,7 @@ function buildCampaignResultMessage({ failedCount, sentCount, totalRecipients })
 
 function normalizeMailPayload(body) {
   const includeUnverified = Boolean(body.includeUnverified);
+  const testEmails = toEmailArray(body.testEmails);
 
   return {
     audienceType: normalizeAudienceType(body.audienceType, includeUnverified),
@@ -131,6 +182,7 @@ function normalizeMailPayload(body) {
     specificEmail: normalizeEmail(body.specificEmail),
     subject: normalizeText(body.subject),
     testEmail: normalizeEmail(body.testEmail),
+    testEmails: testEmails.map(normalizeEmail).filter(Boolean),
     textMessage: normalizeText(body.textMessage)
   };
 }
@@ -138,6 +190,7 @@ function normalizeMailPayload(body) {
 export {
   ApiError,
   buildCampaignResultMessage,
+  cleanEmailList,
   escapeAttribute,
   escapeHtml,
   extractBearerToken,

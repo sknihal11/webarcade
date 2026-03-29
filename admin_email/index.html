@@ -205,6 +205,64 @@
       line-height: 1.6;
     }
 
+    .test-recipient-wrap {
+      display: grid;
+      gap: 12px;
+    }
+
+    .test-recipient-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .test-recipient-item {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .test-recipient-input {
+      flex: 1 1 auto;
+    }
+
+    .test-recipient-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .mini-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-primary);
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .mini-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .mini-btn.remove {
+      color: var(--text-secondary);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .mini-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
     .field-input,
     .field-textarea {
       width: 100%;
@@ -528,6 +586,11 @@
       .stats-grid {
         grid-template-columns: 1fr;
       }
+
+      .test-recipient-item {
+        flex-direction: column;
+        align-items: stretch;
+      }
     }
   </style>
 </head>
@@ -600,19 +663,23 @@
               <div class="field-help">Use the exact registered email address.</div>
             </div>
 
-            <div class="field-row">
-              <div class="field-group">
-                <label for="testEmailInput">Test email</label>
-                <input class="field-input" id="testEmailInput" type="email" placeholder="name@gmail.com"
-                  autocomplete="email" inputmode="email" spellcheck="false">
-                <div class="field-help">Used only for the separate test send button.</div>
+            <div class="field-group">
+              <label>Test inboxes</label>
+              <div class="test-recipient-wrap">
+                <div class="test-recipient-list" id="testRecipientList"></div>
+                <div class="test-recipient-actions">
+                  <button class="mini-btn" id="addTestRecipientButton" type="button">+ Add email</button>
+                  <button class="mini-btn" id="uploadTestEmailsButton" type="button">Upload .txt</button>
+                  <input id="testEmailFileInput" type="file" accept=".txt,text/plain" hidden>
+                </div>
               </div>
+              <div class="field-help" id="testEmailHelp">Add one or more Gmail addresses for the separate test send button.</div>
+            </div>
 
-              <div class="field-group">
-                <label for="replyInfoInput">Reply-to</label>
-                <input class="field-input" id="replyInfoInput" type="text" value="support@webarcade.in" readonly>
-                <div class="field-help">Outgoing mail is sent from your verified WebArcade sending domain.</div>
-              </div>
+            <div class="field-group">
+              <label for="replyInfoInput">Reply-to</label>
+              <input class="field-input" id="replyInfoInput" type="text" value="support@webarcade.in" readonly>
+              <div class="field-help">Outgoing mail is sent from your verified WebArcade sending domain.</div>
             </div>
 
             <div class="field-group">
@@ -634,7 +701,7 @@
             <div class="button-row">
               <button class="secondary-btn" id="previewButton" type="button">Refresh preview</button>
               <button class="secondary-btn" id="dryRunButton" type="button">Preview audience</button>
-              <button class="secondary-btn" id="testButton" type="button">Send test email</button>
+              <button class="secondary-btn" id="testButton" type="button">Send test emails</button>
               <button class="primary-btn" id="sendAllButton" type="submit">Send to all</button>
             </div>
           </form>
@@ -725,7 +792,11 @@
     const logoutButton = document.getElementById("logoutButton");
     const campaignForm = document.getElementById("campaignForm");
     const subjectInput = document.getElementById("subjectInput");
-    const testEmailInput = document.getElementById("testEmailInput");
+    const testRecipientList = document.getElementById("testRecipientList");
+    const addTestRecipientButton = document.getElementById("addTestRecipientButton");
+    const uploadTestEmailsButton = document.getElementById("uploadTestEmailsButton");
+    const testEmailFileInput = document.getElementById("testEmailFileInput");
+    const testEmailHelp = document.getElementById("testEmailHelp");
     const specificUserInput = document.getElementById("specificUserInput");
     const specificUserGroup = document.getElementById("specificUserGroup");
     const htmlInput = document.getElementById("htmlInput");
@@ -782,6 +853,8 @@
     };
 
     renderPreview();
+    ensureTestRecipientRows();
+    updateTestEmailSummary();
     setAudience(selectedAudience);
 
     onAuthStateChanged(auth, async rawUser => {
@@ -812,6 +885,43 @@
     previewButton.addEventListener("click", () => {
       renderPreview();
       showStatus("info", "Preview updated.");
+    });
+
+    addTestRecipientButton.addEventListener("click", () => {
+      appendTestRecipientRow("", true);
+      clearStatus();
+    });
+
+    uploadTestEmailsButton.addEventListener("click", () => {
+      testEmailFileInput.click();
+    });
+
+    testEmailFileInput.addEventListener("change", async event => {
+      const [file] = event.target.files || [];
+      event.target.value = "";
+
+      if (!file) return;
+
+      try {
+        const text = await file.text();
+        const parsedEmails = parseEmailText(text);
+
+        if (!parsedEmails.length) {
+          showStatus("error", "No email addresses were found in that file.");
+          return;
+        }
+
+        const previousCount = getUniqueTestRecipientEmails().length;
+        mergeTestRecipientEmails(parsedEmails);
+        const nextCount = getUniqueTestRecipientEmails().length;
+        const addedCount = Math.max(nextCount - previousCount, 0);
+
+        showStatus("info", addedCount
+          ? `Loaded ${addedCount} test email${addedCount === 1 ? "" : "s"} from the file.`
+          : "No new email addresses were added from that file.");
+      } catch {
+        showStatus("error", "That text file could not be read.");
+      }
     });
 
     document.querySelectorAll("[data-preview-target]").forEach(button => {
@@ -860,7 +970,7 @@
       const subject = subjectInput.value.trim();
       const htmlMessage = htmlInput.value.trim();
       const textMessage = textInput.value.trim();
-      const testEmail = testEmailInput.value.trim().toLowerCase();
+      const testEmails = getUniqueTestRecipientEmails();
       const specificEmail = specificUserInput.value.trim().toLowerCase();
 
       if (!subject) {
@@ -882,10 +992,16 @@
       }
 
       if (testSend) {
-        const emailError = validateEmail(testEmail);
-        if (emailError) {
-          showStatus("error", "Enter a valid Gmail address for the test send.");
-          testEmailInput.focus();
+        if (!testEmails.length) {
+          showStatus("error", "Add at least one Gmail address before sending a test email.");
+          focusFirstTestRecipient();
+          return;
+        }
+
+        const invalidEmail = testEmails.find(email => validateEmail(email));
+        if (invalidEmail) {
+          showStatus("error", `Fix the invalid test email: ${invalidEmail}`);
+          focusTestRecipient(invalidEmail);
           return;
         }
       }
@@ -921,7 +1037,7 @@
           ? await sendTestEmailCampaign({
             htmlMessage,
             subject,
-            testEmail,
+            testEmails,
             textMessage
           })
           : await triggerBulkEmailCampaign(payload);
@@ -993,9 +1109,12 @@
       }
 
       if (snapshot.mode === "test") {
+        const testRecipients = Number(snapshot.testRecipientsCount || snapshot.totalRecipients || 0);
         return snapshot.failedCount
-          ? "Test email attempted, but at least one delivery error was reported."
-          : "Test email sent successfully.";
+          ? `Test send finished with ${snapshot.sentCount || 0} sent and ${snapshot.failedCount || 0} failed recipient(s).`
+          : testRecipients
+            ? `Test email sent to ${testRecipients} recipient(s).`
+            : "Test email sent successfully.";
       }
 
       if (snapshot.status === "completed") {
@@ -1022,7 +1141,12 @@
       if (snapshot.mode) parts.push(`Mode: ${snapshot.mode}`);
       if (snapshot.audience) parts.push(`Audience: ${snapshot.audience}`);
       if (snapshot.specificEmail) parts.push(`User: ${snapshot.specificEmail}`);
-      if (snapshot.testEmail) parts.push(`Test email: ${snapshot.testEmail}`);
+      if (snapshot.testRecipientsCount) parts.push(`Test inboxes: ${snapshot.testRecipientsCount}`);
+      if (Array.isArray(snapshot.testEmails) && snapshot.testEmails.length) {
+        parts.push(`Sample: ${snapshot.testEmails.slice(0, 3).join(", ")}`);
+      } else if (snapshot.testEmail) {
+        parts.push(`Test email: ${snapshot.testEmail}`);
+      }
       if (snapshot.updatedAt?.seconds) {
         parts.push(`Updated: ${new Date(snapshot.updatedAt.seconds * 1000).toLocaleString()}`);
       }
@@ -1068,7 +1192,7 @@
       previewButton.disabled = loading;
 
       dryRunButton.textContent = loading && label.includes("dry run") ? label : selectedAudience === "specific-user" ? "Preview recipient" : "Preview audience";
-      testButton.textContent = loading && label.includes("test") ? label : "Send test email";
+      testButton.textContent = loading && label.includes("test") ? label : "Send test emails";
       sendAllButton.textContent = loading && label.includes("campaign") ? label : selectedAudience === "specific-user" ? "Send to user" : selectedAudience === "verified-users" ? "Send to verified" : selectedAudience === "unverified-users" ? "Send to unverified" : "Send to all";
     }
 
@@ -1115,7 +1239,7 @@
           case "unauthenticated":
           return "Please sign in again before sending email.";
           case "invalid-argument":
-            return error.message || "Please review the subject, message, and test email fields.";
+            return error.message || "Please review the subject, message, and test email list.";
           case "rate-limit":
             return error.message || "Too many email actions were attempted too quickly. Please wait and try again.";
           default:
@@ -1130,6 +1254,139 @@
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#39;");
+    }
+
+    function normalizeRecipientEmail(value) {
+      return String(value || "").trim().toLowerCase();
+    }
+
+    function dedupeEmails(emails) {
+      const seen = new Set();
+      const uniqueEmails = [];
+
+      emails.forEach(email => {
+        const normalized = normalizeRecipientEmail(email);
+        if (!normalized || seen.has(normalized)) return;
+        seen.add(normalized);
+        uniqueEmails.push(normalized);
+      });
+
+      return uniqueEmails;
+    }
+
+    function parseEmailText(text) {
+      return String(text || "")
+        .split(/[\s,;]+/)
+        .map(normalizeRecipientEmail)
+        .filter(Boolean);
+    }
+
+    function createTestRecipientRow(value = "") {
+      const row = document.createElement("div");
+      row.className = "test-recipient-item";
+
+      const input = document.createElement("input");
+      input.className = "field-input test-recipient-input";
+      input.type = "email";
+      input.placeholder = "name@gmail.com";
+      input.autocomplete = "email";
+      input.inputMode = "email";
+      input.spellcheck = false;
+      input.value = normalizeRecipientEmail(value);
+      input.addEventListener("input", updateTestEmailSummary);
+
+      const removeButton = document.createElement("button");
+      removeButton.className = "mini-btn remove";
+      removeButton.type = "button";
+      removeButton.textContent = "Remove";
+      removeButton.addEventListener("click", () => {
+        if (testRecipientList.children.length <= 1) {
+          input.value = "";
+          input.focus();
+          updateTestEmailSummary();
+          return;
+        }
+
+        row.remove();
+        updateTestEmailSummary();
+      });
+
+      row.append(input, removeButton);
+      return row;
+    }
+
+    function appendTestRecipientRow(value = "", focus = false) {
+      const row = createTestRecipientRow(value);
+      testRecipientList.append(row);
+      updateTestEmailSummary();
+
+      if (focus) {
+        row.querySelector("input")?.focus();
+      }
+
+      return row;
+    }
+
+    function ensureTestRecipientRows() {
+      if (!testRecipientList.children.length) {
+        appendTestRecipientRow();
+      }
+    }
+
+    function replaceTestRecipientRows(emails) {
+      testRecipientList.innerHTML = "";
+      const nextEmails = dedupeEmails(emails);
+
+      if (!nextEmails.length) {
+        appendTestRecipientRow();
+        return;
+      }
+
+      nextEmails.forEach(email => appendTestRecipientRow(email));
+    }
+
+    function mergeTestRecipientEmails(emails) {
+      replaceTestRecipientRows([...getTestRecipientEmails(), ...emails]);
+    }
+
+    function getTestRecipientInputs() {
+      return Array.from(testRecipientList.querySelectorAll(".test-recipient-input"));
+    }
+
+    function getTestRecipientEmails() {
+      return getTestRecipientInputs()
+        .map(input => normalizeRecipientEmail(input.value))
+        .filter(Boolean);
+    }
+
+    function getUniqueTestRecipientEmails() {
+      return dedupeEmails(getTestRecipientEmails());
+    }
+
+    function focusFirstTestRecipient() {
+      ensureTestRecipientRows();
+      getTestRecipientInputs()[0]?.focus();
+    }
+
+    function focusTestRecipient(email) {
+      const normalized = normalizeRecipientEmail(email);
+      const matchedInput = getTestRecipientInputs().find(input => normalizeRecipientEmail(input.value) === normalized);
+      matchedInput?.focus();
+    }
+
+    function updateTestEmailSummary() {
+      const rawEmails = getTestRecipientEmails();
+      const uniqueEmails = dedupeEmails(rawEmails);
+      const duplicatesRemoved = rawEmails.length - uniqueEmails.length;
+
+      if (!rawEmails.length) {
+        testEmailHelp.textContent = "Add one or more Gmail addresses for the separate test send button.";
+        return;
+      }
+
+      testEmailHelp.textContent = duplicatesRemoved
+        ? `${uniqueEmails.length} unique test recipient(s) ready. ${duplicatesRemoved} duplicate entry will be ignored.`
+        : `${uniqueEmails.length} test recipient(s) ready.`;
     }
   </script>
 </body>

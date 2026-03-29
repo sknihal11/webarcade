@@ -144,6 +144,7 @@ async function createCampaignLog({
   specificEmail,
   subject,
   testEmail,
+  testEmails,
   textMessage,
   totalRecipients
 }) {
@@ -165,6 +166,8 @@ async function createCampaignLog({
     status: "preparing",
     subject,
     testEmail: testEmail || null,
+    testEmails: Array.isArray(testEmails) ? testEmails.slice(0, 20) : [],
+    testRecipientsCount: Array.isArray(testEmails) ? testEmails.length : testEmail ? 1 : 0,
     textPreview: String(textMessage || "").slice(0, 5000),
     totalRecipients: Number(totalRecipients) || 0,
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
