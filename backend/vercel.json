@@ -22,6 +22,10 @@
       "destination": "/api/send-test-email"
     },
     {
+      "source": "/leaderboard-profiles",
+      "destination": "/api/leaderboard-profiles"
+    },
+    {
       "source": "/bulk-email",
       "destination": "/api/bulk-email"
     }

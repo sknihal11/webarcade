@@ -2505,6 +2505,7 @@
 
   <script type="module">
     import {
+      API_BASE_URL,
       auth,
       calculateGlobalRating,
       collection,
@@ -2852,23 +2853,7 @@
     // ============================================
     async function loadLeaderboard() {
       try {
-        const snapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
-        const leaderData = [];
-
-        for (const docSnap of snapshot.docs) {
-          const d = docSnap.data();
-          const rating = Number(d.globalRating) || calculateGlobalRating(d.best2048 || 0, d.bestFlappy || 0);
-
-          if (rating > 0) {
-            leaderData.push({
-              id: docSnap.id,
-              name: d.username || 'Anonymous',
-              photoURL: d.photoURL || DEFAULT_AVATAR_URL,
-              streak: d.streak || 0,
-              rating
-            });
-          }
-        }
+        const leaderData = await fetchLeaderboardProfiles();
 
         // Sort by rating descending
         leaderData.sort((a, b) => parseFloat(b.rating) - parseFloat(a.rating));
@@ -2928,6 +2913,56 @@
         <div>Failed to load leaderboard</div>
       </div>
     `;
+      }
+    }
+
+    async function fetchLeaderboardProfiles() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/leaderboard-profiles?limit=200`);
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok || payload?.ok === false || !Array.isArray(payload?.profiles)) {
+          throw new Error(payload?.message || "Leaderboard API failed");
+        }
+
+        return payload.profiles
+          .map(profile => {
+            const rating = Number(profile.globalRating) || calculateGlobalRating(
+              Number(profile.score2048) || 0,
+              Number(profile.scoreFlappy) || 0
+            );
+
+            return {
+              id: profile.id,
+              name: profile.name || "Anonymous",
+              photoURL: profile.avatar || DEFAULT_AVATAR_URL,
+              streak: Number(profile.streak) || 0,
+              rating
+            };
+          })
+          .filter(player => player.rating > 0);
+      } catch (apiError) {
+        console.warn("Dashboard leaderboard API fallback activated", apiError);
+
+        const snapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
+        const leaderData = [];
+
+        for (const docSnap of snapshot.docs) {
+          const d = docSnap.data();
+          const rating = Number(d.globalRating) || calculateGlobalRating(d.best2048 || 0, d.bestFlappy || 0);
+
+          if (rating > 0) {
+            leaderData.push({
+              id: docSnap.id,
+              name: d.username || 'Anonymous',
+              photoURL: d.photoURL || DEFAULT_AVATAR_URL,
+              streak: d.streak || 0,
+              rating
+            });
+          }
+        }
+
+        return leaderData;
       }
     }
 

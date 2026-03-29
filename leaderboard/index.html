@@ -468,6 +468,7 @@
   <!-- Scripts -->
   <script type="module">
     import {
+      API_BASE_URL,
       auth,
       calculateGlobalRating,
       collection,
@@ -514,25 +515,7 @@
 
     async function loadData() {
       try {
-        const querySnapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
-        const users = [];
-
-        for (const docSnap of querySnapshot.docs) {
-          const d = docSnap.data();
-          const s2048 = d.best2048 || 0;
-          const sFlappy = d.bestFlappy || 0;
-          const globalRating = Number(d.globalRating) || calculateGlobalRating(s2048, sFlappy);
-
-          users.push({
-            id: docSnap.id,
-            name: d.username || 'Anonymous',
-            avatar: d.photoURL || DEFAULT_AVATAR_URL,
-            streak: d.streak || 0,
-            score2048: s2048,
-            scoreFlappy: sFlappy,
-            globalRating: globalRating
-          });
-        }
+        const users = await fetchLeaderboardProfiles();
 
         allUsersData = users;
         renderLeaderboard();
@@ -590,6 +573,51 @@
           userBar.classList.add('active');
         }
       });
+    }
+
+    async function fetchLeaderboardProfiles() {
+      try {
+        const response = await fetch(`${API_BASE_URL}/leaderboard-profiles?limit=200`);
+        const payload = await response.json().catch(() => null);
+
+        if (!response.ok || payload?.ok === false || !Array.isArray(payload?.profiles)) {
+          throw new Error(payload?.message || "Leaderboard API failed");
+        }
+
+        return payload.profiles.map(profile => ({
+          id: profile.id,
+          name: profile.name || "Anonymous",
+          avatar: profile.avatar || DEFAULT_AVATAR_URL,
+          streak: Number(profile.streak) || 0,
+          score2048: Number(profile.score2048) || 0,
+          scoreFlappy: Number(profile.scoreFlappy) || 0,
+          globalRating: Number(profile.globalRating) || calculateGlobalRating(profile.score2048 || 0, profile.scoreFlappy || 0)
+        }));
+      } catch (apiError) {
+        console.warn("Leaderboard API fallback activated", apiError);
+
+        const querySnapshot = await getDocs(query(collection(db, "public_profiles"), limit(100)));
+        const users = [];
+
+        for (const docSnap of querySnapshot.docs) {
+          const d = docSnap.data();
+          const s2048 = d.best2048 || 0;
+          const sFlappy = d.bestFlappy || 0;
+          const globalRating = Number(d.globalRating) || calculateGlobalRating(s2048, sFlappy);
+
+          users.push({
+            id: docSnap.id,
+            name: d.username || 'Anonymous',
+            avatar: d.photoURL || DEFAULT_AVATAR_URL,
+            streak: d.streak || 0,
+            score2048: s2048,
+            scoreFlappy: sFlappy,
+            globalRating: globalRating
+          });
+        }
+
+        return users;
+      }
     }
   </script>
 </body>
