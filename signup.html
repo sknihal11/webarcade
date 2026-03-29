@@ -177,6 +177,7 @@
       sanitizeNextPath,
       sendAppVerificationEmail,
       setAuthPersistence,
+      startCooldown,
       syncUserProfileAuthState,
       updateProfile,
       validateEmail,
@@ -387,8 +388,7 @@
             username,
             email,
             extraFields: {
-              verificationStatus: "pending",
-              verificationEmailSentAt: new Date()
+              verificationStatus: "pending"
             }
           });
         } catch (profileError) {
@@ -397,8 +397,11 @@
         }
 
         let verificationSendFailed = false;
+        let verificationMessage = "Account created. Check your Gmail inbox for the verification link.";
         try {
-          await sendAppVerificationEmail(credential.user, nextPath);
+          const verificationResult = await sendAppVerificationEmail(credential.user, nextPath);
+          verificationMessage = verificationResult?.message || verificationMessage;
+          startCooldown(`verify-resend:${credential.user.uid}`, 60_000);
         } catch (verificationError) {
           console.warn("Verification email send failed:", verificationError);
           verificationSendFailed = true;
@@ -414,10 +417,11 @@
             "Account created. We could not send the verification email yet, but you can resend it on the next screen."
           );
         } else {
-          showStatus(signupStatus, "success", "Account created. Check your Gmail inbox for the verification link.");
+          showStatus(signupStatus, "success", verificationMessage);
         }
 
-        window.location.replace(`verify-email.html?next=${encodeURIComponent(nextPath)}&new=1`);
+        const verifyUrl = `verify-email.html?next=${encodeURIComponent(nextPath)}&new=1${verificationSendFailed ? "&mail=failed" : ""}`;
+        window.location.replace(verifyUrl);
       } catch (error) {
         recordRateLimitAttempt("signup", { windowMs: 60_000 });
         handleSignupError(error);

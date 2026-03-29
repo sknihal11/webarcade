@@ -9,7 +9,6 @@ import {
   getIdToken,
   onAuthStateChanged,
   reauthenticateWithCredential,
-  sendEmailVerification,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
@@ -670,28 +669,21 @@ export async function markVerificationEmailSent(userId) {
   }
 }
 
-function buildVerificationContinueUrl(nextPath = "blog.html") {
-  const safeNext = sanitizeNextPath(nextPath);
-  const relativePath = `login.html?verified=1&next=${encodeURIComponent(safeNext)}`;
-
-  if (typeof window === "undefined") {
-    return relativePath;
-  }
-
-  return new URL(relativePath, window.location.href).toString();
-}
-
 export async function sendAppVerificationEmail(user, nextPath = "blog.html") {
   if (!user) {
     throw new Error("A signed-in user is required to send a verification email.");
   }
 
-  await sendEmailVerification(user, {
-    url: buildVerificationContinueUrl(nextPath),
-    handleCodeInApp: false
+  const response = await callBackendJson("/send-verification-email", {
+    authRequired: true,
+    authUser: user,
+    body: {
+      email: normalizeEmail(user.email || ""),
+      nextPath: sanitizeNextPath(nextPath)
+    }
   });
 
-  await markVerificationEmailSent(user.uid);
+  return response;
 }
 
 export async function safelyReloadUser(user = auth.currentUser) {
@@ -836,7 +828,8 @@ async function callBackendJson(path, options = {}) {
   };
 
   if (options.authRequired) {
-    const currentUser = auth.currentUser ? await safelyReloadUser(auth.currentUser) : null;
+    const baseUser = options.authUser || auth.currentUser;
+    const currentUser = baseUser ? await safelyReloadUser(baseUser) : null;
     if (!currentUser) {
       throw createBackendApiError({
         code: "unauthenticated",
@@ -917,7 +910,6 @@ export {
   query,
   reauthenticateWithCredential,
   serverTimestamp,
-  sendEmailVerification,
   setDoc,
   signInWithEmailAndPassword,
   signOut,

@@ -194,11 +194,11 @@
       setButtonState(summaryResend, true, "Sending...");
 
       try {
-        await sendAppVerificationEmail(currentUser, nextPath);
+        const result = await sendAppVerificationEmail(currentUser, nextPath);
         startCooldown(`account-verify-resend:${currentUser.uid}`, 60_000);
-        showStatus(summaryStatus, "success", "Verification email sent. Check your Gmail inbox.");
-      } catch {
-        showStatus(summaryStatus, "error", "We could not resend the verification email right now.");
+        showStatus(summaryStatus, "success", result?.message || "Verification email sent. Check your Gmail inbox.");
+      } catch (error) {
+        showStatus(summaryStatus, "error", error?.message || "We could not resend the verification email right now.");
       } finally {
         setButtonState(summaryResend, false, "Resend verification email");
         syncResendState();

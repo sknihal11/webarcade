@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "check": "node --check api/healthz.js && node --check api/reset-password.js && node --check api/send-test-email.js && node --check api/bulk-email.js"
+    "check": "node --check api/healthz.js && node --check api/reset-password.js && node --check api/send-verification-email.js && node --check api/send-test-email.js && node --check api/bulk-email.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

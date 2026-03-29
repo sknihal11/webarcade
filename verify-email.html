@@ -75,6 +75,7 @@
     const params = new URLSearchParams(window.location.search);
     const nextPath = sanitizeNextPath(params.get("next"));
     const isNewSignup = params.get("new") === "1";
+    const mailStatus = params.get("mail");
 
     const destinationLabel = document.getElementById("destinationLabel");
     const emailDisplay = document.getElementById("emailDisplay");
@@ -110,7 +111,9 @@
         return;
       }
 
-      if (isNewSignup) {
+      if (mailStatus === "failed") {
+        showStatus("error", "We could not send the verification email yet. Use the resend button below to try again.");
+      } else if (isNewSignup) {
         showStatus("info", "Verification email sent. Open it, then come back here.");
       } else {
         showStatus("info", "Open the verification email, then continue.");
@@ -155,11 +158,11 @@
       setButtonState(resendButton, true, "Sending...");
 
       try {
-        await sendAppVerificationEmail(currentUser, nextPath);
+        const result = await sendAppVerificationEmail(currentUser, nextPath);
         startCooldown(`verify-resend:${currentUser.uid}`, 60_000);
-        showStatus("success", "Verification email sent. Check your inbox and spam folder.");
-      } catch {
-        showStatus("error", "We could not resend the verification email right now. Please try again shortly.");
+        showStatus("success", result?.message || "Verification email sent. Check your inbox and spam folder.");
+      } catch (error) {
+        showStatus("error", error?.message || "We could not resend the verification email right now. Please try again shortly.");
       } finally {
         setButtonState(resendButton, false, "Resend email");
         syncResendButton();

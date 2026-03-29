@@ -2,7 +2,7 @@ import { ADMIN_EMAILS } from "./config.js";
 import { auth } from "./firebase-admin.js";
 import { ApiError, extractBearerToken, normalizeEmail } from "./helpers.js";
 
-async function requireAdmin(req) {
+async function requireAuthenticatedUser(req) {
   const token = extractBearerToken(req.headers.authorization);
 
   if (!token) {
@@ -16,7 +16,16 @@ async function requireAdmin(req) {
     throw new ApiError(401, "unauthenticated", "You must be signed in.");
   }
 
-  const email = normalizeEmail(decodedToken.email);
+  return {
+    decodedToken,
+    email: normalizeEmail(decodedToken.email),
+    uid: decodedToken.uid
+  };
+}
+
+async function requireAdmin(req) {
+  const user = await requireAuthenticatedUser(req);
+  const { decodedToken, email, uid } = user;
 
   if (!decodedToken.email_verified) {
     throw new ApiError(403, "permission-denied", "Verify your email before using the admin mail system.");
@@ -28,10 +37,11 @@ async function requireAdmin(req) {
 
   return {
     email,
-    uid: decodedToken.uid
+    uid
   };
 }
 
 export {
+  requireAuthenticatedUser,
   requireAdmin
 };

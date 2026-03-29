@@ -16,6 +16,22 @@ function normalizeText(value) {
   return String(value || "").replace(/\r\n/g, "\n").trim();
 }
 
+function sanitizeNextPath(nextPath, fallback = "blog.html") {
+  const cleanedNext = String(nextPath || "").replace(/^\//, "");
+  if (
+    !cleanedNext ||
+    cleanedNext.includes("..") ||
+    /^https?:/i.test(cleanedNext) ||
+    cleanedNext.startsWith("//") ||
+    /^login\.html(?:$|\?)/i.test(cleanedNext) ||
+    /^signup\.html(?:$|\?)/i.test(cleanedNext)
+  ) {
+    return fallback;
+  }
+
+  return cleanedNext;
+}
+
 function isValidGmail(email) {
   return /^[A-Za-z0-9._%+-]+@gmail\.com$/.test(normalizeEmail(email));
 }
@@ -92,6 +108,7 @@ export {
   isValidGmail,
   normalizeEmail,
   normalizeMailPayload,
+  sanitizeNextPath,
   normalizeText,
   readableErrorMessage,
   sanitizeErrorForLogs,
