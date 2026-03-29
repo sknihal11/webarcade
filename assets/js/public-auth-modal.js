@@ -17,6 +17,9 @@ import {
   onAuthStateChanged,
   recordRateLimitAttempt,
   registerSession,
+  requestCustomPasswordReset,
+  resolveLoginEmail,
+  sanitizeNextPath,
   safelyReloadUser,
   sendAppVerificationEmail,
   setAuthPersistence,
@@ -32,7 +35,15 @@ import {
 
 await ensureBrowserPersistence();
 
-const NEXT_PATH = "/games/";
+const params = new URLSearchParams(window.location.search);
+const NEXT_PATH = sanitizeNextPath(params.get("next"));
+const INITIAL_AUTH_MODE = (() => {
+  const requestedMode = String(params.get("auth") || "").trim().toLowerCase();
+  if (requestedMode === "signup") return "signup";
+  if (requestedMode === "recover") return "recover";
+  if (requestedMode === "login") return "login";
+  return "";
+})();
 
 const modal = document.getElementById("modal");
 const loginBtn = document.getElementById("loginBtn");
@@ -78,6 +89,10 @@ onAuthStateChanged(auth, async rawUser => {
     currentDeviceId = null;
     loginBtn.style.display = "";
     userInfo.classList.remove("visible");
+
+    if (INITIAL_AUTH_MODE) {
+      setTimeout(() => openModal(INITIAL_AUTH_MODE), 80);
+    }
     return;
   }
 
@@ -157,7 +172,7 @@ window.requireLogin = event => {
   event?.preventDefault();
 
   if (!currentUser) {
-    window.location.href = `/login/?next=${encodeURIComponent(NEXT_PATH)}`;
+    openModal("login");
     return;
   }
 
@@ -184,11 +199,18 @@ actionBtn.addEventListener("click", async () => {
     return;
   }
 
+  if (modalMode === "recover") {
+    await handleRecovery();
+    return;
+  }
+
   await handleLogin();
 });
 
 forgotPasswordLink?.addEventListener("click", () => {
-  window.location.href = `/login/?next=${encodeURIComponent(NEXT_PATH)}&recover=1`;
+  setMode("recover");
+  clearModalFeedback();
+  focusPrimaryField();
 });
 
 [usernameInput, emailInput, passwordInput].forEach(input => {
@@ -203,14 +225,27 @@ forgotPasswordLink?.addEventListener("click", () => {
 usernameInput?.addEventListener("input", () => {
   usernameInput.classList.remove("invalid");
   usernameError.textContent = "";
+
+  if (modalMode === "signup" && passwordInput.value) {
+    refreshSignupPasswordState();
+  }
 });
 
 emailInput?.addEventListener("input", () => {
   emailInput.classList.remove("invalid");
   emailError.textContent = "";
+
+  if (modalMode === "signup" && passwordInput.value) {
+    refreshSignupPasswordState();
+  }
 });
 
 passwordInput?.addEventListener("input", () => {
+  if (modalMode === "signup") {
+    refreshSignupPasswordState();
+    return;
+  }
+
   passwordInput.classList.remove("invalid", "warning");
   passwordError.textContent = "";
   passwordWarning.textContent = "";
@@ -235,9 +270,9 @@ async function handleLogin() {
     return;
   }
 
-  const email = normalizeEmail(emailInput.value);
+  const identifier = String(emailInput.value || "").trim();
   const password = passwordInput.value;
-  const emailErrorMessage = validateEmail(email);
+  const emailErrorMessage = validateLoginIdentifier(identifier);
 
   if (emailErrorMessage) {
     setFieldError(emailInput, emailError, emailErrorMessage);
@@ -254,7 +289,12 @@ async function handleLogin() {
   setLoading(true, "ENTERING...");
 
   try {
-    const credential = await signInWithEmailAndPassword(auth, email, password);
+    const loginEmail = await resolveLoginEmail(identifier);
+    if (!loginEmail) {
+      throw { code: "auth/invalid-credential" };
+    }
+
+    const credential = await signInWithEmailAndPassword(auth, loginEmail, password);
     clearRateLimitState("public-login");
 
     const user = await safelyReloadUser(credential.user);
@@ -280,6 +320,43 @@ async function handleLogin() {
       setLoading(false, "ENTER ARCADE");
     }
   }
+}
+
+async function handleRecovery() {
+  clearModalFeedback();
+
+  const rateLimit = getRateLimitState("public-password-reset", { maxAttempts: 3, windowMs: 300_000 });
+  if (!rateLimit.allowed) {
+    showStatus(
+      `Please wait ${Math.ceil(rateLimit.retryAfterMs / 1000)} seconds before requesting another reset email.`,
+      true
+    );
+    return;
+  }
+
+  const identifier = String(emailInput.value || "").trim();
+  const identifierError = validateLoginIdentifier(identifier);
+
+  if (identifierError) {
+    setFieldError(emailInput, emailError, identifierError);
+    return;
+  }
+
+  setLoading(true, "SENDING...");
+
+  try {
+    const loginEmail = await resolveLoginEmail(identifier);
+    if (loginEmail) {
+      await requestCustomPasswordReset(loginEmail);
+    }
+  } catch {
+    // Keep the user-facing message generic to avoid enumeration.
+  } finally {
+    recordRateLimitAttempt("public-password-reset", { windowMs: 300_000 });
+    setLoading(false, "SEND RESET EMAIL");
+  }
+
+  showStatus("If this account exists, a reset email is on the way.", false);
 }
 
 async function handleSignup() {
@@ -317,8 +394,13 @@ async function handleSignup() {
     return;
   }
 
-  if (await isUsernameTaken(username)) {
-    setFieldError(usernameInput, usernameError, "That username is already taken.");
+  try {
+    if (await isUsernameTaken(username)) {
+      setFieldError(usernameInput, usernameError, "That username is already taken.");
+      return;
+    }
+  } catch {
+    showStatus("We could not verify username availability right now. Please try again.", true);
     return;
   }
 
@@ -327,9 +409,8 @@ async function handleSignup() {
     setFieldWarning(
       passwordInput,
       passwordWarning,
-      `This password appears in ${breachCount.toLocaleString()} known breaches. Pick a different one.`
+      `This password appears in ${breachCount.toLocaleString()} known breaches. You can continue, but a different password is safer.`
     );
-    return;
   }
 
   authFlowInFlight = true;
@@ -384,25 +465,29 @@ async function handleSignup() {
 }
 
 function setMode(mode) {
-  modalMode = mode === "signup" ? "signup" : "login";
+  modalMode = mode === "signup" ? "signup" : mode === "recover" ? "recover" : "login";
 
   const isSignup = modalMode === "signup";
-  modalTitle.textContent = isSignup ? "CREATE ACCOUNT" : "LOGIN";
-  actionBtn.textContent = isSignup ? "CREATE ACCOUNT" : "ENTER ARCADE";
+  const isRecovery = modalMode === "recover";
+  modalTitle.textContent = isSignup ? "CREATE ACCOUNT" : isRecovery ? "RESET PASSWORD" : "LOGIN";
+  actionBtn.textContent = isSignup ? "CREATE ACCOUNT" : isRecovery ? "SEND RESET EMAIL" : "ENTER ARCADE";
   usernameField.classList.toggle("hidden", !isSignup);
-  forgotRow.classList.toggle("hidden", isSignup);
+  passwordField.classList.toggle("hidden", isRecovery);
+  forgotRow.classList.toggle("hidden", isSignup || isRecovery);
   signupLegalNote.classList.toggle("hidden", !isSignup);
 
-  emailLabel.textContent = isSignup ? "Gmail address" : "Email address";
+  emailLabel.textContent = isSignup ? "Gmail address" : "Username or Gmail";
   passwordLabel.textContent = "Password";
-  emailInput.placeholder = "name@gmail.com";
-  passwordInput.placeholder = isSignup ? "Create a strong password" : "Enter your password";
+  emailInput.placeholder = isSignup ? "name@gmail.com" : "name@gmail.com or username";
+  passwordInput.placeholder = isSignup ? "Use 8+ characters with a number" : "Enter your password";
   passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
   usernameInput.placeholder = "3-20 characters";
 
   switchText.innerHTML = isSignup
     ? "Already have an account? <a>Login</a>"
-    : "New player? <a>Create account</a>";
+    : isRecovery
+      ? "Back to <a>Login</a>"
+      : "New player? <a>Create account</a>";
 
   hidePasswordExtras();
 }
@@ -514,6 +599,23 @@ function ensureSignupLegalNote() {
   return note;
 }
 
+function validateLoginIdentifier(value) {
+  const rawValue = String(value || "").trim();
+  if (!rawValue) {
+    return "Enter your username or Gmail address.";
+  }
+
+  if (rawValue.includes("@")) {
+    return validateEmail(rawValue);
+  }
+
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(rawValue)) {
+    return "Enter your username or Gmail address.";
+  }
+
+  return null;
+}
+
 function mapLoginError(error) {
   switch (error?.code) {
     case "auth/too-many-requests":
@@ -523,7 +625,7 @@ function mapLoginError(error) {
     case "auth/user-not-found":
     case "auth/wrong-password":
     case "auth/invalid-credential":
-      return "The Gmail address and password combination did not match our records.";
+      return "The username or password did not match our records.";
     default:
       return "We could not complete the login request right now. Please try again.";
   }
@@ -540,10 +642,32 @@ function handleSignupError(error) {
       showStatus("This Gmail address could not be accepted.", true);
       return;
     case "auth/weak-password":
-      setFieldError(passwordInput, passwordError, "Choose a stronger password before continuing.");
-      showStatus("This password is too weak for signup.", true);
+      setFieldError(passwordInput, passwordError, "Use at least 8 characters with one number.");
+      showStatus("This password is still too weak for signup.", true);
       return;
     default:
-      showStatus("We could not complete signup right now. Please try again.", true);
+      showStatus(error?.message || "We could not complete signup right now. Please try again.", true);
   }
+}
+
+function refreshSignupPasswordState() {
+  clearFieldError(passwordInput, passwordError);
+  clearFieldWarning(passwordInput, passwordWarning);
+
+  const password = passwordInput.value;
+  if (!password) {
+    return null;
+  }
+
+  const validation = validatePassword(password, {
+    username: usernameInput.value,
+    email: emailInput.value
+  });
+
+  if (validation) {
+    setFieldError(passwordInput, passwordError, validation);
+    return validation;
+  }
+
+  return null;
 }

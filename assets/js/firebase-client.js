@@ -328,7 +328,8 @@ export function isAllowedGmailAddress(email) {
 export function getPasswordRuleState(password) {
   const value = String(password || "");
   return {
-    minLength: value.length >= 10,
+    minLength: value.length >= 8,
+    hasLetter: /[a-z]/i.test(value),
     hasLower: /[a-z]/.test(value),
     hasUpper: /[A-Z]/.test(value),
     hasNumber: /\d/.test(value),
@@ -338,25 +339,14 @@ export function getPasswordRuleState(password) {
 
 export function validatePassword(password, options = {}) {
   const value = String(password || "");
-  const username = String(options.username || "").trim().toLowerCase();
-  const email = normalizeEmail(options.email || "");
   const rules = getPasswordRuleState(value);
   const blacklist = getPasswordBlacklist();
 
   if (!value) return "Password is required";
-  if (!rules.minLength) return "Password must be at least 10 characters";
-  if (!rules.hasLower || !rules.hasUpper) return "Password must include both uppercase and lowercase letters";
+  if (!rules.minLength) return "Password must be at least 8 characters";
+  if (!rules.hasLetter) return "Password must include at least one letter";
   if (!rules.hasNumber) return "Password must include at least one number";
   if (blacklist.has(value.toLowerCase())) return "Choose a password that is harder to guess";
-
-  if (username && value.toLowerCase().includes(username)) {
-    return "Password should not contain your username";
-  }
-
-  const localPart = email.split("@")[0];
-  if (localPart && value.toLowerCase().includes(localPart)) {
-    return "Password should not contain your email name";
-  }
 
   return null;
 }
@@ -367,11 +357,29 @@ export function calculatePasswordStrength(password) {
 
   if (rules.minLength) strength++;
   if (password.length >= 12) strength++;
-  if (rules.hasLower && rules.hasUpper) strength++;
+  if (rules.hasLetter) strength++;
   if (rules.hasNumber) strength++;
   if (rules.hasSymbol) strength++;
 
   return strength;
+}
+
+export async function resolveLoginEmail(identifier) {
+  const rawIdentifier = String(identifier || "").trim();
+  if (!rawIdentifier) return "";
+
+  if (rawIdentifier.includes("@")) {
+    return normalizeEmail(rawIdentifier);
+  }
+
+  const response = await callBackendJson("/resolve-login-email", {
+    authRequired: false,
+    body: {
+      identifier: rawIdentifier
+    }
+  });
+
+  return normalizeEmail(response?.loginEmail || "");
 }
 
 export async function isUsernameTaken(username, currentUserId = null) {

@@ -83,7 +83,7 @@
                 <input class="field-input" id="newPassword" type="password" placeholder="Create a new password" autocomplete="new-password">
                 <button class="password-toggle" type="button" data-password-toggle="newPassword">Show</button>
               </div>
-              <div class="field-note" id="newPasswordNote">Use at least 10 characters with uppercase, lowercase, and a number.</div>
+              <div class="field-note" id="newPasswordNote">Use at least 8 characters with one letter and one number.</div>
             </div>
 
             <div class="field-shell" id="confirmPasswordShell" data-state="default">
@@ -289,13 +289,11 @@
 
       const breachCount = await checkPasswordBreach(newPassword);
       if (breachCount > 0) {
-        setFieldState(newPasswordShell, newPasswordNote, "warning", `This password has appeared in ${breachCount.toLocaleString()} known breaches. Choose another one.`);
-        showStatus(passwordStatus, "error", "Choose a password that has not appeared in known breaches.");
-        return;
+        setFieldState(newPasswordShell, newPasswordNote, "warning", `This password appears in ${breachCount.toLocaleString()} known breaches. You can continue, but a different password is safer.`);
       }
 
       setFieldState(currentPasswordShell, currentPasswordNote, "default", "You must confirm your current password before changing it.");
-      setFieldState(newPasswordShell, newPasswordNote, "default", "Use at least 10 characters with uppercase, lowercase, and a number.");
+      setFieldState(newPasswordShell, newPasswordNote, "default", "Use at least 8 characters with one letter and one number.");
       setFieldState(confirmPasswordShell, confirmPasswordNote, "default", "Repeat the new password to catch typing mistakes.");
       setButtonState(passwordButton, true, "Updating...");
 
