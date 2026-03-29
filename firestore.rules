@@ -8,7 +8,7 @@ service cloud.firestore {
     function isAllowedEmail() {
       return isSignedIn()
         && request.auth.token.email is string
-        && request.auth.token.email.matches('^[A-Za-z0-9._%+-]+@gmail\\.com$');
+        && request.auth.token.email.matches('^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)+$');
     }
 
     function isVerifiedUser() {

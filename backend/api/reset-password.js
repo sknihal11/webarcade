@@ -1,6 +1,6 @@
 import { PASSWORD_RESET_CONTINUE_URL, PASSWORD_RESET_RATE_LIMIT_MAX, PASSWORD_RESET_RATE_LIMIT_WINDOW_MS } from "../lib/config.js";
 import { auth } from "../lib/firebase-admin.js";
-import { ApiError, hashValue, isValidGmail, normalizeEmail, sanitizeErrorForLogs } from "../lib/helpers.js";
+import { ApiError, hashValue, isValidEmailAddress, normalizeEmail, sanitizeErrorForLogs } from "../lib/helpers.js";
 import { runApiRoute, readJsonBody, requireMethod, sendJson } from "../lib/http.js";
 import { buildResetEmail, sendEmail } from "../lib/mail.js";
 import { consumeRateLimit } from "../lib/rate-limit.js";
@@ -13,11 +13,11 @@ export default async function handler(req, res) {
     const email = normalizeEmail(body?.email);
     const genericResponse = {
       ok: true,
-      message: "If this Gmail address is registered, a password reset email is on the way."
+      message: "If this email address is registered, a password reset email is on the way."
     };
 
-    if (!isValidGmail(email)) {
-      throw new ApiError(400, "invalid-argument", "Enter a valid @gmail.com address.");
+    if (!isValidEmailAddress(email)) {
+      throw new ApiError(400, "invalid-argument", "Enter a valid email address.");
     }
 
     const rateLimitState = await consumeRateLimit(

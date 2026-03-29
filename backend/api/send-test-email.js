@@ -47,11 +47,11 @@ export default async function handler(req, res) {
 
     const cleanedRecipients = cleanEmailList(
       [...payload.testEmails, payload.testEmail],
-      { gmailOnly: true }
+      { gmailOnly: false }
     );
 
     if (!cleanedRecipients.emails.length) {
-      throw new ApiError(400, "invalid-argument", "Enter at least one valid Gmail address for test delivery.");
+      throw new ApiError(400, "invalid-argument", "Enter at least one valid email address for test delivery.");
     }
 
     const campaignRef = await createCampaignLog({

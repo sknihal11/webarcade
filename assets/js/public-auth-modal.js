@@ -483,9 +483,9 @@ function setMode(mode) {
   forgotRow.classList.toggle("hidden", isSignup || isRecovery);
   signupLegalNote.classList.toggle("hidden", !isSignup);
 
-  emailLabel.textContent = isSignup ? "Gmail address" : "Username or Gmail";
+  emailLabel.textContent = isSignup ? "Email address" : "Username or email";
   passwordLabel.textContent = "Password";
-  emailInput.placeholder = isSignup ? "name@gmail.com" : "name@gmail.com or username";
+  emailInput.placeholder = isSignup ? "name@example.com" : "name@example.com or username";
   passwordInput.placeholder = isSignup ? "Use 8+ characters with a number" : "Enter your password";
   passwordInput.autocomplete = isSignup ? "new-password" : "current-password";
   usernameInput.placeholder = "3-20 characters";
@@ -690,7 +690,7 @@ function resetPasswordToggle() {
 function validateLoginIdentifier(value) {
   const rawValue = String(value || "").trim();
   if (!rawValue) {
-    return "Enter your username or Gmail address.";
+    return "Enter your username or email address.";
   }
 
   if (rawValue.includes("@")) {
@@ -698,7 +698,7 @@ function validateLoginIdentifier(value) {
   }
 
   if (!/^[a-zA-Z0-9_]{3,20}$/.test(rawValue)) {
-    return "Enter your username or Gmail address.";
+    return "Enter your username or email address.";
   }
 
   return null;
@@ -722,12 +722,12 @@ function mapLoginError(error) {
 function handleSignupError(error) {
   switch (error?.code) {
     case "auth/email-already-in-use":
-      setFieldError(emailInput, emailError, "This Gmail address is already registered.");
-      showStatus("This Gmail address already has an account. Try logging in instead.", true);
+      setFieldError(emailInput, emailError, "This email address is already registered.");
+      showStatus("This email address already has an account. Try logging in instead.", true);
       return;
     case "auth/invalid-email":
-      setFieldError(emailInput, emailError, "Enter a valid Gmail address ending in @gmail.com.");
-      showStatus("This Gmail address could not be accepted.", true);
+      setFieldError(emailInput, emailError, "Enter a valid email address.");
+      showStatus("This email address could not be accepted.", true);
       return;
     case "auth/weak-password":
       setFieldError(passwordInput, passwordError, "Use at least 8 characters with one number.");

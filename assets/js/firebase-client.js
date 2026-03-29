@@ -44,8 +44,8 @@ import {
 export const ADMIN_EMAILS = ["support@webarcade.in", "nihalsk2022@gmail.com"];
 export const DEFAULT_AVATAR_URL = "https://i.imgur.com/8Km9tLL.png";
 export const AUTH_EMAIL_POLICY = {
-  gmailOnly: true,
-  allowedDomain: "gmail.com"
+  gmailOnly: false,
+  allowedDomain: ""
 };
 export const UNVERIFIED_ACCOUNT_GRACE_HOURS = 48;
 export const EMAIL_VALIDATION_LIMITATION =
@@ -292,8 +292,8 @@ export function validateEmail(email, options = {}) {
   if (!/^[a-z0-9._%+-]+$/i.test(localPart)) return "Enter a valid email address";
   if (!/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain)) return "Enter a valid email address";
 
-  if (gmailOnly && domain !== AUTH_EMAIL_POLICY.allowedDomain) {
-    return "Use a valid Gmail address ending in @gmail.com";
+  if (gmailOnly && AUTH_EMAIL_POLICY.allowedDomain && domain !== AUTH_EMAIL_POLICY.allowedDomain) {
+    return `Use a valid email address ending in @${AUTH_EMAIL_POLICY.allowedDomain}`;
   }
 
   if (!gmailOnly) {

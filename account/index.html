@@ -22,7 +22,7 @@
         <a href="/games/" class="back-link">Back to Dashboard</a>
         <span class="eyebrow">Account & Security</span>
         <h1>Manage your authentication settings</h1>
-        <p>Review verification status, resend verification, change your password, or move the account to a different Gmail address safely.</p>
+        <p>Review verification status, resend verification, change your password, or move the account to a different email address safely.</p>
       </div>
 
       <div class="legal-highlight">
@@ -42,12 +42,12 @@
 
         <section class="legal-section">
           <h2>Change Email</h2>
-          <p>Move this account to another Gmail address with Firebase’s secure email-change verification flow.</p>
+          <p>Move this account to another email address with Firebase’s secure email-change verification flow.</p>
           <form class="auth-form" id="emailForm" novalidate>
             <div class="field-shell" id="newEmailShell" data-state="default">
-              <label class="field-label" for="newEmail">New Gmail address</label>
-              <input class="field-input" id="newEmail" type="email" placeholder="newname@gmail.com" autocomplete="email">
-              <div class="field-note" id="newEmailNote">The new address must also be a valid <code>@gmail.com</code> inbox.</div>
+              <label class="field-label" for="newEmail">New email address</label>
+              <input class="field-input" id="newEmail" type="email" placeholder="newname@example.com" autocomplete="email">
+              <div class="field-note" id="newEmailNote">Use a valid email inbox you can access.</div>
             </div>
 
             <div class="field-shell" id="emailPasswordShell" data-state="default">
@@ -196,7 +196,7 @@
       try {
         const result = await sendAppVerificationEmail(currentUser, nextPath);
         startCooldown(`account-verify-resend:${currentUser.uid}`, 60_000);
-        showStatus(summaryStatus, "success", result?.message || "Verification email sent. Check your Gmail inbox.");
+        showStatus(summaryStatus, "success", result?.message || "Verification email sent. Check your inbox.");
       } catch (error) {
         showStatus(summaryStatus, "error", error?.message || "We could not resend the verification email right now.");
       } finally {
@@ -226,7 +226,7 @@
       }
 
       if (newEmail === currentUser.email?.toLowerCase()) {
-        setFieldState(newEmailShell, newEmailNote, "error", "Enter a different Gmail address from the one you already use.");
+        setFieldState(newEmailShell, newEmailNote, "error", "Enter a different email address from the one you already use.");
         return;
       }
 
@@ -235,7 +235,7 @@
         return;
       }
 
-      setFieldState(newEmailShell, newEmailNote, "default", "The new address must also be a valid @gmail.com inbox.");
+      setFieldState(newEmailShell, newEmailNote, "default", "Use a valid email inbox you can access.");
       setFieldState(emailPasswordShell, emailPasswordNote, "default", "Re-enter your current password to authorize the email change.");
       setButtonState(emailButton, true, "Sending...");
 
@@ -248,7 +248,7 @@
           handleCodeInApp: false
         });
 
-        showStatus(emailStatus, "success", "We sent a confirmation link to the new Gmail address. The change will finish after that link is opened.");
+        showStatus(emailStatus, "success", "We sent a confirmation link to the new email address. The change will finish after that link is opened.");
         newEmailInput.value = "";
         emailPasswordInput.value = "";
       } catch (error) {
@@ -391,7 +391,7 @@
         case "auth/requires-recent-login":
           return "Please log in again, then retry this security action.";
         case "auth/email-already-in-use":
-          return "That Gmail address is already in use by another account.";
+          return "That email address is already in use by another account.";
         default:
           return "We could not complete that security change right now. Please try again.";
       }

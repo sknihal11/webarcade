@@ -658,7 +658,7 @@
 
             <div class="field-group" id="specificUserGroup" hidden>
               <label for="specificUserInput">Specific user email</label>
-              <input class="field-input" id="specificUserInput" type="email" placeholder="player@gmail.com"
+                <input class="field-input" id="specificUserInput" type="email" placeholder="player@example.com"
                 autocomplete="email" inputmode="email" spellcheck="false">
               <div class="field-help">Use the exact registered email address.</div>
             </div>
@@ -673,7 +673,7 @@
                   <input id="testEmailFileInput" type="file" accept=".txt,text/plain" hidden>
                 </div>
               </div>
-              <div class="field-help" id="testEmailHelp">Add one or more Gmail addresses for the separate test send button.</div>
+              <div class="field-help" id="testEmailHelp">Add one or more email addresses for the separate test send button.</div>
             </div>
 
             <div class="field-group">
@@ -993,7 +993,7 @@
 
       if (testSend) {
         if (!testEmails.length) {
-          showStatus("error", "Add at least one Gmail address before sending a test email.");
+      showStatus("error", "Add at least one email address before sending a test email.");
           focusFirstTestRecipient();
           return;
         }
@@ -1288,7 +1288,7 @@
       const input = document.createElement("input");
       input.className = "field-input test-recipient-input";
       input.type = "email";
-      input.placeholder = "name@gmail.com";
+      input.placeholder = "name@example.com";
       input.autocomplete = "email";
       input.inputMode = "email";
       input.spellcheck = false;
@@ -1380,7 +1380,7 @@
       const duplicatesRemoved = rawEmails.length - uniqueEmails.length;
 
       if (!rawEmails.length) {
-        testEmailHelp.textContent = "Add one or more Gmail addresses for the separate test send button.";
+      testEmailHelp.textContent = "Add one or more email addresses for the separate test send button.";
         return;
       }
 
