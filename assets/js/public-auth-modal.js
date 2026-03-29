@@ -70,6 +70,7 @@ const emailField = emailInput?.closest(".field");
 const passwordField = passwordInput?.closest(".field");
 const emailLabel = emailField?.querySelector("label");
 const passwordLabel = passwordField?.querySelector("label");
+const passwordToggleButton = ensurePasswordToggle();
 
 const forgotRow = ensureForgotPasswordRow();
 const forgotPasswordLink = forgotRow?.querySelector("button");
@@ -211,6 +212,12 @@ forgotPasswordLink?.addEventListener("click", () => {
   setMode("recover");
   clearModalFeedback();
   focusPrimaryField();
+});
+
+passwordToggleButton?.addEventListener("click", () => {
+  const showPassword = passwordInput.type === "password";
+  passwordInput.type = showPassword ? "text" : "password";
+  passwordToggleButton.textContent = showPassword ? "Hide" : "Show";
 });
 
 [usernameInput, emailInput, passwordInput].forEach(input => {
@@ -508,6 +515,7 @@ function clearModalFeedback() {
   clearFieldError(emailInput, emailError);
   clearFieldError(passwordInput, passwordError);
   clearFieldWarning(passwordInput, passwordWarning);
+  resetPasswordToggle();
   hidePasswordExtras();
   clearStatus();
 }
@@ -597,6 +605,86 @@ function ensureSignupLegalNote() {
 
   switchContainer?.parentElement?.insertBefore(note, switchContainer);
   return note;
+}
+
+function ensurePasswordToggle() {
+  if (!passwordInput || !passwordField) return null;
+
+  injectPasswordToggleStyles();
+
+  const existingButton = passwordField.querySelector(".modal-password-toggle");
+  if (existingButton) return existingButton;
+
+  const existingWrapper = passwordInput.parentElement?.classList.contains("modal-password-wrap")
+    ? passwordInput.parentElement
+    : null;
+
+  const wrapper = existingWrapper || document.createElement("div");
+  wrapper.className = "modal-password-wrap";
+
+  if (!existingWrapper) {
+    passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+    wrapper.appendChild(passwordInput);
+  }
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "modal-password-toggle";
+  button.textContent = "Show";
+  button.setAttribute("aria-label", "Show password");
+  wrapper.appendChild(button);
+
+  return button;
+}
+
+function injectPasswordToggleStyles() {
+  if (document.getElementById("modalPasswordToggleStyles")) return;
+
+  const style = document.createElement("style");
+  style.id = "modalPasswordToggleStyles";
+  style.textContent = `
+    .modal-password-wrap {
+      position: relative;
+    }
+
+    .modal-password-wrap #password {
+      padding-right: 84px;
+    }
+
+    .modal-password-toggle {
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 999px;
+      padding: 6px 12px;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.88);
+      font: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+    }
+
+    .modal-password-toggle:hover {
+      background: rgba(0,240,255,0.14);
+      border-color: rgba(0,240,255,0.28);
+      color: #ffffff;
+    }
+  `;
+
+  document.head.appendChild(style);
+}
+
+function resetPasswordToggle() {
+  if (!passwordInput) return;
+  passwordInput.type = "password";
+  if (passwordToggleButton) {
+    passwordToggleButton.textContent = "Show";
+    passwordToggleButton.setAttribute("aria-label", "Show password");
+  }
 }
 
 function validateLoginIdentifier(value) {
