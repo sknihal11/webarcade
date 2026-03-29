@@ -5,26 +5,51 @@ import {
 import { admin, auth, firestore } from "./firebase-admin.js";
 import {
   buildCampaignResultMessage,
+  isValidEmailAddress,
+  normalizeEmail,
   readableErrorMessage,
   sanitizeErrorForLogs,
   sleep
 } from "./helpers.js";
 import { buildAnnouncementEmail, sendEmail } from "./mail.js";
 
+async function listSuppressedEmails() {
+  const suppressedEmails = new Set();
+
+  try {
+    const snapshot = await firestore.collection("mail_suppressions").get();
+    snapshot.forEach(docSnap => {
+      const data = docSnap.data() || {};
+      if (data.active === false) return;
+
+      const normalizedDocId = normalizeEmail(docSnap.id);
+      const normalizedFieldEmail = normalizeEmail(data.email);
+      const suppressedEmail = normalizedFieldEmail || normalizedDocId;
+
+      if (suppressedEmail) {
+        suppressedEmails.add(suppressedEmail);
+      }
+    });
+  } catch (error) {
+    console.warn("mail_suppressions lookup failed", sanitizeErrorForLogs(error));
+  }
+
+  return suppressedEmails;
+}
+
 async function listMailRecipients({ includeUnverified }) {
-  const recipients = [];
+  const rawRecipients = [];
   let pageToken;
 
   do {
     const page = await auth.listUsers(1000, pageToken);
 
     page.users.forEach(userRecord => {
-      const email = String(userRecord.email || "").trim().toLowerCase();
-      if (!email || userRecord.disabled) return;
+      if (userRecord.disabled) return;
       if (!includeUnverified && !userRecord.emailVerified) return;
 
-      recipients.push({
-        email,
+      rawRecipients.push({
+        email: String(userRecord.email || ""),
         emailVerified: Boolean(userRecord.emailVerified),
         uid: userRecord.uid
       });
@@ -33,12 +58,59 @@ async function listMailRecipients({ includeUnverified }) {
     pageToken = page.pageToken;
   } while (pageToken);
 
-  return recipients;
+  const suppressedEmails = await listSuppressedEmails();
+  const seenEmails = new Set();
+  const recipients = [];
+
+  let duplicatesRemovedCount = 0;
+  let skippedInvalidEmailsCount = 0;
+  let skippedSuppressedEmailsCount = 0;
+
+  rawRecipients.forEach(recipient => {
+    const email = normalizeEmail(recipient.email);
+
+    if (!isValidEmailAddress(email)) {
+      skippedInvalidEmailsCount += 1;
+      return;
+    }
+
+    if (suppressedEmails.has(email)) {
+      skippedSuppressedEmailsCount += 1;
+      return;
+    }
+
+    if (seenEmails.has(email)) {
+      duplicatesRemovedCount += 1;
+      return;
+    }
+
+    seenEmails.add(email);
+    recipients.push({
+      ...recipient,
+      email
+    });
+  });
+
+  const audienceStats = {
+    duplicatesRemovedCount,
+    rawAudienceCount: rawRecipients.length,
+    skippedInvalidEmailsCount,
+    skippedSuppressedEmailsCount,
+    uniqueRecipientsCount: recipients.length
+  };
+
+  console.info("Bulk email audience prepared", audienceStats);
+
+  return {
+    recipients,
+    stats: audienceStats
+  };
 }
 
 async function createCampaignLog({
   adminUser,
   audience,
+  audienceStats,
   dryRun,
   htmlMessage,
   includeUnverified,
@@ -70,10 +142,20 @@ async function createCampaignLog({
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   });
 
+  if (audienceStats) {
+    await campaignRef.set({
+      duplicatesRemovedCount: Number(audienceStats.duplicatesRemovedCount) || 0,
+      rawAudienceCount: Number(audienceStats.rawAudienceCount) || 0,
+      skippedInvalidEmailsCount: Number(audienceStats.skippedInvalidEmailsCount) || 0,
+      skippedSuppressedEmailsCount: Number(audienceStats.skippedSuppressedEmailsCount) || 0,
+      uniqueRecipientsCount: Number(audienceStats.uniqueRecipientsCount) || 0
+    }, { merge: true });
+  }
+
   return campaignRef;
 }
 
-async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, textMessage }) {
+async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, textMessage, audienceStats = null }) {
   let sentCount = 0;
   let failedCount = 0;
   let processedCount = 0;
@@ -85,6 +167,16 @@ async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, 
     totalRecipients: recipients.length,
     updatedAt: admin.firestore.FieldValue.serverTimestamp()
   }, { merge: true });
+
+  if (audienceStats) {
+    await campaignRef.set({
+      duplicatesRemovedCount: Number(audienceStats.duplicatesRemovedCount) || 0,
+      rawAudienceCount: Number(audienceStats.rawAudienceCount) || 0,
+      skippedInvalidEmailsCount: Number(audienceStats.skippedInvalidEmailsCount) || 0,
+      skippedSuppressedEmailsCount: Number(audienceStats.skippedSuppressedEmailsCount) || 0,
+      uniqueRecipientsCount: Number(audienceStats.uniqueRecipientsCount) || recipients.length
+    }, { merge: true });
+  }
 
   for (let index = 0; index < recipients.length; index += BULK_EMAIL_BATCH_SIZE) {
     const batch = recipients.slice(index, index + BULK_EMAIL_BATCH_SIZE);
@@ -153,12 +245,23 @@ async function runBulkCampaign({ campaignRef, recipients, htmlMessage, subject, 
 
   console.info("Bulk email campaign completed", {
     campaignId: campaignRef.id,
+    duplicatesRemovedCount: Number(audienceStats?.duplicatesRemovedCount) || 0,
     failedCount,
+    rawAudienceCount: Number(audienceStats?.rawAudienceCount) || recipients.length,
     sentCount,
+    skippedInvalidEmailsCount: Number(audienceStats?.skippedInvalidEmailsCount) || 0,
+    skippedSuppressedEmailsCount: Number(audienceStats?.skippedSuppressedEmailsCount) || 0,
     totalRecipients: recipients.length
   });
 
   return {
+    audienceStats: audienceStats || {
+      duplicatesRemovedCount: 0,
+      rawAudienceCount: recipients.length,
+      skippedInvalidEmailsCount: 0,
+      skippedSuppressedEmailsCount: 0,
+      uniqueRecipientsCount: recipients.length
+    },
     failedCount,
     sentCount,
     totalRecipients: recipients.length,

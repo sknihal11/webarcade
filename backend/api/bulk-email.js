@@ -41,13 +41,14 @@ export default async function handler(req, res) {
       throw new ApiError(400, "invalid-argument", "Plain-text message is required.");
     }
 
-    const recipients = await listMailRecipients({
+    const { recipients, stats } = await listMailRecipients({
       includeUnverified: payload.includeUnverified
     });
 
     const campaignRef = await createCampaignLog({
       adminUser,
       audience: payload.includeUnverified ? "all-users" : "verified-users",
+      audienceStats: stats,
       dryRun: payload.dryRun,
       htmlMessage: payload.htmlMessage,
       includeUnverified: payload.includeUnverified,
@@ -55,22 +56,29 @@ export default async function handler(req, res) {
       subject: payload.subject,
       testEmail: null,
       textMessage: payload.textMessage,
-      totalRecipients: recipients.length
+      totalRecipients: stats.uniqueRecipientsCount
     });
 
     if (payload.dryRun) {
       await campaignRef.set({
+        duplicatesRemovedCount: stats.duplicatesRemovedCount,
+        rawAudienceCount: stats.rawAudienceCount,
         sampleRecipients: recipients.slice(0, 10).map(user => user.email),
+        skippedInvalidEmailsCount: stats.skippedInvalidEmailsCount,
+        skippedSuppressedEmailsCount: stats.skippedSuppressedEmailsCount,
         status: "dry-run-complete",
+        totalRecipients: stats.uniqueRecipientsCount,
+        uniqueRecipientsCount: stats.uniqueRecipientsCount,
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true });
 
       sendJson(res, 200, {
         ok: true,
         campaignId: campaignRef.id,
-        totalRecipients: recipients.length,
-        message: recipients.length
-          ? `Dry run complete. ${recipients.length} recipient(s) match the current audience.`
+        audienceStats: stats,
+        totalRecipients: stats.uniqueRecipientsCount,
+        message: stats.uniqueRecipientsCount
+          ? `Dry run complete. ${stats.uniqueRecipientsCount} unique recipient(s) match the current audience.`
           : "Dry run complete. No recipients matched the current audience."
       });
       return;
@@ -78,6 +86,7 @@ export default async function handler(req, res) {
 
     try {
       const result = await runBulkCampaign({
+        audienceStats: stats,
         campaignRef,
         htmlMessage: payload.htmlMessage,
         recipients,

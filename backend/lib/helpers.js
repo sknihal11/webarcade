@@ -36,6 +36,23 @@ function isValidGmail(email) {
   return /^[A-Za-z0-9._%+-]+@gmail\.com$/.test(normalizeEmail(email));
 }
 
+function isValidEmailAddress(email) {
+  const normalized = normalizeEmail(email);
+  if (!normalized || /\s/.test(normalized)) return false;
+
+  const parts = normalized.split("@");
+  if (parts.length !== 2) return false;
+
+  const [localPart, domain] = parts;
+  if (!localPart || !domain) return false;
+  if (localPart.length > 64 || normalized.length > 254) return false;
+  if (localPart.startsWith(".") || localPart.endsWith(".") || localPart.includes("..")) {
+    return false;
+  }
+
+  return /^[a-z0-9._%+-]+$/i.test(localPart) && /^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(domain);
+}
+
 function extractBearerToken(headerValue) {
   const value = String(headerValue || "");
   if (!value.startsWith("Bearer ")) return "";
@@ -105,6 +122,7 @@ export {
   escapeHtml,
   extractBearerToken,
   hashValue,
+  isValidEmailAddress,
   isValidGmail,
   normalizeEmail,
   normalizeMailPayload,
