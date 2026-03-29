@@ -1,0 +1,18 @@
+{
+  "name": "webarcade-backend",
+  "private": true,
+  "main": "api/healthz.js",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vercel dev",
+    "check": "node --check api/healthz.js && node --check api/reset-password.js && node --check api/send-test-email.js && node --check api/bulk-email.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "firebase-admin": "^13.0.0",
+    "resend": "^6.2.0"
+  }
+}

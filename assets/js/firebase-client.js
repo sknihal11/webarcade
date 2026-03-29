@@ -10,7 +10,6 @@ import {
   onAuthStateChanged,
   reauthenticateWithCredential,
   sendEmailVerification,
-  sendPasswordResetEmail,
   setPersistence,
   signInWithEmailAndPassword,
   signOut,
@@ -43,7 +42,7 @@ import {
   ref as databaseRef
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-database.js";
 
-export const ADMIN_EMAIL = "nihalsk2022@gmail.com";
+export const ADMIN_EMAILS = ["support@webarcade.in", "nihalsk2022@gmail.com"];
 export const DEFAULT_AVATAR_URL = "https://i.imgur.com/8Km9tLL.png";
 export const AUTH_EMAIL_POLICY = {
   gmailOnly: true,
@@ -67,6 +66,7 @@ export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const rtdb = getDatabase(app);
+export const API_BASE_URL = resolveApiBaseUrl();
 
 let persistencePromise;
 let persistenceMode = "local";
@@ -99,7 +99,22 @@ export function setAuthPersistence(mode = "local") {
 }
 
 export function isAdminEmail(email) {
-  return Boolean(email) && email.toLowerCase() === ADMIN_EMAIL;
+  return Boolean(email) && ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
+function resolveApiBaseUrl() {
+  if (typeof window !== "undefined" && window.WEBARCADE_API_BASE_URL) {
+    return String(window.WEBARCADE_API_BASE_URL).replace(/\/+$/, "");
+  }
+
+  if (typeof window !== "undefined") {
+    const { hostname } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return "http://localhost:3000";
+    }
+  }
+
+  return "https://api.webarcade.in";
 }
 
 function createVerificationDeadline() {
@@ -776,6 +791,113 @@ export async function unregisterSession(userId, deviceId) {
   }
 }
 
+export async function requestCustomPasswordReset(email) {
+  const response = await callBackendJson("/reset-password", {
+    authRequired: false,
+    body: {
+      email: normalizeEmail(email)
+    }
+  });
+  return response;
+}
+
+export async function sendTestEmailCampaign(payload) {
+  const response = await callBackendJson("/send-test-email", {
+    authRequired: true,
+    body: {
+      htmlMessage: String(payload?.htmlMessage || ""),
+      subject: String(payload?.subject || ""),
+      testEmail: normalizeEmail(payload?.testEmail || ""),
+      textMessage: String(payload?.textMessage || "")
+    }
+  });
+  return response;
+}
+
+export async function triggerBulkEmailCampaign(payload) {
+  const response = await callBackendJson("/bulk-email", {
+    authRequired: true,
+    body: {
+      dryRun: Boolean(payload?.dryRun),
+      htmlMessage: String(payload?.htmlMessage || ""),
+      includeUnverified: Boolean(payload?.includeUnverified),
+      subject: String(payload?.subject || ""),
+      textMessage: String(payload?.textMessage || "")
+    }
+  });
+  return response;
+}
+
+async function callBackendJson(path, options = {}) {
+  const requestUrl = `${API_BASE_URL}${path}`;
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.headers || {})
+  };
+
+  if (options.authRequired) {
+    const currentUser = auth.currentUser ? await safelyReloadUser(auth.currentUser) : null;
+    if (!currentUser) {
+      throw createBackendApiError({
+        code: "unauthenticated",
+        message: "You must be signed in.",
+        status: 401
+      });
+    }
+
+    const idToken = await getIdToken(currentUser, true);
+    headers.Authorization = `Bearer ${idToken}`;
+  }
+
+  const response = await fetch(requestUrl, {
+    body: JSON.stringify(options.body || {}),
+    headers,
+    method: options.method || "POST"
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch {
+    payload = null;
+  }
+
+  if (!response.ok || payload?.ok === false) {
+    throw createBackendApiError({
+      code: payload?.code || "internal",
+      message: payload?.message || "The request could not be completed right now.",
+      status: response.status || 500
+    });
+  }
+
+  return payload;
+}
+
+function createBackendApiError(details) {
+  const error = new Error(details.message || "Backend request failed.");
+  error.code = details.code || "internal";
+  error.status = details.status || 500;
+  return error;
+}
+
+export function watchMailCampaign(campaignId, onUpdate, onError) {
+  if (!campaignId) {
+    return () => {};
+  }
+
+  return onSnapshot(doc(db, "mail_campaigns", campaignId), snapshot => {
+    if (!snapshot.exists()) {
+      onUpdate(null);
+      return;
+    }
+
+    onUpdate({
+      id: snapshot.id,
+      ...snapshot.data()
+    });
+  }, onError);
+}
+
 export {
   EmailAuthProvider,
   addDoc,
@@ -796,7 +918,6 @@ export {
   reauthenticateWithCredential,
   serverTimestamp,
   sendEmailVerification,
-  sendPasswordResetEmail,
   setDoc,
   signInWithEmailAndPassword,
   signOut,

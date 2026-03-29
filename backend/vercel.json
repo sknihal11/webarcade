@@ -1,0 +1,25 @@
+{
+  "functions": {
+    "api/*.js": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/healthz",
+      "destination": "/api/healthz"
+    },
+    {
+      "source": "/reset-password",
+      "destination": "/api/reset-password"
+    },
+    {
+      "source": "/send-test-email",
+      "destination": "/api/send-test-email"
+    },
+    {
+      "source": "/bulk-email",
+      "destination": "/api/bulk-email"
+    }
+  ]
+}

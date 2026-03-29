@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#050814">
+  <title>Email Console | WebArcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #050814;
+      --bg-secondary: #09101f;
+      --bg-card: rgba(9, 16, 31, 0.82);
+      --bg-muted: rgba(255, 255, 255, 0.04);
+      --text-primary: #f5f8ff;
+      --text-secondary: #aab8d2;
+      --text-muted: #72819f;
+      --accent: #00f0ff;
+      --accent-strong: #56f7c9;
+      --accent-soft: rgba(0, 240, 255, 0.14);
+      --border: rgba(0, 240, 255, 0.18);
+      --border-strong: rgba(0, 240, 255, 0.3);
+      --danger: #ff5f87;
+      --warning: #f7c65c;
+      --success: #56f7c9;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(0, 240, 255, 0.12), transparent 30%),
+        radial-gradient(circle at top right, rgba(86, 247, 201, 0.12), transparent 28%),
+        linear-gradient(180deg, #040710 0%, #071224 100%);
+      color: var(--text-primary);
+      font-family: "Inter", sans-serif;
+      padding: 24px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .shell {
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+
+    .auth-gate {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(4, 7, 16, 0.94);
+      color: var(--text-primary);
+      z-index: 1000;
+      font-family: "Orbitron", sans-serif;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      margin-bottom: 24px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(0, 240, 255, 0.08);
+      color: var(--accent);
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    h1 {
+      margin: 16px 0 10px;
+      font-family: "Orbitron", sans-serif;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.08;
+    }
+
+    .intro {
+      max-width: 720px;
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.7;
+      margin: 0;
+    }
+
+    .topbar-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .topbar-links a,
+    .ghost-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 44px;
+      padding: 0 16px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(22px);
+    }
+
+    .panel-header {
+      padding: 24px 24px 0;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 1.35rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .panel-copy {
+      margin: 10px 0 0;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    .panel-body {
+      padding: 24px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field-group label {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .field-help {
+      color: var(--text-muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    .field-input,
+    .field-textarea {
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-primary);
+      padding: 14px 16px;
+      outline: none;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    }
+
+    .field-input:focus,
+    .field-textarea:focus {
+      border-color: var(--border-strong);
+      box-shadow: 0 0 0 4px rgba(0, 240, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .field-textarea {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .checkbox-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      padding: 14px 16px;
+      border-radius: 16px;
+      background: var(--bg-muted);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .checkbox-row input {
+      margin-top: 3px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      border: none;
+      border-radius: 16px;
+      min-height: 48px;
+      padding: 0 18px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.18s ease, opacity 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .primary-btn {
+      color: #04111c;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      box-shadow: 0 14px 28px rgba(0, 240, 255, 0.18);
+    }
+
+    .secondary-btn {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+    }
+
+    .danger-btn {
+      color: #fff;
+      background: rgba(255, 95, 135, 0.15);
+      border: 1px solid rgba(255, 95, 135, 0.35);
+    }
+
+    .primary-btn:hover,
+    .secondary-btn:hover,
+    .danger-btn:hover,
+    .ghost-btn:hover,
+    .topbar-links a:hover {
+      transform: translateY(-1px);
+      opacity: 0.95;
+    }
+
+    .primary-btn:disabled,
+    .secondary-btn:disabled,
+    .danger-btn:disabled,
+    .ghost-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status-banner {
+      display: none;
+      margin-top: 4px;
+      padding: 14px 16px;
+      border-radius: 16px;
+      line-height: 1.6;
+      border: 1px solid transparent;
+    }
+
+    .status-banner.show {
+      display: block;
+    }
+
+    .status-banner.info {
+      background: rgba(0, 240, 255, 0.08);
+      border-color: rgba(0, 240, 255, 0.2);
+      color: #b8f7ff;
+    }
+
+    .status-banner.success {
+      background: rgba(86, 247, 201, 0.1);
+      border-color: rgba(86, 247, 201, 0.22);
+      color: #cbfff0;
+    }
+
+    .status-banner.error {
+      background: rgba(255, 95, 135, 0.1);
+      border-color: rgba(255, 95, 135, 0.22);
+      color: #ffd5e1;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .stat-card {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--bg-muted);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .stat-label {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .stat-value {
+      margin-top: 8px;
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-bottom: 18px;
+    }
+
+    .status-chip::before {
+      content: "";
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+    }
+
+    .preview-wrap,
+    .log-card,
+    .tips-card {
+      margin-top: 18px;
+      padding: 18px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .preview-tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .preview-tab {
+      min-height: 38px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .preview-tab.active {
+      color: #04111c;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-strong) 100%);
+      border-color: transparent;
+    }
+
+    .preview-pane {
+      display: none;
+      min-height: 180px;
+      border-radius: 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: #081120;
+      padding: 18px;
+      overflow: auto;
+    }
+
+    .preview-pane.active {
+      display: block;
+    }
+
+    .preview-pane.text {
+      white-space: pre-wrap;
+      color: var(--text-secondary);
+      font-family: "Space Grotesk", sans-serif;
+      line-height: 1.7;
+    }
+
+    .list {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text-secondary);
+      line-height: 1.75;
+    }
+
+    .list li + li {
+      margin-top: 8px;
+    }
+
+    .failure-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .failure-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 95, 135, 0.08);
+      border: 1px solid rgba(255, 95, 135, 0.15);
+      color: #ffd5e1;
+      font-size: 0.92rem;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .muted {
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 1024px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 720px) {
+      body {
+        padding: 16px;
+      }
+
+      .topbar,
+      .field-row {
+        grid-template-columns: 1fr;
+        display: grid;
+      }
+
+      .topbar-links {
+        justify-content: flex-start;
+      }
+
+      .panel-header,
+      .panel-body {
+        padding: 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-gate" id="authGate">Verifying admin access...</div>
+
+  <main class="shell">
+    <header class="topbar">
+      <div>
+        <span class="eyebrow">Admin Email Console</span>
+        <h1>Send branded WebArcade emails safely.</h1>
+        <p class="intro">
+          Use this panel to preview a message, send a single test email, run a recipient dry run, and then broadcast in
+          controlled batches through the secure WebArcade email backend.
+        </p>
+      </div>
+
+      <div class="topbar-links">
+        <a href="admin.html">Back to Admin</a>
+        <a href="blog.html">Dashboard</a>
+        <button class="ghost-btn" id="logoutButton" type="button">Logout</button>
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Campaign editor</h2>
+          <p class="panel-copy">
+            Write both HTML and plain text so the message looks good in inbox apps and still delivers cleanly when HTML
+            is stripped.
+          </p>
+        </div>
+
+        <div class="panel-body">
+          <form class="form-grid" id="campaignForm" novalidate>
+            <div class="field-group">
+              <label for="subjectInput">Subject</label>
+              <input class="field-input" id="subjectInput" type="text" maxlength="140"
+                placeholder="New games, tournaments, and arcade updates">
+              <div class="field-help">Keep it clean, direct, and under 140 characters.</div>
+            </div>
+
+            <div class="field-row">
+              <div class="field-group">
+                <label for="testEmailInput">Test email</label>
+                <input class="field-input" id="testEmailInput" type="email" placeholder="name@gmail.com"
+                  autocomplete="email" inputmode="email" spellcheck="false">
+                <div class="field-help">Used for the single-recipient test send.</div>
+              </div>
+
+              <div class="field-group">
+                <label for="replyInfoInput">Reply-to</label>
+                <input class="field-input" id="replyInfoInput" type="text" value="support@webarcade.in" readonly>
+                <div class="field-help">Outgoing mail is sent from your verified WebArcade sending domain.</div>
+              </div>
+            </div>
+
+            <div class="field-group">
+              <label for="htmlInput">HTML message</label>
+              <textarea class="field-textarea" id="htmlInput"
+                placeholder="<p>Hey players,</p><p>WebArcade just dropped a fresh update...</p>"></textarea>
+              <div class="field-help">This content is inserted into the branded email shell. Keep external embeds minimal.</div>
+            </div>
+
+            <div class="field-group">
+              <label for="textInput">Plain-text message</label>
+              <textarea class="field-textarea" id="textInput"
+                placeholder="Hey players,\n\nWebArcade just dropped a fresh update..."></textarea>
+              <div class="field-help">Plain text improves deliverability and gives you a clean fallback for every inbox.</div>
+            </div>
+
+            <label class="checkbox-row" for="includeUnverifiedInput">
+              <input id="includeUnverifiedInput" type="checkbox">
+              <span>Include unverified accounts in the audience. Leave this off for most production sends.</span>
+            </label>
+
+            <div class="status-banner" id="formStatus" aria-live="polite"></div>
+
+            <div class="button-row">
+              <button class="secondary-btn" id="previewButton" type="button">Refresh preview</button>
+              <button class="secondary-btn" id="dryRunButton" type="button">Dry run audience</button>
+              <button class="secondary-btn" id="testButton" type="button">Send test email</button>
+              <button class="primary-btn" id="sendAllButton" type="submit">Send to all</button>
+            </div>
+          </form>
+
+          <div class="preview-wrap" id="previewWrap">
+            <div class="preview-tabs">
+              <button class="preview-tab active" data-preview-target="htmlPreview" type="button">HTML preview</button>
+              <button class="preview-tab" data-preview-target="textPreview" type="button">Plain text</button>
+            </div>
+
+            <div class="preview-pane active" id="htmlPreview"></div>
+            <div class="preview-pane text" id="textPreview"></div>
+          </div>
+        </div>
+      </article>
+
+      <aside class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">Campaign status</h2>
+          <p class="panel-copy">
+            Track the current send, watch batch progress, and review any failed addresses that need a follow-up.
+          </p>
+        </div>
+
+        <div class="panel-body">
+          <div class="status-chip" id="campaignState">Waiting for your first campaign</div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Audience</div>
+              <div class="stat-value" id="audienceValue">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Sent</div>
+              <div class="stat-value" id="sentValue">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Processed</div>
+              <div class="stat-value" id="processedValue">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Failed</div>
+              <div class="stat-value" id="failedValue">0</div>
+            </div>
+          </div>
+
+          <div class="log-card">
+            <strong>Latest result</strong>
+            <p class="panel-copy" id="campaignSummary">Use a dry run first to confirm the audience before broadcasting.</p>
+            <p class="muted" id="campaignMeta">No campaign in progress yet.</p>
+          </div>
+
+          <div class="log-card">
+            <strong>Recent failures</strong>
+            <div class="failure-list" id="failureList">
+              <div class="muted">No delivery failures logged yet.</div>
+            </div>
+          </div>
+
+          <div class="tips-card">
+            <strong>Recommended flow</strong>
+            <ul class="list">
+              <li>Refresh the preview and check both HTML and plain text.</li>
+              <li>Send one test email to your own Gmail inbox first.</li>
+              <li>Run a dry run to confirm audience size before the real send.</li>
+              <li>Broadcast only when the preview, test, and audience count all look right.</li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      auth,
+      ensureBrowserPersistence,
+      isAdminEmail,
+      onAuthStateChanged,
+      safelyReloadUser,
+      sendTestEmailCampaign,
+      signOut,
+      syncUserProfileAuthState,
+      triggerBulkEmailCampaign,
+      validateEmail,
+      watchMailCampaign
+    } from "./assets/js/firebase-client.js";
+
+    await ensureBrowserPersistence();
+
+    const authGate = document.getElementById("authGate");
+    const logoutButton = document.getElementById("logoutButton");
+    const campaignForm = document.getElementById("campaignForm");
+    const subjectInput = document.getElementById("subjectInput");
+    const testEmailInput = document.getElementById("testEmailInput");
+    const htmlInput = document.getElementById("htmlInput");
+    const textInput = document.getElementById("textInput");
+    const includeUnverifiedInput = document.getElementById("includeUnverifiedInput");
+    const formStatus = document.getElementById("formStatus");
+    const previewButton = document.getElementById("previewButton");
+    const dryRunButton = document.getElementById("dryRunButton");
+    const testButton = document.getElementById("testButton");
+    const sendAllButton = document.getElementById("sendAllButton");
+    const htmlPreview = document.getElementById("htmlPreview");
+    const textPreview = document.getElementById("textPreview");
+    const campaignState = document.getElementById("campaignState");
+    const audienceValue = document.getElementById("audienceValue");
+    const sentValue = document.getElementById("sentValue");
+    const processedValue = document.getElementById("processedValue");
+    const failedValue = document.getElementById("failedValue");
+    const campaignSummary = document.getElementById("campaignSummary");
+    const campaignMeta = document.getElementById("campaignMeta");
+    const failureList = document.getElementById("failureList");
+
+    let activeCampaignUnsubscribe = null;
+    let submitting = false;
+
+    renderPreview();
+
+    onAuthStateChanged(auth, async rawUser => {
+      const trustedUser = rawUser ? await safelyReloadUser(rawUser) : null;
+
+      if (trustedUser) {
+        await syncUserProfileAuthState(trustedUser).catch(() => {});
+      }
+
+      if (trustedUser && trustedUser.emailVerified && isAdminEmail(trustedUser.email)) {
+        authGate.style.display = "none";
+        return;
+      }
+
+      if (trustedUser && !trustedUser.emailVerified) {
+        window.location.replace("verify-email.html?next=admin_email.html");
+        return;
+      }
+
+      window.location.replace("login.html?next=admin_email.html");
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.replace("login.html?next=admin_email.html");
+    });
+
+    previewButton.addEventListener("click", () => {
+      renderPreview();
+      showStatus("info", "Preview updated.");
+    });
+
+    document.querySelectorAll("[data-preview-target]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-preview-target]").forEach(tab => tab.classList.remove("active"));
+        document.querySelectorAll(".preview-pane").forEach(pane => pane.classList.remove("active"));
+        button.classList.add("active");
+        document.getElementById(button.dataset.previewTarget).classList.add("active");
+      });
+    });
+
+    htmlInput.addEventListener("input", renderPreview);
+    textInput.addEventListener("input", renderPreview);
+    subjectInput.addEventListener("input", renderPreview);
+
+    dryRunButton.addEventListener("click", () => {
+      submitCampaign({ dryRun: true });
+    });
+
+    testButton.addEventListener("click", () => {
+      submitCampaign({ testSend: true });
+    });
+
+    campaignForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      submitCampaign({ dryRun: false, testSend: false });
+    });
+
+    async function submitCampaign({ dryRun = false, testSend = false }) {
+      if (submitting) return;
+
+      clearStatus();
+      renderPreview();
+
+      const subject = subjectInput.value.trim();
+      const htmlMessage = htmlInput.value.trim();
+      const textMessage = textInput.value.trim();
+      const includeUnverified = includeUnverifiedInput.checked;
+      const testEmail = testEmailInput.value.trim().toLowerCase();
+
+      if (!subject) {
+        showStatus("error", "Enter a subject before continuing.");
+        subjectInput.focus();
+        return;
+      }
+
+      if (!htmlMessage) {
+        showStatus("error", "Add the HTML message before continuing.");
+        htmlInput.focus();
+        return;
+      }
+
+      if (!textMessage) {
+        showStatus("error", "Add the plain-text message before continuing.");
+        textInput.focus();
+        return;
+      }
+
+      if (testSend) {
+        const emailError = validateEmail(testEmail);
+        if (emailError) {
+          showStatus("error", "Enter a valid Gmail address for the test send.");
+          testEmailInput.focus();
+          return;
+        }
+      }
+
+      if (!dryRun && !testSend) {
+        const confirmSend = window.confirm("Send this campaign to the current audience now?");
+        if (!confirmSend) return;
+      }
+
+      const payload = {
+        dryRun,
+        htmlMessage,
+        includeUnverified,
+        subject,
+        textMessage
+      };
+
+      submitting = true;
+      setActionButtons(true, dryRun ? "Running dry run..." : testSend ? "Sending test..." : "Sending campaign...");
+
+      try {
+        const result = testSend
+          ? await sendTestEmailCampaign({
+            htmlMessage,
+            subject,
+            testEmail,
+            textMessage
+          })
+          : await triggerBulkEmailCampaign(payload);
+        showStatus("success", result.message || "Request accepted.");
+        if (result.campaignId) {
+          startCampaignWatch(result.campaignId);
+        } else {
+          applyCampaignSnapshot(null);
+        }
+      } catch (error) {
+        showStatus("error", mapActionError(error));
+      } finally {
+        submitting = false;
+        setActionButtons(false);
+      }
+    }
+
+    function startCampaignWatch(campaignId) {
+      if (activeCampaignUnsubscribe) {
+        activeCampaignUnsubscribe();
+      }
+
+      activeCampaignUnsubscribe = watchMailCampaign(
+        campaignId,
+        snapshot => applyCampaignSnapshot(snapshot),
+        () => showStatus("error", "Live campaign updates could not be loaded.")
+      );
+    }
+
+    function applyCampaignSnapshot(snapshot) {
+      if (!snapshot) {
+        campaignState.textContent = "Campaign record not found";
+        audienceValue.textContent = "0";
+        sentValue.textContent = "0";
+        processedValue.textContent = "0";
+        failedValue.textContent = "0";
+        campaignSummary.textContent = "No campaign data is available yet.";
+        campaignMeta.textContent = "Try a dry run or test email to start logging activity.";
+        failureList.innerHTML = '<div class="muted">No delivery failures logged yet.</div>';
+        return;
+      }
+
+      campaignState.textContent = formatStatusLabel(snapshot.status, snapshot.mode);
+      audienceValue.textContent = String(snapshot.totalRecipients || 0);
+      sentValue.textContent = String(snapshot.sentCount || 0);
+      processedValue.textContent = String(snapshot.processedCount || 0);
+      failedValue.textContent = String(snapshot.failedCount || 0);
+      campaignSummary.textContent = buildSummary(snapshot);
+      campaignMeta.textContent = buildMeta(snapshot);
+
+      const failures = Array.isArray(snapshot.failures) ? snapshot.failures : [];
+      if (!failures.length) {
+        failureList.innerHTML = '<div class="muted">No delivery failures logged yet.</div>';
+        return;
+      }
+
+      failureList.innerHTML = failures
+        .map(item => `<div class="failure-item"><strong>${escapeHtml(item.email || "Unknown email")}</strong><br>${escapeHtml(item.error || "Unknown error")}</div>`)
+        .join("");
+    }
+
+    function buildSummary(snapshot) {
+      if (snapshot.status === "dry-run-complete") {
+        return snapshot.totalRecipients
+          ? `Dry run complete. ${snapshot.totalRecipients} recipient(s) match the current audience.`
+          : "Dry run complete. No recipients matched the current audience.";
+      }
+
+      if (snapshot.mode === "test") {
+        return snapshot.failedCount
+          ? "Test email attempted, but at least one delivery error was reported."
+          : "Test email sent successfully.";
+      }
+
+      if (snapshot.status === "completed") {
+        return `Campaign completed successfully for ${snapshot.sentCount || 0} recipient(s).`;
+      }
+
+      if (snapshot.status === "completed-with-errors") {
+        return `Campaign finished with ${snapshot.sentCount || 0} sent and ${snapshot.failedCount || 0} failed recipient(s).`;
+      }
+
+      if (snapshot.status === "failed") {
+        return snapshot.errorMessage || "The campaign failed before completion.";
+      }
+
+      if (snapshot.status === "sending") {
+        return "Campaign is currently sending in controlled batches.";
+      }
+
+      return "Campaign accepted and being prepared.";
+    }
+
+    function buildMeta(snapshot) {
+      const parts = [];
+      if (snapshot.mode) parts.push(`Mode: ${snapshot.mode}`);
+      if (snapshot.audience) parts.push(`Audience: ${snapshot.audience}`);
+      if (snapshot.testEmail) parts.push(`Test email: ${snapshot.testEmail}`);
+      if (snapshot.updatedAt?.seconds) {
+        parts.push(`Updated: ${new Date(snapshot.updatedAt.seconds * 1000).toLocaleString()}`);
+      }
+      return parts.join(" | ") || "No campaign metadata yet.";
+    }
+
+    function formatStatusLabel(status, mode) {
+      if (status === "sending") return "Sending in batches";
+      if (status === "dry-run-complete") return "Dry run complete";
+      if (status === "completed") return "Campaign completed";
+      if (status === "completed-with-errors") return "Completed with errors";
+      if (status === "failed") return "Campaign failed";
+      if (status === "test-sent") return "Test email sent";
+      if (status === "test-failed") return "Test email failed";
+      if (mode === "test") return "Preparing test email";
+      return "Preparing campaign";
+    }
+
+    function renderPreview() {
+      const subject = subjectInput.value.trim() || "Your WebArcade subject will appear here";
+      const htmlMessage = htmlInput.value.trim() || "<p>Your HTML preview will appear here.</p>";
+      const textMessage = textInput.value.trim() || "Your plain-text preview will appear here.";
+
+      htmlPreview.innerHTML = `
+        <div style="font-family:Inter,Arial,sans-serif;color:#d7e3fb;">
+          <div style="font-size:12px;letter-spacing:0.18em;text-transform:uppercase;color:#00f0ff;font-weight:700;margin-bottom:12px;">WebArcade Announcement</div>
+          <h3 style="margin:0 0 16px;font-size:28px;line-height:1.2;font-family:Orbitron,Inter,Arial,sans-serif;color:#ffffff;">${escapeHtml(subject)}</h3>
+          <div style="line-height:1.8;">${htmlMessage}</div>
+          <div style="margin-top:18px;color:#7e8ba8;font-size:12px;line-height:1.7;">
+            Reply to: support@webarcade.in<br>
+            You are receiving this email because your address is registered with WebArcade.
+          </div>
+        </div>
+      `;
+
+      textPreview.textContent = `${subject}\n\n${textMessage}\n\nReply to: support@webarcade.in`;
+    }
+
+    function setActionButtons(loading, label = "") {
+      dryRunButton.disabled = loading;
+      testButton.disabled = loading;
+      sendAllButton.disabled = loading;
+      previewButton.disabled = loading;
+
+      dryRunButton.textContent = loading && label.includes("dry run") ? label : "Dry run audience";
+      testButton.textContent = loading && label.includes("test") ? label : "Send test email";
+      sendAllButton.textContent = loading && label.includes("campaign") ? label : "Send to all";
+    }
+
+    function showStatus(type, message) {
+      formStatus.textContent = message;
+      formStatus.className = `status-banner show ${type}`;
+    }
+
+    function clearStatus() {
+      formStatus.textContent = "";
+      formStatus.className = "status-banner";
+    }
+
+    function mapActionError(error) {
+      switch (error?.code) {
+        case "permission-denied":
+          return "This account is not allowed to use the admin email system.";
+        case "unauthenticated":
+          return "Please sign in again before sending email.";
+        case "invalid-argument":
+          return error.message || "Please review the subject, message, and test email fields.";
+        case "rate-limit":
+          return error.message || "Too many email actions were attempted too quickly. Please wait and try again.";
+        default:
+          return "The email request could not be completed right now. Please try again.";
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+
+</html>

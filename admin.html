@@ -68,6 +68,13 @@
             text-decoration: none;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
         .tabs {
             display: flex;
             gap: 1rem;
@@ -222,7 +229,10 @@
 
     <div class="header">
         <h1 style="text-shadow: 0 0 10px var(--accent-glow);">⚙️ WebArcade Admin Panel</h1>
-        <a href="blog.html">← Back to Dashboard</a>
+        <div class="header-actions">
+            <a href="admin_email.html">Email Console</a>
+            <a href="blog.html">← Back to Dashboard</a>
+        </div>
     </div>
 
     <div class="tabs">

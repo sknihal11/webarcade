@@ -126,8 +126,9 @@
       <div class="support-card" id="resetCard">
         <h3>Password recovery</h3>
         <p class="section-copy">
-          Enter your Gmail address and we will send a password reset link. For safety, the response stays generic even
-          if the address is not recognized.
+          Enter your Gmail address and WebArcade will send a branded reset email from
+          <code>support@webarcade.in</code>. For safety, the response stays generic even if the address is not
+          recognized.
         </p>
 
         <form class="reset-form" id="resetForm" novalidate>
@@ -142,7 +143,7 @@
 
           <div class="split-row">
             <button class="secondary-btn" id="resetCancel" type="button">Close</button>
-            <button class="primary-btn" id="resetButton" type="submit">Send reset link</button>
+            <button class="primary-btn" id="resetButton" type="submit">Send reset email</button>
           </div>
         </form>
       </div>
@@ -158,9 +159,9 @@
       getRateLimitState,
       onAuthStateChanged,
       recordRateLimitAttempt,
+      requestCustomPasswordReset,
       safelyReloadUser,
       sanitizeNextPath,
-      sendPasswordResetEmail,
       setAuthPersistence,
       signInWithEmailAndPassword,
       syncUserProfileAuthState,
@@ -300,6 +301,12 @@
       clearStatus(resetStatus);
       setFieldState(resetEmailShell, resetEmailNote, "default", "Use the Gmail address you normally use to sign in.");
 
+      const resetRateLimit = getRateLimitState("password-reset", { maxAttempts: 3, windowMs: 300_000 });
+      if (!resetRateLimit.allowed) {
+        showStatus(resetStatus, "error", `Please wait ${Math.ceil(resetRateLimit.retryAfterMs / 1000)} seconds before requesting another reset email.`);
+        return;
+      }
+
       const email = resetEmailInput.value.trim().toLowerCase();
       const emailError = validateEmail(email);
 
@@ -311,15 +318,16 @@
       setLoading(resetButton, true, "Sending...");
 
       try {
-        await sendPasswordResetEmail(auth, email);
+        await requestCustomPasswordReset(email);
       } catch {
         // Keep the user-facing message generic to avoid account enumeration.
       } finally {
-        setLoading(resetButton, false, "Send reset link");
+        recordRateLimitAttempt("password-reset", { windowMs: 300_000 });
+        setLoading(resetButton, false, "Send reset email");
       }
 
-      setFieldState(resetEmailShell, resetEmailNote, "success", "If this Gmail is registered, a reset link is on the way.");
-      showStatus(resetStatus, "success", "Check your inbox and spam folder for the reset link.");
+      setFieldState(resetEmailShell, resetEmailNote, "success", "If this Gmail is registered, a reset email is on the way.");
+      showStatus(resetStatus, "success", "Check your inbox and spam folder for an email from support@webarcade.in.");
     });
 
     document.querySelectorAll("[data-password-toggle]").forEach(toggle => {
