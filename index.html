@@ -40,7 +40,6 @@
           "name": "WebArcade",
           "url": "https://webarcade.in/",
           "sameAs": [
-            "https://github.com/sknihal11/webarcade",
             "https://www.instagram.com/sknihal11?igsh=MW9ybTA2dW4wNTl2cw=="
           ]
         }
@@ -965,6 +964,32 @@
       line-height: 1.4;
     }
 
+    .modal-utility-row {
+      display: flex;
+      justify-content: flex-end;
+      margin: 8px 0 12px;
+    }
+
+    .modal-utility-link {
+      border: none;
+      background: none;
+      padding: 0;
+      color: var(--neon);
+      font-family: 'Rajdhani', sans-serif;
+      font-size: clamp(11px, 2vw, 13px);
+      font-weight: 700;
+      letter-spacing: .04em;
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .modal-utility-link:hover,
+    .modal-utility-link:focus-visible {
+      color: var(--text);
+      text-shadow: 0 0 10px var(--glow-c);
+      outline: none;
+    }
+
     /* ── MAIN BUTTON ── */
     .main-btn {
       width: 100%;
@@ -1200,9 +1225,9 @@
       width: 40px;
       height: 40px;
       border-radius: 8px;
-      background: var(--bg-card);
-      border: 1px solid rgba(0, 240, 255, 0.2);
-      color: var(--text-secondary);
+      background: rgba(9, 16, 31, 0.92);
+      border: 1px solid rgba(0, 240, 255, 0.3);
+      color: var(--accent-tertiary);
       transition: all 0.3s ease;
     }
 
@@ -1372,12 +1397,15 @@
     }
 
     .seo-link-card {
+      display: block;
+      min-height: 100%;
       padding: 18px 20px;
       border-radius: 18px;
-      border: 1px solid rgba(0, 240, 255, 0.12);
-      background: rgba(9, 12, 26, 0.8);
+      border: 1px solid rgba(0, 240, 255, 0.2);
+      background: rgba(9, 12, 26, 0.94);
       color: var(--text-primary);
       text-decoration: none;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.2);
       transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
     }
 
@@ -1388,7 +1416,7 @@
     }
 
     .seo-link-card span {
-      color: var(--text-secondary);
+      color: #d7e3fb;
       font-size: 0.92rem;
       line-height: 1.6;
     }
@@ -1421,11 +1449,11 @@
   <header>
     <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
     <nav class="header-nav">
-      <a href="index.html" class="nav-link active">Home</a>
-      <a href="blog.html" class="nav-link">Games</a>
-      <a href="leaderboard.html" class="nav-link">Leaderboard</a>
-      <a href="about.html" class="nav-link">About Us</a>
-      <a href="downloads.html" class="nav-link">Downloads</a>
+      <a href="/" class="nav-link active">Home</a>
+      <a href="/games/" class="nav-link">Games</a>
+      <a href="/leaderboard/" class="nav-link">Leaderboard</a>
+      <a href="/about/" class="nav-link">About Us</a>
+      <a href="/downloads/" class="nav-link">Downloads</a>
     </nav>
     <div id="headerActions">
       <button id="loginBtn" onclick="openModal()">[ ENTER ]</button>
@@ -1464,29 +1492,27 @@
 
   <section class="seo-panel" aria-labelledby="platformOverview">
     <div class="seo-copy">
-      <p class="seo-kicker">Browser Arcade Platform</p>
-      <h2 id="platformOverview">Play online without downloads, then go deeper when you want the full arcade.</h2>
-      <p>WebArcade brings classic-style games into the browser so players can jump into quick sessions from desktop or
-        mobile without installing anything. Public pages let visitors explore the platform, rankings, downloads, and
-        community tools, while verified accounts unlock the protected game dashboard, score saving, and multiplayer
-        features.</p>
+      <p class="seo-kicker">Start Here</p>
+      <h2 id="platformOverview">Everything important is one click away.</h2>
+      <p>Jump into games, rankings, downloads, and requests without digging through extra explanation. WebArcade stays
+        browser-first, fast, and focused on play.</p>
     </div>
     <div class="seo-links">
-      <a class="seo-link-card" href="about.html">
+      <a class="seo-link-card" href="/about/">
         <strong>About WebArcade</strong>
-        <span>See how the platform blends browser gaming, cyberpunk presentation, and competitive community systems.</span>
+        <span>Brand, direction, and what WebArcade is building.</span>
       </a>
-      <a class="seo-link-card" href="leaderboard.html">
+      <a class="seo-link-card" href="/leaderboard/">
         <strong>Leaderboard</strong>
-        <span>Track public rankings across the global hall of fame and featured score categories.</span>
+        <span>Live rankings, featured runs, and public scoreboards.</span>
       </a>
-      <a class="seo-link-card" href="downloads.html">
+      <a class="seo-link-card" href="/downloads/">
         <strong>Downloads Hub</strong>
-        <span>Grab official asset packs, artwork, and extra downloadable files published by the WebArcade team.</span>
+        <span>Official files, extras, and downloadable content.</span>
       </a>
-      <a class="seo-link-card" href="request_game.html">
+      <a class="seo-link-card" href="/request_game/">
         <strong>Request a Game</strong>
-        <span>Suggest the next browser game, challenge format, or arcade idea you want added to the site.</span>
+        <span>Tell us what should be added next.</span>
       </a>
     </div>
   </section>
@@ -1522,8 +1548,13 @@
         <div class="info-text hidden" id="breachInfo">🔒 Passwords checked against known data breaches</div>
       </div>
 
+      <div class="modal-utility-row" id="forgotPasswordRow">
+        <button class="modal-utility-link" id="forgotPasswordLink" type="button">Forgot password?</button>
+      </div>
       <button class="main-btn" id="actionBtn">ENTER ARCADE</button>
       <div class="status" id="status" role="status" aria-live="polite"></div>
+      <div class="info-text hidden" id="signupLegalNote">By creating an account, you agree to the <a
+          href="/terms/">Terms</a> and <a href="/privacy/">Privacy Policy</a>.</div>
       <div class="switch" onclick="toggleMode()">
         <span id="switchText">New player? <a>Create account →</a></span>
       </div>
@@ -1539,11 +1570,11 @@
       </div>
       <div class="footer-links">
         <h3>Menu</h3>
-        <a href="index.html">Home</a>
-        <a href="blog.html">Games</a>
-        <a href="leaderboard.html">Leaderboard</a>
-        <a href="about.html">About Us</a>
-        <a href="downloads.html">Downloads</a>
+        <a href="/">Home</a>
+        <a href="/games/">Games</a>
+        <a href="/leaderboard/">Leaderboard</a>
+        <a href="/about/">About Us</a>
+        <a href="/downloads/">Downloads</a>
       </div>
       <div class="footer-social">
         <h3>Connect</h3>
@@ -1564,7 +1595,7 @@
   </footer>
 
   <!-- ── FIREBASE MODULE ── -->
-  <script type="module" src="./assets/js/public-auth-modal.js"></script>
+  <script type="module" src="/assets/js/public-auth-modal.js"></script>
 
   <!-- ── VANILLA SCRIPTS ── -->
   <script>

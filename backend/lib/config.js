@@ -29,7 +29,7 @@ function clampNumber(value, fallback, min, max) {
 const APP_NAME = String(process.env.APP_NAME || "WebArcade").trim() || "WebArcade";
 const APP_URL = trimTrailingSlash(process.env.APP_URL || "https://webarcade.in");
 const PASSWORD_RESET_CONTINUE_URL =
-  process.env.PASSWORD_RESET_CONTINUE_URL || `${APP_URL}/login.html?reset=1`;
+  process.env.PASSWORD_RESET_CONTINUE_URL || `${APP_URL}/login/?reset=1`;
 const FRONTEND_ORIGINS = parseCsv(
   process.env.FRONTEND_ORIGINS || `${APP_URL},https://sknihal11.github.io,http://localhost:3000`
 );

@@ -7,25 +7,25 @@
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://webarcade.in/about.html</loc>
+    <loc>https://webarcade.in/about/</loc>
     <lastmod>2026-03-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://webarcade.in/downloads.html</loc>
+    <loc>https://webarcade.in/downloads/</loc>
     <lastmod>2026-03-28</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://webarcade.in/leaderboard.html</loc>
+    <loc>https://webarcade.in/leaderboard/</loc>
     <lastmod>2026-03-28</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://webarcade.in/request_game.html</loc>
+    <loc>https://webarcade.in/request_game/</loc>
     <lastmod>2026-03-28</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

@@ -180,15 +180,17 @@ export function normalizeEmail(email) {
   return String(email || "").trim().toLowerCase();
 }
 
-export function sanitizeNextPath(nextPath, fallback = "blog.html") {
-  const cleanedNext = String(nextPath || "").replace(/^\//, "");
+export function sanitizeNextPath(nextPath, fallback = "/games/") {
+  const rawValue = String(nextPath || "").trim();
+  if (!rawValue) return fallback;
+
+  const cleanedNext = `/${rawValue.replace(/^\/+/, "")}`;
   if (
-    !cleanedNext ||
     cleanedNext.includes("..") ||
-    /^https?:/i.test(cleanedNext) ||
-    cleanedNext.startsWith("//") ||
-    /^login\.html(?:$|\?)/i.test(cleanedNext) ||
-    /^signup\.html(?:$|\?)/i.test(cleanedNext)
+    /^https?:/i.test(rawValue) ||
+    rawValue.startsWith("//") ||
+    /^\/(?:login|signup|verify-email)\/?(?:$|\?)/i.test(cleanedNext) ||
+    /^\/(?:login|signup|verify-email)\.html(?:$|\?)/i.test(cleanedNext)
   ) {
     return fallback;
   }
@@ -196,12 +198,12 @@ export function sanitizeNextPath(nextPath, fallback = "blog.html") {
   return cleanedNext;
 }
 
-export function buildLoginRedirect(nextPath = "blog.html", loginPath = "login.html") {
+export function buildLoginRedirect(nextPath = "/games/", loginPath = "/login/") {
   const safeNext = sanitizeNextPath(nextPath);
   return `${loginPath}?next=${encodeURIComponent(safeNext)}`;
 }
 
-export function buildVerificationRedirect(nextPath = "blog.html", verifyPath = "verify-email.html") {
+export function buildVerificationRedirect(nextPath = "/games/", verifyPath = "/verify-email/") {
   const safeNext = sanitizeNextPath(nextPath);
   return `${verifyPath}?next=${encodeURIComponent(safeNext)}`;
 }
@@ -669,7 +671,7 @@ export async function markVerificationEmailSent(userId) {
   }
 }
 
-export async function sendAppVerificationEmail(user, nextPath = "blog.html") {
+export async function sendAppVerificationEmail(user, nextPath = "/games/") {
   if (!user) {
     throw new Error("A signed-in user is required to send a verification email.");
   }
@@ -807,12 +809,24 @@ export async function sendTestEmailCampaign(payload) {
 }
 
 export async function triggerBulkEmailCampaign(payload) {
+  const normalizedAudience = String(payload?.audienceType || "verified-users").trim().toLowerCase();
+  const audienceType = [
+    "verified-users",
+    "unverified-users",
+    "all-users",
+    "specific-user"
+  ].includes(normalizedAudience)
+    ? normalizedAudience
+    : "verified-users";
+
   const response = await callBackendJson("/bulk-email", {
     authRequired: true,
     body: {
+      audienceType,
       dryRun: Boolean(payload?.dryRun),
       htmlMessage: String(payload?.htmlMessage || ""),
-      includeUnverified: Boolean(payload?.includeUnverified),
+      includeUnverified: audienceType === "all-users" || audienceType === "unverified-users",
+      specificEmail: normalizeEmail(payload?.specificEmail || ""),
       subject: String(payload?.subject || ""),
       textMessage: String(payload?.textMessage || "")
     }

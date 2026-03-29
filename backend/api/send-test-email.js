@@ -76,6 +76,8 @@ export default async function handler(req, res) {
         headers: {
           "X-WebArcade-Campaign-ID": campaignRef.id
         }
+      }, {
+        idempotencyKey: `test-email/${campaignRef.id}/${payload.testEmail}`
       });
 
       await campaignRef.set({
@@ -96,10 +98,13 @@ export default async function handler(req, res) {
         failedCount: 1,
         failures: [{
           email: payload.testEmail,
+          code: error?.code || "internal",
           error: readableErrorMessage(error)
         }],
         finishedAt: admin.firestore.FieldValue.serverTimestamp(),
         processedCount: 1,
+        providerCode: error?.code || "internal",
+        providerStatusCode: Number(error?.statusCode) || 500,
         status: "test-failed",
         updatedAt: admin.firestore.FieldValue.serverTimestamp()
       }, { merge: true }).catch(() => {});
@@ -108,7 +113,12 @@ export default async function handler(req, res) {
         campaignId: campaignRef.id
       }));
 
-      throw new ApiError(500, "internal", "The test email could not be sent.");
+      const statusCode = Number(error?.statusCode);
+      throw new ApiError(
+        statusCode >= 400 && statusCode < 500 ? statusCode : 500,
+        error?.code || "internal",
+        readableErrorMessage(error) || "The test email could not be sent."
+      );
     }
   });
 }

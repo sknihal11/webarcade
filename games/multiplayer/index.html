@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+    <title>WebArcade | Lobby</title>
+    <style>
+        :root { --bg: #020617; --accent: #6366f1; --surface: rgba(30, 41, 59, 0.7); }
+        body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: white; display: flex; align-items: center; justify-content: center; min-height: 100vh; }
+        .card { background: var(--surface); padding: 2rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); width: 90%; max-width: 500px; text-align: center; backdrop-filter: blur(10px); }
+        .slots { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .slot { background: rgba(0,0,0,0.3); border: 2px dashed rgba(255,255,255,0.1); border-radius: 12px; padding: 15px; height: 80px; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+        .slot.active { border: 2px solid var(--accent); background: rgba(99, 102, 241, 0.1); }
+        .slot img { width: 35px; height: 35px; border-radius: 50%; border: 2px solid var(--accent); margin-bottom: 5px; }
+        input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; margin-bottom: 10px; box-sizing: border-box; text-align: center; }
+        .btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.2s; margin-bottom: 10px; text-transform: uppercase; }
+        .btn-p { background: var(--accent); color: white; }
+        .btn-s { background: #334155; color: white; }
+        .room-code { font-size: 24px; color: var(--accent); font-family: monospace; letter-spacing: 3px; }
+    </style>
+</head>
+<body>
+
+<div class="card" id="view-setup">
+    <h1>WebArcade Lobby</h1>
+    <button class="btn btn-p" onclick="createRoom()">Host Game</button>
+    <div style="margin: 10px 0; color: #64748b;">— OR —</div>
+    <input type="text" id="joinInput" placeholder="Enter 6-Digit Code">
+    <button class="btn btn-s" onclick="joinRoom()">Join Friend</button>
+</div>
+
+<div class="card" id="view-lobby" style="display:none">
+    <h2>Room: <span class="room-code" id="codeText">------</span></h2>
+    <div class="slots" id="playerSlots">
+        <div class="slot">Empty</div><div class="slot">Empty</div>
+        <div class="slot">Empty</div><div class="slot">Empty</div>
+    </div>
+    <button id="startBtn" class="btn btn-p" onclick="startGame()" style="display:none">Start Game</button>
+    <button class="btn btn-s" onclick="leaveRoom()">Leave Lobby</button>
+</div>
+
+<script type="module">
+import {
+    auth,
+    db,
+    DEFAULT_AVATAR_URL,
+    deleteDoc,
+    doc,
+    ensureBrowserPersistence,
+    getDoc,
+    onAuthStateChanged,
+    onSnapshot,
+    safelyReloadUser,
+    setDoc,
+    updateDoc
+} from "/assets/js/firebase-client.js";
+
+await ensureBrowserPersistence();
+
+let user, currentRoom, isHost = false;
+
+onAuthStateChanged(auth, async u => {
+    if (!u) {
+        location.href = "/login/?next=/games/multiplayer/";
+        return;
+    }
+
+    user = await safelyReloadUser(u);
+    if (!user.emailVerified) {
+        location.href = "/verify-email/?next=/games/multiplayer/";
+    }
+});
+
+window.createRoom = async () => {
+    const id = Math.floor(100000 + Math.random() * 900000).toString();
+    currentRoom = id; isHost = true;
+    await setDoc(doc(db, "matches", id), {
+        host: user.uid,
+        players: [{ uid: user.uid, name: user.displayName || "Player", photo: user.photoURL || DEFAULT_AVATAR_URL }],
+        participantIds: [user.uid],
+        status: "waiting"
+    });
+    showLobby();
+};
+
+window.joinRoom = async () => {
+    const id = document.getElementById("joinInput").value;
+    const snap = await getDoc(doc(db, "matches", id));
+    if(!snap.exists()) return alert("Room not found!");
+    const data = snap.data();
+    const p = [...data.players];
+    if(p.length >= 4) return alert("Full!");
+    if ((data.participantIds || []).includes(user.uid)) {
+        currentRoom = id;
+        showLobby();
+        return;
+    }
+    p.push({uid: user.uid, name: user.displayName || "Player", photo: user.photoURL || DEFAULT_AVATAR_URL});
+    await updateDoc(doc(db, "matches", id), {
+        players: p,
+        participantIds: [...(data.participantIds || p.map(player => player.uid).slice(0, -1)), user.uid]
+    });
+    currentRoom = id; showLobby();
+};
+
+function showLobby() {
+    document.getElementById("view-setup").style.display = "none";
+    document.getElementById("view-lobby").style.display = "block";
+    document.getElementById("codeText").innerText = currentRoom;
+
+    onSnapshot(doc(db, "matches", currentRoom), (snap) => {
+        const data = snap.data(); if(!data) return;
+        if(data.status === "playing") location.href = `/games/uno_game/?room=${currentRoom}`;
+        
+        const slots = document.getElementById("playerSlots"); slots.innerHTML = "";
+        data.players.forEach(p => {
+            slots.innerHTML += `<div class="slot active"><img src="${p.photo}"><span>${p.name}</span></div>`;
+        });
+        for(let i=data.players.length; i<4; i++) slots.innerHTML += `<div class="slot">Empty</div>`;
+        
+        if(isHost) {
+            document.getElementById("startBtn").style.display = "block";
+            document.getElementById("startBtn").disabled = data.players.length < 2;
+        }
+    });
+}
+
+window.leaveRoom = async () => {
+    if(!currentRoom) return;
+    const snap = await getDoc(doc(db, "matches", currentRoom));
+    if(snap.exists()){
+        const data = snap.data();
+        const p = data.players.filter(x => x.uid !== user.uid);
+        const participantIds = (data.participantIds || []).filter(id => id !== user.uid);
+        const roomRef = doc(db, "matches", currentRoom);
+        if(p.length === 0) {
+            // No players left: clean up the match document
+            await deleteDoc(roomRef);
+        } else {
+            const updates = { players: p, participantIds };
+            if (data.host === user.uid) {
+                updates.host = participantIds[0];
+            }
+            await updateDoc(roomRef, updates);
+        }
+    }
+    location.reload();
+};
+
+window.addEventListener('beforeunload', () => leaveRoom());
+
+window.startGame = async () => {
+    const snap = await getDoc(doc(db, "matches", currentRoom));
+    const players = snap.data().players;
+    const colors = ['red', 'blue', 'green', 'yellow'];
+    let deck = [];
+    colors.forEach(c => {
+        ['0','1','2','3','4','5','6','7','8','9','SKIP','REV','+2'].forEach(v => {
+            deck.push({color: c, val: v, id: Math.random()});
+            if(v!=='0') deck.push({color: c, val: v, id: Math.random()});
+        });
+    });
+    for(let i=0; i<4; i++) { deck.push({color:'wild', val:'WILD', id:Math.random()}); deck.push({color:'wild', val:'+4', id:Math.random()}); }
+    deck.sort(() => Math.random() - 0.5);
+    
+    let hands = {}; players.forEach(p => hands[p.uid] = deck.splice(0, 7));
+    const participantIds = players.map(p => p.uid);
+    await updateDoc(doc(db, "matches", currentRoom), {
+        status: "playing",
+        players: participantIds,
+        participantIds,
+        lobbyInfo: players,
+        hands,
+        deck,
+        currentCard: deck.pop(),
+        turnIndex: 0,
+        direction: 1
+    });
+};
+</script>
+</body>
+</html>
+

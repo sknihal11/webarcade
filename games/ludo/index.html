@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex,nofollow">
+    <title>Ludo - WebArcade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+  <link rel="stylesheet" href="/games/ludo.css">
+</head>
+
+<body>
+
+    <!-- Main Menu Overlay -->
+    <!-- Main Menu Overlay -->
+    <div id="mainMenu" class="overlay">
+
+        <!-- Screen 1: Dashboard -->
+        <div class="menu-container dashboard-menu" id="mainDashboard">
+            <h1 class="menu-title">LUDO KING</h1>
+            <div class="dashboard-grid top-row">
+                <div class="btn-dashboard online-btn" style="opacity:0.6; cursor:default;">
+                    <div class="btn-icon">🌍</div>
+                    <div class="btn-label">ONLINE (COMING SOON)</div>
+                </div>
+                <div class="btn-dashboard teamup-btn" onclick="openSelectGame('team')">
+                    <div class="btn-icon">⚔️</div>
+                    <div class="btn-label">TEAM UP</div>
+                </div>
+                <div class="btn-dashboard friends-btn" style="opacity:0.6; cursor:default;">
+                    <div class="btn-icon">💕</div>
+                    <div class="btn-label">FRIENDS (COMING SOON)</div>
+                </div>
+            </div>
+            <div class="dashboard-grid bottom-row">
+                <div class="btn-dashboard computer-btn" onclick="openSelectGame('bot')">
+                    <div class="btn-icon">💻</div>
+                    <div class="btn-label">COMPUTER</div>
+                </div>
+                <div class="btn-dashboard passnplay-btn" onclick="openSelectGame('local')">
+                    <div class="btn-icon">👥</div>
+                    <div class="btn-label">PASS N PLAY</div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" id="rulesBtn" style="margin-top: 20px;">How to Play</button>
+        </div>
+
+        <!-- Screen 2: Select Game -->
+        <div class="menu-container select-game-menu hidden" id="selectGameMenu">
+            <div class="select-header">
+                <h2 class="lk-title">SELECT GAME</h2>
+            </div>
+
+            <div class="select-options">
+                <div class="select-row active" onclick="selectVariant('classic')" id="rowClassic">
+                    <div class="row-icon"><span class="icon-classic">⚄</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle">✔</span> Classic
+                    </div>
+                </div>
+
+                <div class="select-row" onclick="selectVariant('team')" id="rowTeam">
+                    <div class="row-icon"><span class="icon-team">⚔️</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle"></span> Classic Team Up
+                    </div>
+                </div>
+
+                <div class="select-row" onclick="selectVariant('quick')" id="rowQuick">
+                    <div class="row-icon"><span class="icon-quick">⏱️</span></div>
+                    <div class="row-pill">
+                        <span class="check-circle"></span> QUICK
+                    </div>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:center; gap: 15px; margin-top: 30px;">
+                <button class="lk-pill-btn secondary" onclick="backToDashboard()">Back</button>
+                <button class="lk-pill-btn primary" onclick="goToColorSelection()">Next</button>
+            </div>
+        </div>
+
+        <!-- Screen 3: Choose Color and Name -->
+        <div class="menu-container choose-color-menu hidden" id="chooseColorMenu" style="max-width: 600px;">
+            <div class="select-header">
+                <h2 class="lk-title" style="font-size: 24px;">CHOOSE COLOR AND NAME</h2>
+            </div>
+
+            <div class="color-slots" id="colorSlotsContainer">
+                <!-- JS will populate rows for Red, Green, Yellow, Blue -->
+            </div>
+
+            <div class="player-count-selector" id="playerCountSelector">
+                <div class="p-btn active" onclick="selectPlayerCount(2)" id="pbtn2">2P</div>
+                <div class="p-btn" onclick="selectPlayerCount(3)" id="pbtn3">3P</div>
+                <div class="p-btn" onclick="selectPlayerCount(4)" id="pbtn4">4P</div>
+                <div class="p-btn disabled">5P</div>
+                <div class="p-btn disabled">6P</div>
+            </div>
+
+            <div style="display:flex; justify-content:center; gap: 15px; margin-top: 30px;">
+                <button class="lk-pill-btn secondary" onclick="backToSelectGame()"
+                    style="width: auto; padding: 10px 30px;">Back</button>
+                <button class="lk-pill-btn huge" id="startBtn">Play</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Rules Menu Overlay -->
+    <div id="rulesMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h2 style="color:white; margin-bottom: 20px;">How To Play</h2>
+            <ul
+                style="text-align: left; color: #ccc; font-size: 14px; gap: 10px; display: flex; flex-direction: column; padding-left: 20px;">
+                <li>Roll a 6 to move a token out of the base.</li>
+                <li>Roll a 6 grants an extra turn. Rolling three 6s in a row passes the turn.</li>
+                <li>Landing on an opponent's token sends it back to base and grants you an extra turn.</li>
+                <li>Spaces marked with ★ are safe zones.</li>
+                <li>Getting a token Home grants an auto extra turn.</li>
+                <li>First player to get all 4 tokens Home wins!</li>
+            </ul>
+            <button class="btn btn-secondary" style="margin-top: 20px;" id="closeRulesBtn">Back</button>
+        </div>
+    </div>
+
+    <!-- Win Screen Overlay -->
+    <div id="winMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h1 class="menu-title" id="winTitle" style="font-size: 40px;">RED WINS!</h1>
+
+
+            <button class="btn" style="margin-top: 10px;" id="playAgainBtn">Play Again</button>
+            <button class="btn btn-secondary" id="homeBtn">Main Menu</button>
+        </div>
+    </div>
+
+    <!-- Top Bar -->
+    <div class="top-bar">
+        <a href="/games/" class="back-btn">← Back to Arcade</a>
+        <div class="game-status" id="statusText">Red's Turn</div>
+        <div class="controls-row">
+            <button class="icon-btn" id="emojiBtn">💬</button>
+            <button class="icon-btn" id="soundToggle">🔊</button>
+            <button class="icon-btn" id="settingsBtn">⚙️</button>
+        </div>
+    </div>
+
+    <!-- Game Area -->
+    <div class="game-container">
+
+        <!-- Corner Dice & Player Info -->
+        <div class="corner-dice red" id="corner_red"></div>
+        <div class="corner-dice green" id="corner_green"></div>
+        <div class="corner-dice blue" id="corner_blue"></div>
+        <div class="corner-dice yellow" id="corner_yellow"></div>
+
+        <div class="ludo-board" id="board"></div>
+
+    </div>
+
+    <div class="toast" id="toast">Message</div>
+
+    <!-- Emoji Picker Overlay -->
+    <div id="emojiPicker" class="emoji-picker hidden">
+        <div class="emoji-btn" onclick="sendEmoji('😂')">😂</div>
+        <div class="emoji-btn" onclick="sendEmoji('🔥')">🔥</div>
+        <div class="emoji-btn" onclick="sendEmoji('😢')">😢</div>
+        <div class="emoji-btn" onclick="sendEmoji('👏')">👏</div>
+        <div class="emoji-btn" onclick="sendEmoji('🎲')">🎲</div>
+        <div class="emoji-btn" onclick="sendEmoji('👋')">👋</div>
+    </div>
+
+    <!-- Settings Overlay -->
+    <div id="settingsMenu" class="overlay hidden">
+        <div class="menu-container">
+            <h2 style="color:white; margin-bottom: 20px;">Settings</h2>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-weight: 600; color: #ccc;">Board Theme:</label>
+                <div class="player-setup" id="themeSetup" style="margin-top:10px;">
+                    <div class="player-count-btn active" data-theme="neon">Neon</div>
+                    <div class="player-count-btn" data-theme="classic">Classic</div>
+                    <div class="player-count-btn" data-theme="nature">Nature</div>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 20px;">
+                <label style="font-weight: 600; color: #ccc;">Team Mode: Friendly Kill</label>
+                <div class="player-setup" id="friendlyKillSetup" style="margin-top:10px;">
+                    <div class="player-count-btn active" data-kill="false">Safe</div>
+                    <div class="player-count-btn" data-kill="true">Kill Allowed</div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary" id="closeSettingsBtn">Back</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Firebase Scripts -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+            authDomain: "webarcade-d4c3d.firebaseapp.com",
+            projectId: "webarcade-d4c3d"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let user = null;
+
+        onAuthStateChanged(auth, async u => {
+            if (!u) {
+                location.replace("/login/?next=/games/ludo/");
+                return;
+            }
+
+            try {
+                await u.reload();
+            } catch { }
+
+            user = auth.currentUser || u;
+            if (!user.emailVerified) {
+                location.replace("/verify-email/?next=/games/ludo/");
+                return;
+            }
+
+            console.log("Logged in as", user.displayName || user.email);
+        });
+
+        window.reportLudoWin = async () => {
+            if (!user) {
+                const localWins = parseInt(localStorage.getItem('ludo_wins') || '0') + 1;
+                localStorage.setItem('ludo_wins', localWins);
+                return;
+            }
+
+            try {
+                const userRef = doc(db, "users", user.uid);
+                await updateDoc(userRef, {
+                    bestLudo: increment(1),
+                    totalRating: increment(50) // Huge boost for winning Ludo!
+                });
+                console.log("Score updated in Firebase!");
+            } catch (e) {
+                console.error("Firebase score error", e);
+            }
+        };
+    </script>
+  <script src="/games/ludo.js"></script>
+</body>
+
+</html>

@@ -7,7 +7,7 @@ import {
   markCampaignFailure,
   runBulkCampaign
 } from "../lib/campaigns.js";
-import { ApiError, hashValue, normalizeMailPayload } from "../lib/helpers.js";
+import { ApiError, hashValue, isValidEmailAddress, normalizeMailPayload } from "../lib/helpers.js";
 import { runApiRoute, readJsonBody, requireMethod, sendJson } from "../lib/http.js";
 import { consumeRateLimit } from "../lib/rate-limit.js";
 
@@ -40,19 +40,27 @@ export default async function handler(req, res) {
     if (!payload.textMessage) {
       throw new ApiError(400, "invalid-argument", "Plain-text message is required.");
     }
+    if (payload.audienceType === "specific-user" && !isValidEmailAddress(payload.specificEmail)) {
+      throw new ApiError(400, "invalid-argument", "Enter a valid email for the selected user.");
+    }
+
+    const includesUnverifiedAudience =
+      payload.audienceType === "all-users" || payload.audienceType === "unverified-users";
 
     const { recipients, stats } = await listMailRecipients({
-      includeUnverified: payload.includeUnverified
+      audienceType: payload.audienceType,
+      specificEmail: payload.specificEmail
     });
 
     const campaignRef = await createCampaignLog({
       adminUser,
-      audience: payload.includeUnverified ? "all-users" : "verified-users",
+      audience: payload.audienceType,
       audienceStats: stats,
       dryRun: payload.dryRun,
       htmlMessage: payload.htmlMessage,
-      includeUnverified: payload.includeUnverified,
+      includeUnverified: includesUnverifiedAudience,
       mode: payload.dryRun ? "dry-run" : "broadcast",
+      specificEmail: payload.audienceType === "specific-user" ? payload.specificEmail : null,
       subject: payload.subject,
       testEmail: null,
       textMessage: payload.textMessage,

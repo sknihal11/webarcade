@@ -39,26 +39,50 @@ async function listSuppressedEmails() {
   return suppressedEmails;
 }
 
-async function listMailRecipients({ includeUnverified }) {
+async function listMailRecipients({ audienceType = "verified-users", specificEmail = "" }) {
   const rawRecipients = [];
-  let pageToken;
 
-  do {
-    const page = await auth.listUsers(1000, pageToken);
+  if (audienceType === "specific-user") {
+    const email = normalizeEmail(specificEmail);
 
-    page.users.forEach(userRecord => {
-      if (userRecord.disabled) return;
-      if (!includeUnverified && !userRecord.emailVerified) return;
+    if (email) {
+      try {
+        const userRecord = await auth.getUserByEmail(email);
 
-      rawRecipients.push({
-        email: String(userRecord.email || ""),
-        emailVerified: Boolean(userRecord.emailVerified),
-        uid: userRecord.uid
+        if (!userRecord.disabled) {
+          rawRecipients.push({
+            email: String(userRecord.email || ""),
+            emailVerified: Boolean(userRecord.emailVerified),
+            uid: userRecord.uid
+          });
+        }
+      } catch (error) {
+        if (error?.code !== "auth/user-not-found") {
+          throw error;
+        }
+      }
+    }
+  } else {
+    let pageToken;
+
+    do {
+      const page = await auth.listUsers(1000, pageToken);
+
+      page.users.forEach(userRecord => {
+        if (userRecord.disabled) return;
+        if (audienceType === "verified-users" && !userRecord.emailVerified) return;
+        if (audienceType === "unverified-users" && userRecord.emailVerified) return;
+
+        rawRecipients.push({
+          email: String(userRecord.email || ""),
+          emailVerified: Boolean(userRecord.emailVerified),
+          uid: userRecord.uid
+        });
       });
-    });
 
-    pageToken = page.pageToken;
-  } while (pageToken);
+      pageToken = page.pageToken;
+    } while (pageToken);
+  }
 
   const suppressedEmails = await listSuppressedEmails();
   const seenEmails = new Set();
@@ -117,6 +141,7 @@ async function createCampaignLog({
   htmlMessage,
   includeUnverified,
   mode,
+  specificEmail,
   subject,
   testEmail,
   textMessage,
@@ -136,6 +161,7 @@ async function createCampaignLog({
     mode,
     processedCount: 0,
     sentCount: 0,
+    specificEmail: specificEmail || null,
     status: "preparing",
     subject,
     testEmail: testEmail || null,

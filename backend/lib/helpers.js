@@ -16,15 +16,31 @@ function normalizeText(value) {
   return String(value || "").replace(/\r\n/g, "\n").trim();
 }
 
-function sanitizeNextPath(nextPath, fallback = "blog.html") {
-  const cleanedNext = String(nextPath || "").replace(/^\//, "");
+function normalizeAudienceType(value, includeUnverifiedFallback = false) {
+  const normalized = String(value || "").trim().toLowerCase();
+
+  switch (normalized) {
+    case "verified-users":
+    case "unverified-users":
+    case "all-users":
+    case "specific-user":
+      return normalized;
+    default:
+      return includeUnverifiedFallback ? "all-users" : "verified-users";
+  }
+}
+
+function sanitizeNextPath(nextPath, fallback = "/games/") {
+  const rawValue = String(nextPath || "").trim();
+  if (!rawValue) return fallback;
+
+  const cleanedNext = `/${rawValue.replace(/^\/+/, "")}`;
   if (
-    !cleanedNext ||
     cleanedNext.includes("..") ||
-    /^https?:/i.test(cleanedNext) ||
-    cleanedNext.startsWith("//") ||
-    /^login\.html(?:$|\?)/i.test(cleanedNext) ||
-    /^signup\.html(?:$|\?)/i.test(cleanedNext)
+    /^https?:/i.test(rawValue) ||
+    rawValue.startsWith("//") ||
+    /^\/(?:login|signup|verify-email)\/?(?:$|\?)/i.test(cleanedNext) ||
+    /^\/(?:login|signup|verify-email)\.html(?:$|\?)/i.test(cleanedNext)
   ) {
     return fallback;
   }
@@ -105,10 +121,14 @@ function buildCampaignResultMessage({ failedCount, sentCount, totalRecipients })
 }
 
 function normalizeMailPayload(body) {
+  const includeUnverified = Boolean(body.includeUnverified);
+
   return {
+    audienceType: normalizeAudienceType(body.audienceType, includeUnverified),
     dryRun: Boolean(body.dryRun),
     htmlMessage: normalizeText(body.htmlMessage),
-    includeUnverified: Boolean(body.includeUnverified),
+    includeUnverified,
+    specificEmail: normalizeEmail(body.specificEmail),
     subject: normalizeText(body.subject),
     testEmail: normalizeEmail(body.testEmail),
     textMessage: normalizeText(body.textMessage)

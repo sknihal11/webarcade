@@ -33,8 +33,8 @@ onAuthStateChanged(auth, user => {
     };
   } else {
     authBox.innerHTML = `
-      <a href="login.html" class="login-btn">Login</a>
-      <a href="signup.html" class="signup-btn">Sign up</a>
+      <a href="/login/" class="login-btn">Login</a>
+      <a href="/signup/" class="signup-btn">Sign up</a>
     `;
   }
 });

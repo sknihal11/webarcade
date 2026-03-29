@@ -23,7 +23,7 @@ export default async function handler(req, res) {
     const signedInUser = await requireAuthenticatedUser(req);
     const body = await readJsonBody(req);
     const requestedEmail = normalizeEmail(body?.email);
-    const nextPath = sanitizeNextPath(body?.nextPath, "blog.html");
+    const nextPath = sanitizeNextPath(body?.nextPath, "/games/");
     const userRecord = await auth.getUser(signedInUser.uid).catch(() => null);
 
     if (!userRecord?.email) {
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
 
     try {
       const continueUrl = new URL(
-        `login.html?verified=1&next=${encodeURIComponent(nextPath)}`,
+        `/login/?verified=1&next=${encodeURIComponent(nextPath)}`,
         `${APP_URL}/`
       ).toString();
 

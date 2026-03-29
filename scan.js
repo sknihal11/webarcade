@@ -1,9 +1,9 @@
 const puppeteer = require('puppeteer');
 
 const games = [
-    '2048.html', 'flappy.html', 'ludo.html', 'multiplayer.html', 
-    'pong.html', 'snake.html', 'solitaire.html', 'tetris.html', 
-    'tictactoe.html', 'uno_game.html'
+    '/games/2048/', '/games/flappy/', '/games/ludo/', '/games/multiplayer/',
+    '/games/pong/', '/games/snake/', '/games/solitaire/', '/games/tetris/',
+    '/games/tictactoe/', '/games/uno_game/'
 ];
 
 async function scan() {
@@ -40,7 +40,7 @@ async function scan() {
     for (const game of games) {
         console.log(`Scanning ${game}...`);
         try {
-            await page.goto(`http://localhost:8080/games/${game}`, { waitUntil: 'networkidle2', timeout: 5000 });
+            await page.goto(`http://localhost:8080${game}`, { waitUntil: 'networkidle2', timeout: 5000 });
             // Wait an extra second for any async init logic
             await new Promise(r => setTimeout(r, 1000));
         } catch (e) {

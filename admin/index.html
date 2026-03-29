@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex,nofollow">
+    <meta name="theme-color" content="#07111f">
+    <title>Admin Panel | WebArcade</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg: #07111f;
+            --panel: rgba(10, 19, 34, 0.88);
+            --panel-soft: rgba(255, 255, 255, 0.03);
+            --border: rgba(118, 149, 198, 0.16);
+            --border-strong: rgba(118, 149, 198, 0.28);
+            --text: #f3f7ff;
+            --text-soft: #afbed8;
+            --text-muted: #7e8faa;
+            --accent: #59d7ff;
+            --accent-soft: rgba(89, 215, 255, 0.12);
+            --success: #61e2b5;
+            --warning: #ffd166;
+            --danger: #ff708e;
+            --shadow: 0 28px 80px rgba(0, 0, 0, 0.35);
+            --radius-lg: 24px;
+            --radius-md: 18px;
+            --radius-sm: 14px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(89, 215, 255, 0.12), transparent 30%),
+                linear-gradient(180deg, #040a14 0%, var(--bg) 100%);
+            color: var(--text);
+            font-family: "Inter", sans-serif;
+            padding: 28px 20px 40px;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button,
+        input,
+        textarea {
+            font: inherit;
+        }
+
+        #authCheck {
+            position: fixed;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(4, 10, 20, 0.94);
+            color: var(--text);
+            z-index: 1000;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.92rem;
+            font-weight: 700;
+        }
+
+        .shell {
+            max-width: 1240px;
+            margin: 0 auto;
+        }
+
+        .page-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 20px;
+            align-items: end;
+            margin-bottom: 24px;
+        }
+
+        .eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: var(--accent-soft);
+            border: 1px solid var(--border-strong);
+            color: var(--accent);
+            font-size: 0.76rem;
+            font-weight: 800;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+
+        h1 {
+            margin: 16px 0 10px;
+            font-size: clamp(2rem, 4vw, 3.3rem);
+            line-height: 1.04;
+            letter-spacing: -0.04em;
+        }
+
+        .page-copy {
+            max-width: 720px;
+            margin: 0;
+            color: var(--text-soft);
+            line-height: 1.7;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+
+        .header-link,
+        .tab,
+        .btn {
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            min-height: 46px;
+            padding: 0 16px;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            cursor: pointer;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+        }
+
+        .header-link:hover,
+        .tab:hover,
+        .btn:hover {
+            border-color: var(--border-strong);
+            transform: translateY(-1px);
+        }
+
+        .header-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .page-notice {
+            display: none;
+            margin-bottom: 20px;
+            padding: 15px 18px;
+            border-radius: var(--radius-sm);
+            border: 1px solid transparent;
+            line-height: 1.6;
+        }
+
+        .page-notice.show {
+            display: block;
+        }
+
+        .page-notice.success {
+            background: rgba(97, 226, 181, 0.12);
+            border-color: rgba(97, 226, 181, 0.28);
+            color: #dffdef;
+        }
+
+        .page-notice.error {
+            background: rgba(255, 112, 142, 0.12);
+            border-color: rgba(255, 112, 142, 0.28);
+            color: #ffe0e7;
+        }
+
+        .page-notice.info {
+            background: rgba(89, 215, 255, 0.12);
+            border-color: rgba(89, 215, 255, 0.28);
+            color: #dff8ff;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-soft);
+            font-weight: 600;
+        }
+
+        .tab.active {
+            background: rgba(89, 215, 255, 0.14);
+            border-color: rgba(89, 215, 255, 0.34);
+            color: var(--text);
+        }
+
+        .panel {
+            display: none;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(18px);
+            padding: 24px;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+            margin-bottom: 22px;
+        }
+
+        .panel-header h2 {
+            margin: 0;
+            font-size: 1.45rem;
+            letter-spacing: -0.03em;
+        }
+
+        .panel-header p {
+            margin: 10px 0 0;
+            color: var(--text-soft);
+            line-height: 1.7;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 16px;
+            margin-bottom: 22px;
+        }
+
+        .metric-card,
+        .surface-card {
+            background: var(--panel-soft);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-md);
+            padding: 18px;
+        }
+
+        .metric-label {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 12px;
+        }
+
+        .metric-value {
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.04em;
+            margin-bottom: 6px;
+        }
+
+        .metric-note {
+            color: var(--text-soft);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .charts-grid,
+        .split-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 18px;
+        }
+
+        .chart-card canvas {
+            width: 100%;
+            max-height: 320px;
+        }
+
+        .section-title {
+            margin: 0 0 8px;
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .section-copy {
+            margin: 0 0 18px;
+            color: var(--text-soft);
+            line-height: 1.65;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-soft);
+            font-size: 0.92rem;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text);
+            padding: 14px 16px;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            border-color: var(--border-strong);
+            box-shadow: 0 0 0 4px rgba(89, 215, 255, 0.08);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1bd4ff, #63ebb8);
+            border-color: transparent;
+            color: #04111c;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .btn-danger {
+            background: rgba(255, 112, 142, 0.14);
+            border-color: rgba(255, 112, 142, 0.26);
+            color: #ffe1e8;
+        }
+
+        .announcement-display {
+            min-height: 144px;
+            padding: 16px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .list-stack {
+            display: grid;
+            gap: 14px;
+        }
+
+        .req-card {
+            display: grid;
+            gap: 14px;
+            background: var(--panel-soft);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: var(--radius-md);
+            padding: 18px;
+        }
+
+        .req-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .req-title {
+            margin: 0;
+            font-size: 1.05rem;
+        }
+
+        .req-meta,
+        .helper-copy {
+            color: var(--text-soft);
+            line-height: 1.6;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 30px;
+            padding: 0 12px;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: var(--text-soft);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+        }
+
+        .badge.success {
+            background: rgba(97, 226, 181, 0.14);
+            border-color: rgba(97, 226, 181, 0.3);
+            color: #dffdef;
+        }
+
+        .badge.pending {
+            background: rgba(255, 209, 102, 0.14);
+            border-color: rgba(255, 209, 102, 0.26);
+            color: #ffefc4;
+        }
+
+        .badge.info {
+            background: rgba(89, 215, 255, 0.14);
+            border-color: rgba(89, 215, 255, 0.26);
+            color: #dff8ff;
+        }
+
+        .badge.danger {
+            background: rgba(255, 112, 142, 0.14);
+            border-color: rgba(255, 112, 142, 0.26);
+            color: #ffe1e8;
+        }
+
+        .req-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .table-shell {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 760px;
+        }
+
+        .admin-table th,
+        .admin-table td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .admin-table th {
+            color: var(--text-soft);
+            font-size: 0.82rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .admin-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .user-name {
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .user-email {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--text-muted);
+        }
+
+        .status-dot.online {
+            background: var(--success);
+            box-shadow: 0 0 12px rgba(97, 226, 181, 0.45);
+        }
+
+        .table-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .empty-state {
+            padding: 18px;
+            border-radius: 16px;
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            color: var(--text-soft);
+            line-height: 1.7;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        @media (max-width: 980px) {
+            .page-header,
+            .charts-grid,
+            .split-grid,
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-actions {
+                justify-content: flex-start;
+            }
+        }
+
+        @media (max-width: 640px) {
+            body {
+                padding: 18px 14px 30px;
+            }
+
+            .panel {
+                padding: 18px;
+            }
+
+            .panel-header {
+                flex-direction: column;
+            }
+
+            .tabs {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .tab {
+                width: 100%;
+            }
+
+            .btn-row,
+            .req-actions,
+            .table-actions {
+                flex-direction: column;
+            }
+
+            .btn,
+            .header-link {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="authCheck">Checking admin access...</div>
+
+    <main class="shell">
+        <header class="page-header">
+            <div>
+                <span class="eyebrow">Admin</span>
+                <h1>WebArcade admin, without the clutter.</h1>
+                <p class="page-copy">
+                    Announcements, requests, users, and email in one simple place.
+                </p>
+            </div>
+
+            <div class="header-actions">
+                <a class="header-link" href="/admin_email/">Email console</a>
+                <a class="header-link" href="/games/">Back to dashboard</a>
+            </div>
+        </header>
+
+        <div class="page-notice" id="pageNotice" aria-live="polite"></div>
+
+        <nav class="tabs" aria-label="Admin sections">
+            <button class="tab active" type="button" onclick="switchTab(event, 'analytics')">Analytics</button>
+            <button class="tab" type="button" onclick="switchTab(event, 'announcements')">Announcements</button>
+            <button class="tab" type="button" onclick="switchTab(event, 'requests')">Game requests</button>
+            <button class="tab" type="button" onclick="switchTab(event, 'users')">Users</button>
+        </nav>
+
+        <section id="analytics" class="panel active">
+            <div class="panel-header">
+                <div>
+                    <h2>Platform overview</h2>
+                    <p>Quick account numbers and a simple view of player activity.</p>
+                </div>
+            </div>
+
+            <div class="metrics-grid">
+                <article class="metric-card">
+                    <div class="metric-label">Registered users</div>
+                    <div class="metric-value" id="metricUsers">--</div>
+                    <div class="metric-note">Accounts created in WebArcade.</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-label">Verified users</div>
+                    <div class="metric-value" id="metricVerified">--</div>
+                    <div class="metric-note">Trusted accounts with verified email.</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-label">Live now</div>
+                    <div class="metric-value" id="metricLive">--</div>
+                    <div class="metric-note">Seen in the last hour with an active session.</div>
+                </article>
+                <article class="metric-card">
+                    <div class="metric-label">Unverified users</div>
+                    <div class="metric-value" id="metricUnverified">--</div>
+                    <div class="metric-note">Accounts that still need email verification.</div>
+                </article>
+            </div>
+
+            <div class="charts-grid">
+                <article class="surface-card chart-card">
+                    <h3 class="section-title">Signup trend</h3>
+                    <p class="section-copy">New registrations over the last 7 days.</p>
+                    <canvas id="growthChart"></canvas>
+                </article>
+                <article class="surface-card chart-card">
+                    <h3 class="section-title">Account status</h3>
+                    <p class="section-copy">Verified, unverified, and banned account split.</p>
+                    <canvas id="gameChart"></canvas>
+                </article>
+            </div>
+        </section>
+
+        <section id="announcements" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Announcements</h2>
+                    <p>Publish one clear message for players, or remove it when the update is no longer needed.</p>
+                </div>
+            </div>
+
+            <div class="split-grid">
+                <article class="surface-card">
+                    <h3 class="section-title">Write a new announcement</h3>
+                    <p class="section-copy">Keep it short and readable. This message is meant for the whole site.</p>
+
+                    <div class="form-group">
+                        <label for="annText">Announcement text</label>
+                        <textarea id="annText" rows="5" placeholder="For example: Weekend leaderboard reset is now live."></textarea>
+                    </div>
+
+                    <div class="btn-row">
+                        <button class="btn btn-primary" type="button" onclick="postAnnouncement()">Publish announcement</button>
+                    </div>
+                </article>
+
+                <article class="surface-card">
+                    <h3 class="section-title">Current announcement</h3>
+                    <p class="section-copy">This is the latest message visible to users.</p>
+
+                    <div class="announcement-display" id="currentAnn">Loading current announcement...</div>
+
+                    <div class="btn-row" style="margin-top: 16px;">
+                        <button class="btn btn-danger" type="button" id="delAnnBtn" onclick="deleteCurrentAnnouncement()" hidden>Clear announcement</button>
+                    </div>
+                </article>
+            </div>
+        </section>
+
+        <section id="requests" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>Game requests</h2>
+                    <p>Read what players are asking for, reply when needed, and clear finished requests.</p>
+                </div>
+            </div>
+
+            <div class="list-stack" id="requestsList">
+                <div class="empty-state">Loading requests...</div>
+            </div>
+        </section>
+
+        <section id="users" class="panel">
+            <div class="panel-header">
+                <div>
+                    <h2>User management</h2>
+                    <p>See activity, verification status, and access at a glance.</p>
+                </div>
+            </div>
+
+            <div id="usersList">
+                <div class="empty-state">Loading users...</div>
+            </div>
+        </section>
+    </main>
+
+    <script type="module">
+        import {
+            addDoc,
+            auth,
+            collection,
+            db,
+            deleteDoc,
+            doc,
+            ensureBrowserPersistence,
+            getDocs,
+            isAdminEmail,
+            limit,
+            onAuthStateChanged,
+            orderBy,
+            query,
+            safelyReloadUser,
+            serverTimestamp,
+            syncUserProfileAuthState,
+            updateDoc
+        } from "/assets/js/firebase-client.js";
+
+        await ensureBrowserPersistence();
+
+        const authCheck = document.getElementById("authCheck");
+        const pageNotice = document.getElementById("pageNotice");
+        const currentAnnEl = document.getElementById("currentAnn");
+        const deleteAnnouncementButton = document.getElementById("delAnnBtn");
+
+        const metricUsers = document.getElementById("metricUsers");
+        const metricVerified = document.getElementById("metricVerified");
+        const metricLive = document.getElementById("metricLive");
+        const metricUnverified = document.getElementById("metricUnverified");
+
+        let currentAnnId = null;
+        let growthChartInstance = null;
+        let gameChartInstance = null;
+
+        window.switchTab = (event, tabId) => {
+            document.querySelectorAll(".tab").forEach(tab => tab.classList.remove("active"));
+            document.querySelectorAll(".panel").forEach(panel => panel.classList.remove("active"));
+
+            event.currentTarget.classList.add("active");
+            document.getElementById(tabId).classList.add("active");
+
+            if (tabId === "requests") loadRequests();
+            if (tabId === "users") loadUsers();
+            if (tabId === "analytics") loadAnalytics();
+        };
+
+        onAuthStateChanged(auth, async user => {
+            const trustedUser = user ? await safelyReloadUser(user) : null;
+            if (trustedUser) {
+                await syncUserProfileAuthState(trustedUser).catch(() => {});
+            }
+
+            if (trustedUser && trustedUser.emailVerified && isAdminEmail(trustedUser.email)) {
+                authCheck.style.display = "none";
+                await Promise.all([
+                    loadCurrentAnnouncement(),
+                    loadAnalytics()
+                ]);
+                return;
+            }
+
+            authCheck.textContent = "Redirecting...";
+
+            if (trustedUser && !trustedUser.emailVerified) {
+                window.location.href = "/verify-email/?next=/admin/";
+                return;
+            }
+
+            window.location.href = "/";
+        });
+
+        window.loadAnalytics = async () => {
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                const users = [];
+                snap.forEach(docSnap => users.push(docSnap.data()));
+
+                let verifiedUsers = 0;
+                let unverifiedUsers = 0;
+                let liveUsers = 0;
+                let bannedUsers = 0;
+                const signupDates = {};
+
+                const now = new Date();
+                for (let index = 6; index >= 0; index--) {
+                    const day = new Date(now);
+                    day.setDate(day.getDate() - index);
+                    signupDates[day.toLocaleDateString(undefined, { month: "short", day: "numeric" })] = 0;
+                }
+
+                users.forEach(data => {
+                    if (data.emailVerified) {
+                        verifiedUsers++;
+                    } else {
+                        unverifiedUsers++;
+                    }
+                    if (data.banned) bannedUsers++;
+
+                    if (data.lastActivity && Array.isArray(data.activeSessions) && data.activeSessions.length > 0) {
+                        const lastSeen = data.lastActivity.toDate();
+                        const diffMinutes = (Date.now() - lastSeen.getTime()) / (1000 * 60);
+                        if (diffMinutes < 60) liveUsers++;
+                    }
+
+                    if (data.createdAt) {
+                        const createdLabel = data.createdAt.toDate().toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric"
+                        });
+                        if (signupDates[createdLabel] !== undefined) {
+                            signupDates[createdLabel]++;
+                        }
+                    }
+                });
+
+                metricUsers.textContent = String(users.length);
+                metricVerified.textContent = String(verifiedUsers);
+                metricLive.textContent = String(liveUsers);
+                metricUnverified.textContent = String(unverifiedUsers);
+
+                Chart.defaults.color = "#aab8d2";
+                Chart.defaults.font.family = "'Inter', sans-serif";
+
+                const growthContext = document.getElementById("growthChart").getContext("2d");
+                if (growthChartInstance) growthChartInstance.destroy();
+                growthChartInstance = new Chart(growthContext, {
+                    type: "line",
+                    data: {
+                        labels: Object.keys(signupDates),
+                        datasets: [{
+                            label: "New registrations",
+                            data: Object.values(signupDates),
+                            borderColor: "#59d7ff",
+                            backgroundColor: "rgba(89, 215, 255, 0.16)",
+                            fill: true,
+                            tension: 0.35,
+                            pointBackgroundColor: "#59d7ff",
+                            pointBorderColor: "#07111f",
+                            pointHoverRadius: 5
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: { stepSize: 1 },
+                                grid: { color: "rgba(255, 255, 255, 0.08)" }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                labels: { boxWidth: 12, usePointStyle: true }
+                            }
+                        }
+                    }
+                });
+
+                const gameContext = document.getElementById("gameChart").getContext("2d");
+                if (gameChartInstance) gameChartInstance.destroy();
+                gameChartInstance = new Chart(gameContext, {
+                    type: "doughnut",
+                    data: {
+                        labels: ["Verified", "Unverified", "Banned"],
+                        datasets: [{
+                            data: [verifiedUsers, unverifiedUsers, bannedUsers],
+                            backgroundColor: ["#61e2b5", "#59d7ff", "#ff708e"],
+                            borderWidth: 0,
+                            hoverOffset: 6
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        cutout: "68%",
+                        plugins: {
+                            legend: { position: "bottom" }
+                        }
+                    }
+                });
+            } catch (error) {
+                showPageNotice("error", `Analytics could not be loaded: ${error.message}`);
+            }
+        };
+
+        async function loadCurrentAnnouncement() {
+            try {
+                const announcementQuery = query(collection(db, "announcements"), orderBy("createdAt", "desc"), limit(1));
+                const snap = await getDocs(announcementQuery);
+
+                if (!snap.empty) {
+                    currentAnnId = snap.docs[0].id;
+                    currentAnnEl.textContent = snap.docs[0].data().text;
+                    deleteAnnouncementButton.hidden = false;
+                    return;
+                }
+
+                currentAnnId = null;
+                currentAnnEl.textContent = "No announcement is currently live.";
+                deleteAnnouncementButton.hidden = true;
+            } catch (error) {
+                currentAnnEl.textContent = `Failed to load the current announcement: ${error.message}`;
+                deleteAnnouncementButton.hidden = true;
+            }
+        }
+
+        window.deleteCurrentAnnouncement = async () => {
+            if (!currentAnnId || !confirm("Clear the current announcement?")) return;
+
+            try {
+                await deleteDoc(doc(db, "announcements", currentAnnId));
+                await loadCurrentAnnouncement();
+                showPageNotice("success", "Announcement cleared.");
+            } catch (error) {
+                showPageNotice("error", `Announcement could not be cleared: ${error.message}`);
+            }
+        };
+
+        window.postAnnouncement = async () => {
+            const text = document.getElementById("annText").value.trim();
+            if (!text) {
+                showPageNotice("error", "Announcement text cannot be empty.");
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, "announcements"), {
+                    text,
+                    createdAt: serverTimestamp()
+                });
+
+                document.getElementById("annText").value = "";
+                await loadCurrentAnnouncement();
+                showPageNotice("success", "Announcement published.");
+            } catch (error) {
+                showPageNotice("error", `Announcement could not be published: ${error.message}`);
+            }
+        };
+
+        window.loadRequests = async () => {
+            const list = document.getElementById("requestsList");
+            list.innerHTML = '<div class="empty-state">Loading requests...</div>';
+
+            try {
+                const requestQuery = query(collection(db, "game_requests"), orderBy("createdAt", "desc"));
+                const snap = await getDocs(requestQuery);
+
+                if (snap.empty) {
+                    list.innerHTML = '<div class="empty-state">No game requests have been submitted yet.</div>';
+                    return;
+                }
+
+                const items = [];
+
+                snap.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const requestId = docSnap.id;
+                    const status = String(data.status || "pending").toLowerCase();
+                    const date = data.createdAt ? data.createdAt.toDate().toLocaleString() : "Unknown date";
+                    const badgeClass = status === "replied" ? "badge success" : "badge pending";
+
+                    items.push(`
+                        <article class="req-card" id="req-${requestId}">
+                            <div class="req-header">
+                                <div>
+                                    <h3 class="req-title">${escapeHtml(data.gameTitle || "Untitled request")}</h3>
+                                    <div class="req-meta">${escapeHtml(data.username || "Unknown user")} (${escapeHtml(data.email || "No email")})</div>
+                                </div>
+                                <span class="${badgeClass}">${escapeHtml(status)}</span>
+                            </div>
+                            <div class="helper-copy">${escapeHtml(data.description || "No description provided.")}</div>
+                            <div class="req-meta">Submitted: ${escapeHtml(date)}</div>
+                            ${status === "replied" ? `<div class="helper-copy"><strong>Reply:</strong> ${escapeHtml(data.replyText || "")}</div>` : ""}
+                            <div class="req-actions">
+                                <button class="btn btn-primary" type="button" onclick="replyRequest('${requestId}')">Reply</button>
+                                <button class="btn btn-danger" type="button" onclick="deleteRequest('${requestId}')">Delete</button>
+                            </div>
+                        </article>
+                    `);
+                });
+
+                list.innerHTML = items.join("");
+            } catch (error) {
+                list.innerHTML = `<div class="empty-state">Requests could not be loaded: ${escapeHtml(error.message)}</div>`;
+            }
+        };
+
+        window.deleteRequest = async requestId => {
+            if (!confirm("Delete this request?")) return;
+
+            try {
+                await deleteDoc(doc(db, "game_requests", requestId));
+                await loadRequests();
+                showPageNotice("success", "Request deleted.");
+            } catch (error) {
+                showPageNotice("error", `Request could not be deleted: ${error.message}`);
+            }
+        };
+
+        window.replyRequest = async requestId => {
+            const reply = prompt("Write your reply for this request:");
+            if (!reply || !reply.trim()) return;
+
+            try {
+                await updateDoc(doc(db, "game_requests", requestId), {
+                    status: "replied",
+                    replyText: reply.trim(),
+                    repliedAt: serverTimestamp()
+                });
+                await loadRequests();
+                showPageNotice("success", "Reply saved.");
+            } catch (error) {
+                showPageNotice("error", `Reply could not be saved: ${error.message}`);
+            }
+        };
+
+        window.loadUsers = async () => {
+            const list = document.getElementById("usersList");
+            list.innerHTML = '<div class="empty-state">Loading users...</div>';
+
+            try {
+                const snap = await getDocs(collection(db, "users"));
+                const users = [];
+                snap.forEach(docSnap => users.push({ id: docSnap.id, ...docSnap.data() }));
+
+                if (!users.length) {
+                    list.innerHTML = '<div class="empty-state">No users were found.</div>';
+                    return;
+                }
+
+                users.sort((left, right) => (right.lastActivity?.seconds || 0) - (left.lastActivity?.seconds || 0));
+
+                const rows = users.map(user => {
+                    const name = user.username || user.displayName || user.name || "Unknown";
+                    const verificationLabel = user.emailVerified ? "Verified" : "Unverified";
+                    const verificationClass = user.emailVerified ? "success" : "info";
+                    const accessLabel = user.banned ? "Banned" : "Allowed";
+                    const accessClass = user.banned ? "danger" : "success";
+                    let isOnline = false;
+                    let lastActiveText = "Never";
+
+                    if (user.lastActivity) {
+                        const lastSeenDate = user.lastActivity.toDate();
+                        lastActiveText = `${lastSeenDate.toLocaleDateString()} ${lastSeenDate.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit"
+                        })}`;
+
+                        if (Array.isArray(user.activeSessions) && user.activeSessions.length > 0) {
+                            const diffMinutes = (Date.now() - lastSeenDate.getTime()) / (1000 * 60);
+                            if (diffMinutes < 60) isOnline = true;
+                        }
+                    }
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="user-name">${escapeHtml(name)}</div>
+                                <div class="user-email">${escapeHtml(user.email || "No email")}</div>
+                            </td>
+                            <td>
+                                <div class="status-indicator">
+                                    <span class="status-dot ${isOnline ? "online" : ""}"></span>
+                                    <span>${isOnline ? "Online" : "Offline"}</span>
+                                </div>
+                                <div class="user-email">Last active: ${escapeHtml(lastActiveText)}</div>
+                            </td>
+                            <td><span class="badge ${verificationClass}">${verificationLabel}</span></td>
+                            <td><span class="badge ${accessClass}">${accessLabel}</span></td>
+                            <td>
+                                <div class="table-actions">
+                                    <button class="btn ${user.banned ? "btn-secondary" : "btn-danger"}" type="button" onclick="toggleBanUser('${user.id}', ${user.banned ? "true" : "false"})">${user.banned ? "Unban user" : "Ban user"}</button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join("");
+
+                list.innerHTML = `
+                    <div class="helper-copy" style="margin-bottom: 14px;">Total users: ${users.length} | Verified: ${users.filter(user => user.emailVerified).length}</div>
+                    <div class="table-shell">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Activity</th>
+                                    <th>Verification</th>
+                                    <th>Access</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>
+                `;
+            } catch (error) {
+                list.innerHTML = `<div class="empty-state">Users could not be loaded: ${escapeHtml(error.message)}</div>`;
+            }
+        };
+
+        window.toggleBanUser = async (userId, currentStatus) => {
+            const action = currentStatus ? "unban" : "ban";
+            if (!confirm(`Are you sure you want to ${action} this user?`)) return;
+
+            try {
+                await updateDoc(doc(db, "users", userId), {
+                    banned: !currentStatus
+                });
+                await loadUsers();
+                showPageNotice("success", `User ${action}ned successfully.`);
+            } catch (error) {
+                showPageNotice("error", `User could not be ${action}ned: ${error.message}`);
+            }
+        };
+
+        function showPageNotice(type, message) {
+            pageNotice.textContent = message;
+            pageNotice.className = `page-notice show ${type}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+    </script>
+</body>
+
+</html>

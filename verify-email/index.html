@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#040710">
+  <meta name="description" content="Verify your Gmail for WebArcade so you can continue to protected features.">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Verify Email | WebArcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/auth-portal.css">
+</head>
+
+<body class="auth-page">
+  <main class="auth-shell auth-shell--compact">
+    <section class="form-panel">
+      <div class="auth-card auth-card--compact">
+        <div class="card-header">
+          <a href="/" class="back-link">Back to Home</a>
+          <span class="eyebrow">Verify Gmail</span>
+          <h2>Check your inbox</h2>
+          <p class="card-copy">We sent a verification link to the email below. Open it, then come back here and continue.</p>
+        </div>
+
+        <div class="rule-panel">
+          <strong>Signed-in account</strong>
+          <div class="helper-copy" id="emailDisplay">Loading your account...</div>
+        </div>
+
+        <div class="destination-card">
+          <span class="destination-label">Next destination</span>
+          <span class="destination-value" id="destinationLabel">Games Dashboard</span>
+        </div>
+
+        <p class="quick-note">Check Spam or Promotions if you do not see the email yet.</p>
+
+        <div class="status-banner" id="verifyStatus" aria-live="polite"></div>
+
+        <div class="auth-form">
+          <button class="primary-btn" id="refreshButton" type="button">I've verified, continue</button>
+          <button class="secondary-btn" id="resendButton" type="button">Resend email</button>
+          <button class="secondary-btn" id="accountButton" type="button">Use a different email</button>
+          <button class="secondary-btn" id="logoutButton" type="button">Logout</button>
+        </div>
+
+        <div class="footer-links">
+          <a class="utility-link" id="loginLink" href="/login/">Back to login</a>
+          <a class="utility-link" href="/">Back to public pages</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      auth,
+      ensureBrowserPersistence,
+      getCooldownRemaining,
+      onAuthStateChanged,
+      safelyReloadUser,
+      sanitizeNextPath,
+      sendAppVerificationEmail,
+      signOut,
+      startCooldown,
+      syncUserProfileAuthState
+    } from "/assets/js/firebase-client.js";
+
+    await ensureBrowserPersistence();
+
+    const params = new URLSearchParams(window.location.search);
+    const nextPath = sanitizeNextPath(params.get("next"));
+    const isNewSignup = params.get("new") === "1";
+    const mailStatus = params.get("mail");
+
+    const destinationLabel = document.getElementById("destinationLabel");
+    const emailDisplay = document.getElementById("emailDisplay");
+    const verifyStatus = document.getElementById("verifyStatus");
+    const refreshButton = document.getElementById("refreshButton");
+    const resendButton = document.getElementById("resendButton");
+    const accountButton = document.getElementById("accountButton");
+    const logoutButton = document.getElementById("logoutButton");
+    const loginLink = document.getElementById("loginLink");
+
+    let currentUser = null;
+    let resendTimer = null;
+
+    destinationLabel.textContent = formatDestinationLabel(nextPath);
+    loginLink.href = `/login/?next=${encodeURIComponent(nextPath)}`;
+
+    onAuthStateChanged(auth, async rawUser => {
+      if (!rawUser) {
+        emailDisplay.textContent = "No signed-in account was found. Please log in again before continuing.";
+        showStatus("error", "Please log in again to continue.");
+        refreshButton.disabled = true;
+        resendButton.disabled = true;
+        return;
+      }
+
+      currentUser = await safelyReloadUser(rawUser);
+      await syncUserProfileAuthState(currentUser).catch(() => {});
+      emailDisplay.textContent = currentUser.email || "Unknown email";
+
+      if (currentUser.emailVerified) {
+        showStatus("success", "Email verified. Redirecting...");
+        window.location.replace(nextPath);
+        return;
+      }
+
+      if (mailStatus === "failed") {
+        showStatus("error", "We could not send the verification email yet. Use the resend button below to try again.");
+      } else if (isNewSignup) {
+        showStatus("info", "Verification email sent. Open it, then come back here.");
+      } else {
+        showStatus("info", "Open the verification email, then continue.");
+      }
+
+      syncResendButton();
+    });
+
+    refreshButton.addEventListener("click", async () => {
+      if (!currentUser) {
+        showStatus("error", "Sign in again before checking verification status.");
+        return;
+      }
+
+      setButtonState(refreshButton, true, "Checking...");
+      currentUser = await safelyReloadUser(currentUser);
+      await syncUserProfileAuthState(currentUser).catch(() => {});
+
+      if (currentUser.emailVerified) {
+        showStatus("success", "Email verified. Redirecting...");
+        window.location.replace(nextPath);
+        return;
+      }
+
+      showStatus("error", "This account is still unverified. Please use the link from your inbox first.");
+      setButtonState(refreshButton, false, "I've verified, continue");
+    });
+
+    resendButton.addEventListener("click", async () => {
+      if (!currentUser) {
+        showStatus("error", "Sign in again before requesting another verification email.");
+        return;
+      }
+
+      const remaining = getCooldownRemaining(`verify-resend:${currentUser.uid}`);
+      if (remaining > 0) {
+        showStatus("error", `Please wait ${Math.ceil(remaining / 1000)} seconds before resending.`);
+        syncResendButton();
+        return;
+      }
+
+      setButtonState(resendButton, true, "Sending...");
+
+      try {
+        const result = await sendAppVerificationEmail(currentUser, nextPath);
+        startCooldown(`verify-resend:${currentUser.uid}`, 60_000);
+        showStatus("success", result?.message || "Verification email sent. Check your inbox and spam folder.");
+      } catch (error) {
+        showStatus("error", error?.message || "We could not resend the verification email right now. Please try again shortly.");
+      } finally {
+        setButtonState(resendButton, false, "Resend email");
+        syncResendButton();
+      }
+    });
+
+    accountButton.addEventListener("click", () => {
+      window.location.href = `/account/?next=${encodeURIComponent(nextPath)}`;
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      await signOut(auth);
+      window.location.href = `/login/?next=${encodeURIComponent(nextPath)}`;
+    });
+
+    function syncResendButton() {
+      clearInterval(resendTimer);
+      if (!currentUser) return;
+
+      const updateLabel = () => {
+        const remaining = getCooldownRemaining(`verify-resend:${currentUser.uid}`);
+        if (remaining <= 0) {
+          resendButton.disabled = false;
+          resendButton.textContent = "Resend email";
+          return false;
+        }
+
+        resendButton.disabled = true;
+        resendButton.textContent = `Resend in ${Math.ceil(remaining / 1000)}s`;
+        return true;
+      };
+
+      if (updateLabel()) {
+        resendTimer = setInterval(() => {
+          if (!updateLabel()) {
+            clearInterval(resendTimer);
+          }
+        }, 1000);
+      }
+    }
+
+    function setButtonState(button, loading, label) {
+      button.disabled = loading;
+      button.textContent = label;
+    }
+
+    function showStatus(type, message) {
+      verifyStatus.textContent = message;
+      verifyStatus.className = `status-banner show ${type}`;
+    }
+
+    function formatDestinationLabel(path) {
+      if (path === "/games/") return "Games Dashboard";
+      if (path === "/request_game/") return "Request a Game";
+      if (path === "/account/") return "Account & Security";
+      if (path.startsWith("/games/")) return "Protected game route";
+      return "Protected destination";
+    }
+  </script>
+</body>
+
+</html>

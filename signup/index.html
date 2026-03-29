@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#040710">
+  <title>Create Account | WebArcade</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@500;700;800&family=Space+Grotesk:wght@500;700&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/auth-portal.css">
+</head>
+
+<body class="auth-page">
+  <main class="auth-shell auth-shell--compact">
+    <section class="form-panel">
+      <div class="auth-card auth-card--compact">
+        <div class="card-header">
+          <a href="/" class="back-link">Return to Home</a>
+          <span class="eyebrow">Player Signup</span>
+          <h1>Create account</h1>
+          <p class="card-copy">Pick a username, add your Gmail, and get verified.</p>
+        </div>
+
+        <form class="auth-form" id="signupForm" novalidate>
+          <div class="field-shell" id="usernameShell" data-state="default">
+            <label class="field-label" for="username">Username</label>
+            <input class="field-input" id="username" name="username" type="text"
+              placeholder="3-20 characters, letters, numbers, underscore" maxlength="20" autocomplete="username"
+              autocapitalize="none" spellcheck="false">
+            <div class="field-note" id="usernameNote">Shown publicly.</div>
+          </div>
+
+          <div class="field-shell" id="emailShell" data-state="default">
+            <label class="field-label" for="email">Gmail address</label>
+            <input class="field-input" id="email" name="email" type="email" placeholder="name@gmail.com"
+              autocomplete="email" spellcheck="false" inputmode="email">
+            <div class="field-note" id="emailNote">Use a Gmail address you can verify.</div>
+          </div>
+
+          <div class="field-shell" id="passwordShell" data-state="default">
+            <label class="field-label" for="password">Password</label>
+            <div class="password-shell">
+              <input class="field-input" id="password" name="password" type="password"
+                placeholder="Create a strong password" autocomplete="new-password">
+              <button class="password-toggle" type="button" data-password-toggle="password">Show</button>
+            </div>
+            <div class="field-note" id="passwordNote">At least 10 characters with upper, lower, and a number.</div>
+          </div>
+
+          <div class="field-shell" id="confirmShell" data-state="default">
+            <label class="field-label" for="confirmPassword">Confirm password</label>
+            <div class="password-shell">
+              <input class="field-input" id="confirmPassword" name="confirmPassword" type="password"
+                placeholder="Re-enter your password" autocomplete="new-password">
+              <button class="password-toggle" type="button" data-password-toggle="confirmPassword">Show</button>
+            </div>
+            <div class="field-note" id="confirmNote">Re-enter the same password.</div>
+          </div>
+
+          <label class="check-line" for="termsAccepted">
+            <input id="termsAccepted" type="checkbox">
+            <span>I agree to the WebArcade <a class="inline-link" href="/terms/">Terms</a> and
+              <a class="inline-link" href="/privacy/">Privacy Policy</a>.</span>
+          </label>
+
+          <div class="status-banner" id="signupStatus" aria-live="polite"></div>
+
+          <button class="primary-btn" id="signupButton" type="submit">Create account</button>
+        </form>
+
+        <div class="footer-links">
+          <span>Already have an account? <a class="inline-link" id="loginLink" href="/login/">Login</a></span>
+          <a class="utility-link" href="/">Back to public pages</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      EMAIL_VALIDATION_LIMITATION,
+      auth,
+      checkPasswordBreach,
+      cleanupFailedSignup,
+      clearRateLimitState,
+      createUserProfile,
+      createUserWithEmailAndPassword,
+      ensureBrowserPersistence,
+      getRateLimitState,
+      isUsernameTaken,
+      normalizeEmail,
+      onAuthStateChanged,
+      recordRateLimitAttempt,
+      safelyReloadUser,
+      sanitizeNextPath,
+      sendAppVerificationEmail,
+      setAuthPersistence,
+      startCooldown,
+      syncUserProfileAuthState,
+      updateProfile,
+      validateEmail,
+      validatePassword,
+      validateUsername
+    } from "/assets/js/firebase-client.js";
+
+    await ensureBrowserPersistence();
+
+    const params = new URLSearchParams(window.location.search);
+    const nextPath = sanitizeNextPath(params.get("next"));
+
+    const loginLink = document.getElementById("loginLink");
+    const signupForm = document.getElementById("signupForm");
+    const signupButton = document.getElementById("signupButton");
+    const termsAccepted = document.getElementById("termsAccepted");
+    const signupStatus = document.getElementById("signupStatus");
+
+    const usernameInput = document.getElementById("username");
+    const emailInput = document.getElementById("email");
+    const passwordInput = document.getElementById("password");
+    const confirmInput = document.getElementById("confirmPassword");
+
+    const usernameShell = document.getElementById("usernameShell");
+    const emailShell = document.getElementById("emailShell");
+    const passwordShell = document.getElementById("passwordShell");
+    const confirmShell = document.getElementById("confirmShell");
+
+    const usernameNote = document.getElementById("usernameNote");
+    const emailNote = document.getElementById("emailNote");
+    const passwordNote = document.getElementById("passwordNote");
+    const confirmNote = document.getElementById("confirmNote");
+
+    let isSubmitting = false;
+    let usernameTimer;
+    let breachTimer;
+    let lastCheckedPassword = "";
+
+    loginLink.href = `/login/?next=${encodeURIComponent(nextPath)}`;
+    emailNote.innerHTML = `Only valid <code>@gmail.com</code> addresses are accepted. ${EMAIL_VALIDATION_LIMITATION}`;
+
+    onAuthStateChanged(auth, async rawUser => {
+      if (!rawUser || isSubmitting) return;
+
+      const user = await safelyReloadUser(rawUser);
+      await syncUserProfileAuthState(user).catch(() => {});
+
+      if (user.emailVerified) {
+        window.location.replace(nextPath);
+        return;
+      }
+
+      window.location.replace(`/verify-email/?next=${encodeURIComponent(nextPath)}`);
+    });
+
+    usernameInput.addEventListener("input", () => {
+      clearTimeout(usernameTimer);
+      const username = usernameInput.value.trim();
+      const usernameError = validateUsername(username);
+
+      if (usernameError) {
+        setFieldState(usernameShell, usernameNote, "error", usernameError);
+        return;
+      }
+
+      setFieldState(usernameShell, usernameNote, "default", "Checking availability...");
+
+      usernameTimer = setTimeout(async () => {
+        const taken = await isUsernameTaken(username);
+        if (taken) {
+          setFieldState(usernameShell, usernameNote, "error", "That username is already taken.");
+          return;
+        }
+
+        setFieldState(usernameShell, usernameNote, "success", "Username is available.");
+      }, 450);
+    });
+
+    emailInput.addEventListener("input", () => {
+      const emailError = validateEmail(emailInput.value);
+      if (emailError) {
+        setFieldState(emailShell, emailNote, "error", emailError);
+        return;
+      }
+
+      setFieldState(emailShell, emailNote, "success", EMAIL_VALIDATION_LIMITATION);
+    });
+
+    passwordInput.addEventListener("input", () => {
+      const password = passwordInput.value;
+      const passwordError = validatePassword(password, {
+        username: usernameInput.value,
+        email: emailInput.value
+      });
+
+      if (passwordError) {
+        setFieldState(passwordShell, passwordNote, "error", passwordError);
+      } else {
+        setFieldState(passwordShell, passwordNote, "success", "Password looks good.");
+      }
+
+      clearTimeout(breachTimer);
+      breachTimer = setTimeout(async () => {
+        if (!password || password === lastCheckedPassword || passwordError) return;
+        lastCheckedPassword = password;
+
+        const breachCount = await checkPasswordBreach(password);
+        if (breachCount > 0) {
+          setFieldState(passwordShell, passwordNote, "warning", `This password has appeared in ${breachCount.toLocaleString()} known breaches. Pick a different one.`);
+        }
+      }, 900);
+
+      validateConfirmPassword();
+    });
+
+    confirmInput.addEventListener("input", validateConfirmPassword);
+
+    document.querySelectorAll("[data-password-toggle]").forEach(toggle => {
+      toggle.addEventListener("click", () => {
+        const target = document.getElementById(toggle.dataset.passwordToggle);
+        const nextType = target.type === "password" ? "text" : "password";
+        target.type = nextType;
+        toggle.textContent = nextType === "password" ? "Show" : "Hide";
+      });
+    });
+
+    signupForm.addEventListener("submit", async event => {
+      event.preventDefault();
+      clearStatus(signupStatus);
+
+      const rateLimit = getRateLimitState("signup", { maxAttempts: 4, windowMs: 60_000 });
+      if (!rateLimit.allowed) {
+        showStatus(signupStatus, "error", `Too many signup attempts. Try again in ${Math.ceil(rateLimit.retryAfterMs / 1000)} seconds.`);
+        return;
+      }
+
+      const username = usernameInput.value.trim();
+      const email = normalizeEmail(emailInput.value);
+      const password = passwordInput.value;
+      const confirmPassword = confirmInput.value;
+
+      const usernameError = validateUsername(username);
+      const emailError = validateEmail(email);
+      const passwordError = validatePassword(password, { username, email });
+      const confirmError = password === confirmPassword ? null : "Passwords do not match";
+
+      if (usernameError) {
+        setFieldState(usernameShell, usernameNote, "error", usernameError);
+        return;
+      }
+
+      if (emailError) {
+        setFieldState(emailShell, emailNote, "error", emailError);
+        return;
+      }
+
+      if (passwordError) {
+        setFieldState(passwordShell, passwordNote, "error", passwordError);
+        return;
+      }
+
+      if (confirmError) {
+        setFieldState(confirmShell, confirmNote, "error", confirmError);
+        return;
+      }
+
+      if (!termsAccepted.checked) {
+        showStatus(signupStatus, "error", "You need to accept the Terms and Privacy Policy before creating an account.");
+        return;
+      }
+
+      if (await isUsernameTaken(username)) {
+        setFieldState(usernameShell, usernameNote, "error", "That username is already taken.");
+        return;
+      }
+
+      const breachCount = await checkPasswordBreach(password);
+      if (breachCount > 0) {
+        setFieldState(passwordShell, passwordNote, "warning", `This password has appeared in ${breachCount.toLocaleString()} known breaches. Pick a different one.`);
+        showStatus(signupStatus, "error", "Choose a password that has not appeared in known breaches.");
+        return;
+      }
+
+      isSubmitting = true;
+      setLoading(signupButton, true, "Creating account...");
+      showStatus(signupStatus, "info", "Creating your account and sending a verification email...");
+
+      try {
+        let credential;
+        await setAuthPersistence("local");
+
+        credential = await createUserWithEmailAndPassword(auth, email, password);
+        await updateProfile(credential.user, { displayName: username });
+
+        try {
+          await createUserProfile(credential.user, {
+            username,
+            email,
+            extraFields: {
+              verificationStatus: "pending"
+            }
+          });
+        } catch (profileError) {
+          await cleanupFailedSignup(credential.user, username).catch(() => {});
+          throw profileError;
+        }
+
+        let verificationSendFailed = false;
+        let verificationMessage = "Account created. Check your Gmail inbox for the verification link.";
+        try {
+          const verificationResult = await sendAppVerificationEmail(credential.user, nextPath);
+          verificationMessage = verificationResult?.message || verificationMessage;
+          startCooldown(`verify-resend:${credential.user.uid}`, 60_000);
+        } catch (verificationError) {
+          console.warn("Verification email send failed:", verificationError);
+          verificationSendFailed = true;
+        }
+
+        await syncUserProfileAuthState(await safelyReloadUser(credential.user)).catch(() => {});
+        clearRateLimitState("signup");
+
+        if (verificationSendFailed) {
+          showStatus(
+            signupStatus,
+            "info",
+            "Account created. We could not send the verification email yet, but you can resend it on the next screen."
+          );
+        } else {
+          showStatus(signupStatus, "success", verificationMessage);
+        }
+
+        const verifyUrl = `/verify-email/?next=${encodeURIComponent(nextPath)}&new=1${verificationSendFailed ? "&mail=failed" : ""}`;
+        window.location.replace(verifyUrl);
+      } catch (error) {
+        recordRateLimitAttempt("signup", { windowMs: 60_000 });
+        handleSignupError(error);
+      } finally {
+        isSubmitting = false;
+        setLoading(signupButton, false, "Create account");
+      }
+    });
+
+    function validateConfirmPassword() {
+      if (!confirmInput.value) {
+        setFieldState(confirmShell, confirmNote, "default", "Re-enter the same password.");
+        return;
+      }
+
+      if (passwordInput.value !== confirmInput.value) {
+        setFieldState(confirmShell, confirmNote, "error", "Passwords do not match.");
+        return;
+      }
+
+      setFieldState(confirmShell, confirmNote, "success", "Passwords match.");
+    }
+
+    function handleSignupError(error) {
+      switch (error?.code) {
+        case "auth/email-already-in-use":
+          setFieldState(emailShell, emailNote, "error", "This Gmail address is already registered.");
+          showStatus(signupStatus, "error", "This Gmail address already has an account. Try logging in instead.");
+          return;
+        case "auth/invalid-email":
+          setFieldState(emailShell, emailNote, "error", "Enter a valid Gmail address ending in @gmail.com.");
+          showStatus(signupStatus, "error", "This Gmail address could not be accepted.");
+          return;
+        case "auth/weak-password":
+          setFieldState(passwordShell, passwordNote, "error", "Choose a stronger password before continuing.");
+          showStatus(signupStatus, "error", "This password is too weak for signup.");
+          return;
+        default:
+          showStatus(signupStatus, "error", "We could not complete signup right now. Please try again.");
+      }
+    }
+
+    function setFieldState(shell, note, state, message) {
+      shell.dataset.state = state;
+      note.innerHTML = message;
+      note.className = "field-note";
+      if (state === "error") note.classList.add("is-error");
+      if (state === "success") note.classList.add("is-success");
+      if (state === "warning") note.classList.add("is-warning");
+    }
+
+    function showStatus(element, type, message) {
+      element.textContent = message;
+      element.className = `status-banner show ${type}`;
+    }
+
+    function clearStatus(element) {
+      element.textContent = "";
+      element.className = "status-banner";
+    }
+
+    function setLoading(button, loading, label) {
+      button.disabled = loading;
+      button.textContent = label;
+    }
+  </script>
+</body>
+
+</html>

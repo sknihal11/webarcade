@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="robots" content="noindex,nofollow">
+    <title>UNO Online - WebArcade</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: rgba(30, 41, 59, 0.8);
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --green: #22c55e;
+            --yellow: #eab308;
+            --wild: #111;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        .header {
+            width: 100%;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-sizing: border-box;
+        }
+
+        .room-code {
+            font-family: monospace;
+            color: #6366f1;
+            letter-spacing: 2px;
+        }
+
+        .game-area {
+            flex: 1;
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        .opponents-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .opponent {
+            text-align: center;
+            opacity: 0.5;
+            transition: 0.3s;
+        }
+
+        .opponent.active {
+            opacity: 1;
+            transform: scale(1.1);
+            font-weight: bold;
+            color: #00f3ff;
+        }
+
+        .opponent img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #334155;
+        }
+
+        .center-play {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            flex: 1;
+        }
+
+        .card {
+            width: 80px;
+            height: 120px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 900;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 4px;
+            transform: rotate(-15deg);
+        }
+
+        .card.red {
+            background: var(--red);
+        }
+
+        .card.blue {
+            background: var(--blue);
+        }
+
+        .card.green {
+            background: var(--green);
+        }
+
+        .card.yellow {
+            background: var(--yellow);
+        }
+
+        .card.wild {
+            background: var(--wild);
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .draw-pile {
+            cursor: pointer;
+            background: #334155;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .draw-pile:active {
+            transform: scale(0.95);
+        }
+
+        .my-hand-container {
+            width: 100%;
+            height: 160px;
+            position: relative;
+        }
+
+        .my-hand {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: -20px;
+            height: 100%;
+            width: 100%;
+            overflow-x: auto;
+            padding-bottom: 20px;
+        }
+
+        .my-hand .card {
+            cursor: pointer;
+            transition: 0.2s;
+            margin-left: -30px;
+        }
+
+        .my-hand .card:first-child {
+            margin-left: 0;
+        }
+
+        .my-hand .card:hover {
+            transform: translateY(-20px);
+            z-index: 10;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .my-hand.disabled {
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        /* Color Picker Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .color-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .color-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 243, 255, 0.9);
+            color: black;
+            font-weight: bold;
+            padding: 10px 30px;
+            border-radius: 20px;
+            opacity: 0;
+            transition: 0.3s;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .game-over-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 200;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-over-modal h1 {
+            font-size: 50px;
+            color: #0f0;
+            margin-bottom: 10px;
+            text-shadow: 0 0 20px #0f0;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <a href="/games/" style="color:#94a3b8; text-decoration:none;">← Leave</a>
+        <div class="room-code" id="roomCodeDisplay">ROOM: ----</div>
+        <div id="turnIndicator" style="font-weight:bold; color:#00f3ff;">Waiting...</div>
+    </div>
+
+    <div class="game-area">
+        <div class="opponents-row" id="opponentsDiv">
+            <!-- Opponents injected here -->
+        </div>
+
+        <div class="center-play">
+            <div class="card draw-pile" onclick="drawCard()" id="drawPileBtn">DRAW</div>
+            <div class="card red" id="currentCardDisplay">?</div>
+        </div>
+
+        <div class="my-hand-container">
+            <div class="my-hand disabled" id="myHandDiv">
+                <!-- Cards injected here -->
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="colorPickerModal">
+        <h2>Choose Color</h2>
+        <div class="color-grid">
+            <button class="color-btn" style="background:var(--red);" onclick="playWild('red')"></button>
+            <button class="color-btn" style="background:var(--blue);" onclick="playWild('blue')"></button>
+            <button class="color-btn" style="background:var(--green);" onclick="playWild('green')"></button>
+            <button class="color-btn" style="background:var(--yellow);" onclick="playWild('yellow')"></button>
+        </div>
+    </div>
+
+    <div class="toast" id="toastMsg">Message!</div>
+
+    <div class="game-over-modal" id="gameOverModal">
+        <h1 id="winStatusText">YOU WIN!</h1>
+
+
+        <button class="btn" onclick="window.location.href='/games/'">Back to Arcade</button>
+    </div>
+
+    <script type="module">
+        import {
+            auth,
+            db,
+            doc,
+            ensureBrowserPersistence,
+            getDoc,
+            onAuthStateChanged,
+            onSnapshot,
+            safelyReloadUser,
+            updateDoc
+        } from "/assets/js/firebase-client.js";
+
+        await ensureBrowserPersistence();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomId = urlParams.get('room');
+
+        let currentUser = null;
+        let gameData = null;
+        let myId = null;
+        let myTurnIndex = -1;
+        let pendingWildCard = null;
+        const loginRedirect = `/login/?next=${encodeURIComponent(`/games/uno_game/${window.location.search}`)}`;
+
+        if (!roomId) window.location.href = '/games/';
+
+        document.getElementById('roomCodeDisplay').innerText = `ROOM: ${roomId}`;
+
+        onAuthStateChanged(auth, async u => {
+            if (!u) {
+                window.location.href = loginRedirect;
+                return;
+            }
+
+            currentUser = await safelyReloadUser(u);
+            if (!currentUser.emailVerified) {
+                window.location.href = `/verify-email/?next=${encodeURIComponent(`/games/uno_game/${window.location.search}`)}`;
+                return;
+            }
+
+            myId = currentUser.uid;
+            listenToGame();
+        });
+
+        function showToast(msg) {
+            const el = document.getElementById('toastMsg');
+            el.innerText = msg;
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, 2000);
+        }
+
+        function listenToGame() {
+            onSnapshot(doc(db, "matches", roomId), (snap) => {
+                const data = snap.data();
+                if (!data) { alert("Room deleted!"); window.location.href = '/games/'; return; }
+
+                // If game already finished, handle win screen
+                if (data.status === 'finished') {
+                    showGameOver(data.winner);
+                    return;
+                }
+
+                gameData = data;
+                myTurnIndex = data.players.indexOf(myId);
+
+                renderGame();
+            });
+        }
+
+        function renderGame() {
+            if (!gameData || myTurnIndex === -1) return;
+
+            const isMyTurn = gameData.turnIndex === myTurnIndex;
+            const myHandContainer = document.getElementById('myHandDiv');
+
+            // Turn indication
+            if (isMyTurn) {
+                document.getElementById('turnIndicator').innerText = "YOUR TURN!";
+                document.getElementById('turnIndicator').style.color = '#0f0';
+                myHandContainer.classList.remove('disabled');
+            } else {
+                const currentId = gameData.players[gameData.turnIndex];
+                const pInfo = gameData.lobbyInfo ? gameData.lobbyInfo.find(x => x.uid === currentId) : null;
+                document.getElementById('turnIndicator').innerText = pInfo ? `${pInfo.name.substring(0, 10)}'s turn` : "Opponent's turn";
+                document.getElementById('turnIndicator').style.color = '#94a3b8';
+                myHandContainer.classList.add('disabled');
+            }
+
+            // Render Center Card
+            const cc = gameData.currentCard;
+            const ccDiv = document.getElementById('currentCardDisplay');
+            ccDiv.className = `card ${cc.color}`;
+            ccDiv.innerText = cc.val === 'WILD' || cc.val === '+4' ? 'W' : cc.val;
+
+            // Render My Hand
+            const myCards = gameData.hands[myId] || [];
+            myHandContainer.innerHTML = '';
+            myCards.forEach(card => {
+                const canPlay = card.color === 'wild' || card.color === cc.color || card.val === cc.val;
+
+                const cardDiv = document.createElement('div');
+                cardDiv.className = `card ${card.color}`;
+                if (!canPlay && isMyTurn) cardDiv.style.opacity = '0.5';
+
+                cardDiv.innerText = card.val === 'WILD' || card.val === '+4' ? 'W' : card.val;
+
+                cardDiv.onclick = () => {
+                    if (isMyTurn && canPlay) attemptPlayCard(card);
+                };
+                myHandContainer.appendChild(cardDiv);
+            });
+
+            // Render Opponents
+            const oppDiv = document.getElementById('opponentsDiv');
+            oppDiv.innerHTML = '';
+            gameData.players.forEach((pId, idx) => {
+                if (pId === myId) return;
+                const handCount = gameData.hands[pId] ? gameData.hands[pId].length : 0;
+
+                const html = `
+                    <div class="opponent ${idx === gameData.turnIndex ? 'active' : ''}">
+                        <div style="font-size:24px; color:white;">🃏 ${handCount}</div>
+                    </div>
+                `;
+                oppDiv.innerHTML += html;
+            });
+        }
+
+        window.attemptPlayCard = (card) => {
+            if (card.color === 'wild') {
+                pendingWildCard = card;
+                document.getElementById('colorPickerModal').style.display = 'flex';
+                return;
+            }
+            executePlay(card, card.color);
+        };
+
+        window.playWild = (chosenColor) => {
+            document.getElementById('colorPickerModal').style.display = 'none';
+            if (pendingWildCard) {
+                executePlay(pendingWildCard, chosenColor);
+                pendingWildCard = null;
+            }
+        };
+
+        window.drawCard = async () => {
+            if (gameData.turnIndex !== myTurnIndex) return;
+
+            let deck = [...gameData.deck];
+            let hand = [...gameData.hands[myId]];
+
+            if (deck.length === 0) { showToast("Deck is empty!"); return; }
+
+            const newCard = deck.pop();
+            hand.push(newCard);
+
+            const nextTurn = getNextTurn();
+
+            await updateDoc(doc(db, "matches", roomId), {
+                deck: deck,
+                [`hands.${myId}`]: hand,
+                turnIndex: nextTurn
+            });
+        };
+
+        async function executePlay(card, chosenColor) {
+            let hand = [...gameData.hands[myId]];
+            hand = hand.filter(c => c.id !== card.id);
+
+            let nextCard = { ...card, color: chosenColor || card.color };
+            let direction = gameData.direction || 1;
+            let skipCount = 1;
+
+            if (card.val === 'REV') {
+                direction *= -1;
+                if (gameData.players.length === 2) skipCount = 2; // In 2-p, reverse acts as skip
+            } else if (card.val === 'SKIP') {
+                skipCount = 2;
+            }
+
+            let nextTurn = getNextTurn(skipCount, direction);
+
+            // Check Win Condition
+            if (hand.length === 0) {
+                await updateDoc(doc(db, "matches", roomId), {
+                    status: 'finished',
+                    winner: myId
+                });
+                return;
+            }
+
+            // Apply +2 or +4 logic to target player before updating turn
+            let deck = [...gameData.deck];
+            let nextPlayerId = gameData.players[getNextTurn(1, direction)];
+            let targetHand = [...(gameData.hands[nextPlayerId] || [])];
+
+            if (card.val === '+2') {
+                if (deck.length >= 2) { targetHand.push(deck.pop()); targetHand.push(deck.pop()); skipCount = 2; }
+            } else if (card.val === '+4') {
+                if (deck.length >= 4) { targetHand.push(deck.pop()); targetHand.push(deck.pop()); targetHand.push(deck.pop()); targetHand.push(deck.pop()); skipCount = 2; }
+            }
+
+            nextTurn = getNextTurn(skipCount, direction);
+
+            if (hand.length === 1) showToast("UNO!");
+
+            const updates = {
+                currentCard: nextCard,
+                [`hands.${myId}`]: hand,
+                direction: direction,
+                turnIndex: nextTurn,
+                deck: deck
+            };
+            if (card.val === '+2' || card.val === '+4') {
+                updates[`hands.${nextPlayerId}`] = targetHand;
+            }
+
+            await updateDoc(doc(db, "matches", roomId), updates);
+        }
+
+        function getNextTurn(steps = 1, dir = null) {
+            const currentDir = dir !== null ? dir : (gameData.direction || 1);
+            let n = (gameData.turnIndex + (steps * currentDir)) % gameData.players.length;
+            if (n < 0) n += gameData.players.length;
+            return n;
+        }
+
+        function showGameOver(winnerId) {
+            document.getElementById('gameOverModal').style.display = 'flex';
+            if (winnerId === myId) {
+                document.getElementById('winStatusText').innerText = 'YOU WIN!';
+                document.getElementById('winStatusText').style.color = '#0f0';
+                document.getElementById('winStatusText').style.textShadow = '0 0 20px #0f0';
+            } else {
+                document.getElementById('winStatusText').innerText = 'YOU LOST!';
+                document.getElementById('winStatusText').style.color = '#f00';
+                document.getElementById('winStatusText').style.textShadow = '0 0 20px #f00';
+            }
+        }
+    </script>
+</body>
+
+</html>

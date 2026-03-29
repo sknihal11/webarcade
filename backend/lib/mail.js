@@ -11,22 +11,35 @@ function buildFromAddress() {
   return `${MAIL_FROM_NAME.replace(/[<>"]/g, "").trim()} <${MAIL_FROM_ADDRESS}>`;
 }
 
-async function sendEmail({ to, subject, html, text, headers = {} }) {
-  const result = await resend.emails.send({
-    from: buildFromAddress(),
-    to: Array.isArray(to) ? to : [to],
-    subject,
-    html,
-    text,
-    replyTo: MAIL_REPLY_TO,
-    headers
-  });
+function createMailProviderError(error) {
+  const wrappedError = new Error(error?.message || "Resend request failed.");
+  wrappedError.code = error?.name || error?.code || "application_error";
+  wrappedError.statusCode = Number(error?.statusCode) || 500;
+  return wrappedError;
+}
 
-  if (result?.error) {
-    throw new Error(result.error.message || "Resend request failed.");
+async function sendEmail({ to, subject, html, text, headers = {} }, options = {}) {
+  try {
+    const result = await resend.emails.send({
+      from: buildFromAddress(),
+      to: Array.isArray(to) ? to : [to],
+      subject,
+      html,
+      text,
+      replyTo: MAIL_REPLY_TO,
+      headers
+    }, options.idempotencyKey ? {
+      idempotencyKey: options.idempotencyKey
+    } : undefined);
+
+    if (result?.error) {
+      throw createMailProviderError(result.error);
+    }
+
+    return result?.data || result;
+  } catch (error) {
+    throw createMailProviderError(error);
   }
-
-  return result?.data || result;
 }
 
 function buildResetEmail(resetLink) {
