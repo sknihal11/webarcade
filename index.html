@@ -5,18 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="theme-color" content="#04050f">
-  <meta name="description" content="WebArcade is relaunching. A new website is being built and will go live on June 10, 2026. Stay tuned.">
+  <meta name="description" content="WebArcade is relaunching. A new website is being built and will go live on June 14, 2026. Stay tuned.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://webarcade.in/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="WebArcade">
-  <meta property="og:title" content="WebArcade | Coming Soon — June 10, 2026">
-  <meta property="og:description" content="Something bigger is loading. WebArcade relaunches June 10, 2026 at 1:30 PM.">
+  <meta property="og:title" content="WebArcade | Coming Soon — June 14, 2026">
+  <meta property="og:description" content="Something bigger is loading. WebArcade relaunches June 14, 2026 at 11:00 AM.">
   <meta property="og:url" content="https://webarcade.in/">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="WebArcade | Coming Soon — June 10, 2026">
-  <meta name="twitter:description" content="Something bigger is loading. WebArcade relaunches June 10, 2026 at 1:30 PM.">
-  <title>WebArcade | Coming Soon — June 10, 2026</title>
+  <meta name="twitter:title" content="WebArcade | Coming Soon — June 14, 2026">
+  <meta name="twitter:description" content="Something bigger is loading. WebArcade relaunches June 14, 2026 at 11:00 AM.">
+  <title>WebArcade | Coming Soon — June 14, 2026</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
 
@@ -48,6 +48,7 @@
       --success: #00ff9d;
       --danger: #ff0055;
       --warn: #ffb300;
+      --warn-glow: rgba(255, 179, 0, 0.35);
     }
 
     *, *::before, *::after {
@@ -117,6 +118,96 @@
     .corner.br { bottom: clamp(10px,2vw,20px); right: clamp(10px,2vw,20px); transform: scale(-1); }
 
     @media (max-width:400px) { .corner { display: none; } }
+
+    /* ── DELAY ALERT BANNER ── */
+    .delay-banner {
+      position: relative;
+      z-index: 6;
+      background: linear-gradient(90deg, rgba(255,179,0,0.08), rgba(255,179,0,0.14), rgba(255,179,0,0.08));
+      border-top: 2px solid rgba(255,179,0,0.55);
+      border-bottom: 2px solid rgba(255,179,0,0.55);
+      padding: clamp(14px,3vw,20px) clamp(16px,5vw,5%);
+      text-align: center;
+      overflow: hidden;
+    }
+    .delay-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        90deg,
+        rgba(255,179,0,0.03) 0px,
+        rgba(255,179,0,0.03) 2px,
+        transparent 2px,
+        transparent 24px
+      );
+      pointer-events: none;
+    }
+    .delay-banner-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(6px,1.5vw,10px);
+      position: relative;
+      z-index: 1;
+    }
+    .delay-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(8px,1.8vw,11px);
+      letter-spacing: .28em;
+      color: var(--warn);
+      text-shadow: 0 0 12px var(--warn-glow);
+      text-transform: uppercase;
+    }
+    .delay-tag-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 10px var(--warn), 0 0 20px var(--warn-glow);
+      animation: warnBlink 1s step-end infinite;
+      flex-shrink: 0;
+    }
+    @keyframes warnBlink { 50% { opacity: 0; } }
+    .delay-headline {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1rem, 3.5vw, 1.7rem);
+      letter-spacing: .04em;
+      color: var(--warn);
+      text-shadow: 0 0 20px var(--warn-glow), 0 0 40px rgba(255,179,0,0.2);
+      line-height: 1.15;
+    }
+    .delay-detail {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(.82rem, 2vw, 1rem);
+      color: rgba(255,179,0,0.65);
+      letter-spacing: .03em;
+      line-height: 1.6;
+      max-width: min(600px, 90vw);
+    }
+    .delay-detail strong {
+      color: var(--warn);
+      font-weight: 700;
+    }
+    .delay-strikethrough {
+      text-decoration: line-through;
+      opacity: 0.5;
+    }
+    .delay-arrow {
+      display: inline-block;
+      margin: 0 6px;
+      color: var(--warn);
+      font-weight: 900;
+      animation: arrowPulse 1.2s ease-in-out infinite;
+    }
+    @keyframes arrowPulse {
+      0%, 100% { transform: translateX(0); opacity: 1; }
+      50% { transform: translateX(4px); opacity: 0.7; }
+    }
 
     /* ── HEADER (logo only) ── */
     header {
@@ -462,6 +553,123 @@
       animation: fadeSlideUp 1s ease both .9s;
     }
 
+    /* ── DELAY NOTICE PANEL ── */
+    .delay-panel {
+      position: relative;
+      z-index: 2;
+      width: min(820px, calc(100% - 32px));
+      margin: 0 auto clamp(28px,5vw,48px);
+      padding: clamp(24px,4vw,40px) clamp(24px,5vw,48px);
+      border-radius: 10px;
+      border: 1px solid rgba(255,179,0,0.35);
+      background: linear-gradient(180deg, rgba(255,179,0,0.06), rgba(20,14,0,0.7));
+      box-shadow: 0 0 0 1px rgba(255,179,0,0.06), 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(255,179,0,0.06);
+      overflow: hidden;
+    }
+    .delay-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--warn), transparent);
+      box-shadow: 0 0 14px var(--warn-glow);
+    }
+    .delay-panel::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% -10%, rgba(255,179,0,0.07), transparent 65%);
+      pointer-events: none;
+    }
+    .delay-panel-eyebrow {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(8px,1.8vw,10px);
+      letter-spacing: .3em;
+      color: var(--warn);
+      text-shadow: 0 0 10px var(--warn-glow);
+      margin-bottom: clamp(10px,2vw,16px);
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .delay-panel-eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 10px var(--warn), 0 0 20px var(--warn-glow);
+      animation: warnBlink 1s step-end infinite;
+      flex-shrink: 0;
+    }
+    .delay-panel-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.1rem,3.5vw,2rem);
+      letter-spacing: .02em;
+      color: var(--warn);
+      text-shadow: 0 0 20px var(--warn-glow);
+      margin-bottom: clamp(14px,3vw,22px);
+      line-height: 1.15;
+      position: relative;
+      z-index: 1;
+    }
+    .delay-panel-body {
+      font-size: clamp(.9rem,2vw,1.05rem);
+      color: rgba(255,200,80,0.72);
+      line-height: 1.8;
+      position: relative;
+      z-index: 1;
+      max-width: 640px;
+    }
+    .delay-panel-body p + p { margin-top: 1em; }
+    .delay-panel-body .hl { color: var(--warn); font-weight: 700; }
+    .delay-panel-schedule {
+      margin-top: clamp(16px,3vw,24px);
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(10px,2vw,16px);
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+    .delay-schedule-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .delay-schedule-label {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(7px,1.5vw,9px);
+      letter-spacing: .22em;
+      color: rgba(255,179,0,0.45);
+      text-transform: uppercase;
+    }
+    .delay-schedule-val {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(.78rem,2vw,1rem);
+      font-weight: 700;
+      letter-spacing: .06em;
+    }
+    .delay-schedule-val.old {
+      color: rgba(255,179,0,0.35);
+      text-decoration: line-through;
+    }
+    .delay-schedule-val.new-date {
+      color: var(--warn);
+      text-shadow: 0 0 10px var(--warn-glow);
+    }
+    .delay-arrow-icon {
+      font-size: clamp(1.1rem,3vw,1.5rem);
+      color: var(--warn);
+      opacity: 0.6;
+      align-self: flex-end;
+      padding-bottom: 2px;
+    }
+
     /* ── LAUNCH MESSAGE PANEL ── */
     .message-section {
       position: relative;
@@ -634,6 +842,8 @@
     @media (max-width:480px) {
       .hero-title { font-size:1.8rem; }
       .hero { min-height:60vh; padding-top:36px; }
+      .delay-panel-schedule { flex-direction: column; align-items: flex-start; }
+      .delay-arrow-icon { align-self: flex-start; transform: rotate(90deg); }
     }
 
     @media (prefers-reduced-motion:reduce) {
@@ -666,6 +876,19 @@
     <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
   </header>
 
+  <!-- ── DELAY ALERT BANNER ── -->
+  <div class="delay-banner" role="alert" aria-live="polite">
+    <div class="delay-banner-inner">
+      <span class="delay-tag"><span class="delay-tag-dot"></span>LAUNCH UPDATE</span>
+      <p class="delay-headline">Launch rescheduled to June 14, 2026 at 11:00 AM IST</p>
+      <p class="delay-detail">
+        The original June 10 launch has been pushed back to give us more time to get everything right.
+        <strong>New target: June 14, 2026 at 11:00 AM IST.</strong>
+        Worth the wait — we promise.
+      </p>
+    </div>
+  </div>
+
   <!-- ── TICKER ── -->
   <div class="ticker">
     <div class="ticker-inner" id="tickerInner"></div>
@@ -680,7 +903,7 @@
       <span class="line"><span>CONQUER.</span></span>
     </h1>
     <p class="hero-sub">WebArcade is a browser-based arcade gaming platform for fast online play, score chasing, and retro-inspired competition across classic game styles.</p>
-    <div class="hero-warning">MAJOR WEBSITE WORKS UNDERGOING — NEW WEBSITE LAUNCHES JUNE 10, 2026 AT 1:30 PM</div>
+    <div class="hero-warning">LAUNCH DELAYED — NEW WEBSITE NOW LIVE ON JUNE 14, 2026 AT 11:00 AM IST</div>
   </div>
 
   <!-- ── STATS BAR ── -->
@@ -722,11 +945,36 @@
         <span class="countdown-unit-label">Seconds</span>
       </div>
     </div>
-    <p class="countdown-launch-info">Target: <strong>JUNE 10, 2026 — 13:30 IST</strong></p>
+    <p class="countdown-launch-info">Target: <strong>JUNE 14, 2026 — 11:00 AM IST</strong></p>
     <div class="progress-track">
       <div class="progress-bar" id="progressBar" style="width:0%"></div>
     </div>
     <p class="progress-label" id="progressLabel">CALCULATING PROGRESS...</p>
+  </section>
+
+  <!-- ── DELAY NOTICE PANEL ── -->
+  <section class="delay-panel" aria-label="Launch delay notice">
+    <p class="delay-panel-eyebrow">SYSTEM DELAY — LAUNCH UPDATE</p>
+    <h2 class="delay-panel-title">We're taking 4 more days.<br>To make it 10× better.</h2>
+    <div class="delay-panel-body">
+      <p>
+        The June 10 launch was close — but <span class="hl">close isn't good enough</span> for what we're building. We caught a few things that needed fixing before we could put the WebArcade name on it with confidence.
+      </p>
+      <p>
+        So we pushed the date. Not because we failed — because we give a damn. The new arena goes live on <span class="hl">June 14, 2026 at 11:00 AM IST.</span> That's 4 more days of polish, 4 more days of testing, and 4 more days of making sure the platform you walk into is absolutely worth the wait.
+      </p>
+    </div>
+    <div class="delay-panel-schedule">
+      <div class="delay-schedule-item">
+        <span class="delay-schedule-label">Original Launch</span>
+        <span class="delay-schedule-val old">June 10, 2026 — 1:30 PM IST</span>
+      </div>
+      <span class="delay-arrow-icon">→</span>
+      <div class="delay-schedule-item">
+        <span class="delay-schedule-label">New Launch Date</span>
+        <span class="delay-schedule-val new-date">June 14, 2026 — 11:00 AM IST</span>
+      </div>
+    </div>
   </section>
 
   <!-- ── MESSAGE PANEL ── -->
@@ -739,7 +987,7 @@
         We didn't just patch a few pixels and call it a day. We went back to the source code — the concept, the feel, the soul of WebArcade — and rebuilt it from the ground up. Every frame. Every interaction. Every line of neon.
       </p>
       <p>
-        What's coming on <span class="highlight">June 10, 2026 at 1:30 PM</span> isn't an update. It's a full system reboot. A new arena built for players who take their scores seriously, their competition personally, and their arcade experience without compromise.
+        What's coming on <span class="highlight">June 14, 2026 at 11:00 AM</span> isn't an update. It's a full system reboot. A new arena built for players who take their scores seriously, their competition personally, and their arcade experience without compromise.
       </p>
       <p>
         Faster. Sharper. More alive than anything we've shipped before. The leaderboards are getting upgraded. The games are getting sharper. The platform is getting a soul transplant.
@@ -748,14 +996,14 @@
         Stay tuned. Stay ready. <span class="highlight">Your new arcade is almost online.</span>
       </p>
     </div>
-    <div class="msg-badge">● LAUNCHING JUNE 10 AT 1:30 PM IST</div>
+    <div class="msg-badge">● LAUNCHING JUNE 14 AT 11:00 AM IST</div>
     <p class="msg-signature">— THE WEBARCADE TEAM</p>
   </section>
 
   <!-- ── FOOTER ── -->
   <footer class="cyber-footer">
     <div class="footer-bottom">
-      <p>&copy; 2026 WebArcade. All rights reserved. — New website launching June 10, 2026.</p>
+      <p>&copy; 2026 WebArcade. All rights reserved. — New website launching June 14, 2026.</p>
     </div>
   </footer>
 
@@ -806,7 +1054,7 @@
 
     // ── TICKER ──
     (function () {
-      const items = ['WEBARCADE RELAUNCHING JUNE 10', 'NEW WEBSITE INCOMING', 'SYSTEM REBOOT IN PROGRESS', 'LEADERBOARDS UPGRADED', 'ALL-NEW ARENA LOADING', 'STAY TUNED FOR LAUNCH', 'JUNE 10 — 1:30 PM IST', 'SOMETHING BIGGER IS LOADING'];
+      const items = ['LAUNCH RESCHEDULED TO JUNE 14', 'NEW DATE: JUNE 14 — 11:00 AM IST', 'SYSTEM DELAY — WORTH THE WAIT', 'LEADERBOARDS UPGRADED', 'ALL-NEW ARENA LOADING', 'STAY TUNED FOR LAUNCH', 'JUNE 14 — 11:00 AM IST', 'SOMETHING BIGGER IS LOADING'];
       const doubled = [...items, ...items];
       document.getElementById('tickerInner').innerHTML = doubled.map(t => `<span>◆ ${t}</span>`).join('');
     })();
@@ -835,9 +1083,9 @@
 
     // ── COUNTDOWN ──
     (function () {
-      // Launch: June 10 2026, 13:30 IST (UTC+5:30 = UTC 08:00)
-      const launchIST = new Date('2026-06-10T13:30:00+05:30');
-      // Build start reference for progress bar (approx when work started — using June 1)
+      // Launch: June 14 2026, 11:00 AM IST (UTC+5:30 = UTC 05:30)
+      const launchIST = new Date('2026-06-14T11:00:00+05:30');
+      // Build start reference for progress bar
       const buildStart = new Date('2026-06-01T00:00:00+05:30');
       const totalDuration = launchIST - buildStart;
 
