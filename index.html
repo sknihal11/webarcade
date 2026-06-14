@@ -5,18 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="theme-color" content="#04050f">
-  <meta name="description" content="WebArcade is relaunching. A new website is being built and will go live on June 14, 2026. Stay tuned.">
+  <meta name="description" content="WebArcade is coming soon. Launch date to be announced. Stay tuned.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://webarcade.in/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="WebArcade">
-  <meta property="og:title" content="WebArcade | Coming Soon — June 14, 2026">
-  <meta property="og:description" content="Something bigger is loading. WebArcade relaunches June 14, 2026 at 11:00 AM.">
+  <meta property="og:title" content="WebArcade | Coming Soon — Launch Date TBA">
+  <meta property="og:description" content="Something bigger is loading. WebArcade launch date to be announced.">
   <meta property="og:url" content="https://webarcade.in/">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="WebArcade | Coming Soon — June 14, 2026">
-  <meta name="twitter:description" content="Something bigger is loading. WebArcade relaunches June 14, 2026 at 11:00 AM.">
-  <title>WebArcade | Coming Soon — June 14, 2026</title>
+  <meta name="twitter:title" content="WebArcade | Coming Soon — Launch Date TBA">
+  <meta name="twitter:description" content="Something bigger is loading. WebArcade launch date to be announced.">
+  <title>WebArcade | Coming Soon — Launch Date TBA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
 
@@ -49,6 +49,8 @@
       --danger: #ff0055;
       --warn: #ffb300;
       --warn-glow: rgba(255, 179, 0, 0.35);
+      --apology: #a78bfa;
+      --apology-glow: rgba(167, 139, 250, 0.35);
     }
 
     *, *::before, *::after {
@@ -119,13 +121,13 @@
 
     @media (max-width:400px) { .corner { display: none; } }
 
-    /* ── DELAY ALERT BANNER ── */
+    /* ── TBA ALERT BANNER ── */
     .delay-banner {
       position: relative;
       z-index: 6;
-      background: linear-gradient(90deg, rgba(255,179,0,0.08), rgba(255,179,0,0.14), rgba(255,179,0,0.08));
-      border-top: 2px solid rgba(255,179,0,0.55);
-      border-bottom: 2px solid rgba(255,179,0,0.55);
+      background: linear-gradient(90deg, rgba(167,139,250,0.06), rgba(167,139,250,0.12), rgba(167,139,250,0.06));
+      border-top: 2px solid rgba(167,139,250,0.45);
+      border-bottom: 2px solid rgba(167,139,250,0.45);
       padding: clamp(14px,3vw,20px) clamp(16px,5vw,5%);
       text-align: center;
       overflow: hidden;
@@ -136,8 +138,8 @@
       inset: 0;
       background: repeating-linear-gradient(
         90deg,
-        rgba(255,179,0,0.03) 0px,
-        rgba(255,179,0,0.03) 2px,
+        rgba(167,139,250,0.03) 0px,
+        rgba(167,139,250,0.03) 2px,
         transparent 2px,
         transparent 24px
       );
@@ -158,16 +160,16 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,1.8vw,11px);
       letter-spacing: .28em;
-      color: var(--warn);
-      text-shadow: 0 0 12px var(--warn-glow);
+      color: var(--apology);
+      text-shadow: 0 0 12px var(--apology-glow);
       text-transform: uppercase;
     }
     .delay-tag-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--warn);
-      box-shadow: 0 0 10px var(--warn), 0 0 20px var(--warn-glow);
+      background: var(--apology);
+      box-shadow: 0 0 10px var(--apology), 0 0 20px var(--apology-glow);
       animation: warnBlink 1s step-end infinite;
       flex-shrink: 0;
     }
@@ -177,39 +179,24 @@
       font-weight: 900;
       font-size: clamp(1rem, 3.5vw, 1.7rem);
       letter-spacing: .04em;
-      color: var(--warn);
-      text-shadow: 0 0 20px var(--warn-glow), 0 0 40px rgba(255,179,0,0.2);
+      color: var(--apology);
+      text-shadow: 0 0 20px var(--apology-glow), 0 0 40px rgba(167,139,250,0.2);
       line-height: 1.15;
     }
     .delay-detail {
       font-family: 'Inter', sans-serif;
       font-size: clamp(.82rem, 2vw, 1rem);
-      color: rgba(255,179,0,0.65);
+      color: rgba(167,139,250,0.65);
       letter-spacing: .03em;
       line-height: 1.6;
       max-width: min(600px, 90vw);
     }
     .delay-detail strong {
-      color: var(--warn);
+      color: var(--apology);
       font-weight: 700;
     }
-    .delay-strikethrough {
-      text-decoration: line-through;
-      opacity: 0.5;
-    }
-    .delay-arrow {
-      display: inline-block;
-      margin: 0 6px;
-      color: var(--warn);
-      font-weight: 900;
-      animation: arrowPulse 1.2s ease-in-out infinite;
-    }
-    @keyframes arrowPulse {
-      0%, 100% { transform: translateX(0); opacity: 1; }
-      50% { transform: translateX(4px); opacity: 0.7; }
-    }
 
-    /* ── HEADER (logo only) ── */
+    /* ── HEADER ── */
     header {
       position: sticky;
       top: 0;
@@ -363,14 +350,14 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(7px,1.8vw,10px);
       letter-spacing: .12em;
-      color: var(--warn);
-      border: 1px solid rgba(255,179,0,.3);
+      color: var(--apology);
+      border: 1px solid rgba(167,139,250,.3);
       padding: clamp(6px,1.5vw,8px) clamp(10px,2vw,16px);
       border-radius: 3px;
       text-align: center;
       animation: fadeSlideUp 1s ease both .9s;
     }
-    .hero-warning::before { content:'▲'; font-size:.9em; flex-shrink:0; }
+    .hero-warning::before { content:'◈'; font-size:.9em; flex-shrink:0; }
 
     /* ── STATS BAR ── */
     .stats-bar {
@@ -400,8 +387,8 @@
     .stat:last-child::after { display:none; }
     @media (max-width:360px) { .stat::after { display:none; } }
 
-    /* ── COUNTDOWN SECTION ── */
-    .countdown-section {
+    /* ── TBA SECTION ── */
+    .tba-section {
       position: relative;
       z-index: 2;
       display: flex;
@@ -411,7 +398,7 @@
       text-align: center;
     }
 
-    .countdown-label {
+    .tba-label {
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,2vw,12px);
       letter-spacing: .3em;
@@ -422,171 +409,141 @@
       animation: fadeSlideUp 1s ease both .2s;
     }
 
-    .countdown-grid {
-      display: flex;
-      gap: clamp(10px,3vw,28px);
-      align-items: flex-start;
-      justify-content: center;
-      flex-wrap: wrap;
+    .tba-display {
       animation: fadeSlideUp 1s ease both .4s;
     }
 
-    .countdown-unit {
+    .tba-box {
+      position: relative;
+      background: rgba(10,13,32,0.7);
+      border: 1px solid rgba(167,139,250,0.25);
+      border-radius: 12px;
+      padding: clamp(30px,6vw,56px) clamp(40px,10vw,100px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 8px;
-    }
-
-    .countdown-box {
-      position: relative;
-      background: rgba(10,13,32,0.7);
-      border: 1px solid rgba(0,240,255,0.2);
-      border-radius: 8px;
-      width: clamp(72px,18vw,120px);
-      height: clamp(72px,18vw,120px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      gap: clamp(10px,2vw,16px);
       box-shadow:
-        0 0 0 1px rgba(0,240,255,0.05),
-        0 0 30px rgba(0,240,255,0.06),
-        inset 0 1px 0 rgba(0,240,255,0.1);
+        0 0 0 1px rgba(167,139,250,0.06),
+        0 0 50px rgba(167,139,250,0.08),
+        inset 0 1px 0 rgba(167,139,250,0.12);
       overflow: hidden;
-      transition: border-color 0.3s;
     }
 
-    .countdown-box::before {
+    .tba-box::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--neon3), var(--neon), var(--neon2));
-      box-shadow: 0 0 10px var(--glow-c);
+      background: linear-gradient(90deg, var(--neon3), var(--apology), var(--neon2));
+      box-shadow: 0 0 14px rgba(167,139,250,0.5);
     }
 
-    .countdown-box::after {
+    .tba-box::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(0,240,255,0.07), transparent 70%);
+      background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.07), transparent 70%);
       pointer-events: none;
     }
 
-    .countdown-box.pulse-red {
-      border-color: rgba(255,0,85,0.5);
-      box-shadow: 0 0 25px rgba(255,0,85,0.2), inset 0 1px 0 rgba(255,0,85,0.15);
-    }
-
-    .countdown-num {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(1.8rem,7vw,4rem);
-      font-weight: 900;
-      color: var(--neon);
-      text-shadow: 0 0 20px var(--glow-c), 0 0 40px rgba(0,240,255,0.3);
+    .tba-icon {
+      font-size: clamp(2.5rem,8vw,5rem);
+      line-height: 1;
       position: relative;
       z-index: 1;
-      transition: transform 0.15s, color 0.3s;
-      letter-spacing: -.02em;
+      filter: drop-shadow(0 0 20px rgba(167,139,250,0.5));
+      animation: iconFloat 3s ease-in-out infinite;
     }
 
-    .countdown-num.flip {
-      transform: scale(1.12);
+    @keyframes iconFloat {
+      0%,100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
     }
 
-    .countdown-unit-label {
+    .tba-main-text {
       font-family: 'Orbitron', sans-serif;
-      font-size: clamp(7px,1.5vw,10px);
-      letter-spacing: .22em;
-      color: var(--muted);
+      font-weight: 900;
+      font-size: clamp(2rem,8vw,5rem);
+      letter-spacing: .05em;
+      color: var(--apology);
+      text-shadow: 0 0 30px var(--apology-glow), 0 0 60px rgba(167,139,250,0.2);
+      position: relative;
+      z-index: 1;
+      line-height: 1;
+    }
+
+    .tba-sub-text {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(9px,2vw,13px);
+      letter-spacing: .25em;
+      color: rgba(167,139,250,0.5);
+      position: relative;
+      z-index: 1;
       text-transform: uppercase;
     }
 
-    .countdown-sep {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(1.5rem,5vw,3rem);
-      color: rgba(0,240,255,0.2);
-      padding-top: clamp(18px,4vw,36px);
-      animation: sepBlink 1s step-end infinite;
-      user-select: none;
-    }
-    @keyframes sepBlink {
-      0%,100% { opacity:1 }
-      50% { opacity:0.15 }
-    }
-
-    .countdown-launch-info {
+    .tba-info {
       margin-top: clamp(20px,4vw,36px);
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(9px,2vw,13px);
       letter-spacing: .18em;
-      color: rgba(0,240,255,0.5);
+      color: rgba(0,240,255,0.4);
       animation: fadeSlideUp 1s ease both .6s;
     }
-    .countdown-launch-info strong {
+    .tba-info strong {
       color: var(--neon);
       text-shadow: 0 0 10px var(--glow-c);
     }
 
-    .progress-track {
-      margin-top: clamp(28px,5vw,48px);
-      width: min(540px, 90vw);
-      height: 3px;
-      background: rgba(255,255,255,0.05);
-      border-radius: 2px;
-      overflow: hidden;
-      animation: fadeSlideUp 1s ease both .8s;
-    }
-    .progress-bar {
-      height: 100%;
-      background: linear-gradient(90deg, var(--neon3), var(--neon), var(--neon2));
-      box-shadow: 0 0 12px var(--glow-c);
-      border-radius: 2px;
-      transition: width 1s linear;
-    }
-    .progress-label {
-      margin-top: 10px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(7px,1.5vw,9px);
-      letter-spacing: .2em;
-      color: var(--muted);
-      animation: fadeSlideUp 1s ease both .9s;
+    .tba-pulse-ring {
+      position: absolute;
+      inset: -1px;
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.2);
+      animation: ringPulse 2.5s ease-in-out infinite;
+      pointer-events: none;
     }
 
-    /* ── DELAY NOTICE PANEL ── */
-    .delay-panel {
+    @keyframes ringPulse {
+      0%,100% { opacity:0.3; transform: scale(1); }
+      50% { opacity:0.8; transform: scale(1.005); }
+    }
+
+    /* ── APOLOGY PANEL ── */
+    .apology-panel {
       position: relative;
       z-index: 2;
       width: min(820px, calc(100% - 32px));
       margin: 0 auto clamp(28px,5vw,48px);
-      padding: clamp(24px,4vw,40px) clamp(24px,5vw,48px);
-      border-radius: 10px;
-      border: 1px solid rgba(255,179,0,0.35);
-      background: linear-gradient(180deg, rgba(255,179,0,0.06), rgba(20,14,0,0.7));
-      box-shadow: 0 0 0 1px rgba(255,179,0,0.06), 0 20px 50px rgba(0,0,0,0.35), 0 0 40px rgba(255,179,0,0.06);
+      padding: clamp(28px,5vw,48px) clamp(24px,5vw,52px);
+      border-radius: 12px;
+      border: 1px solid rgba(167,139,250,0.3);
+      background: linear-gradient(180deg, rgba(167,139,250,0.06), rgba(10,5,20,0.75));
+      box-shadow: 0 0 0 1px rgba(167,139,250,0.05), 0 20px 50px rgba(0,0,0,0.4), 0 0 50px rgba(167,139,250,0.06);
       overflow: hidden;
     }
-    .delay-panel::before {
+    .apology-panel::before {
       content: '';
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: linear-gradient(90deg, transparent, var(--warn), transparent);
-      box-shadow: 0 0 14px var(--warn-glow);
+      background: linear-gradient(90deg, transparent, var(--apology), var(--neon), transparent);
+      box-shadow: 0 0 14px var(--apology-glow);
     }
-    .delay-panel::after {
+    .apology-panel::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at 50% -10%, rgba(255,179,0,0.07), transparent 65%);
+      background: radial-gradient(ellipse at 50% -10%, rgba(167,139,250,0.07), transparent 65%);
       pointer-events: none;
     }
-    .delay-panel-eyebrow {
+    .apology-panel-eyebrow {
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,1.8vw,10px);
       letter-spacing: .3em;
-      color: var(--warn);
-      text-shadow: 0 0 10px var(--warn-glow);
+      color: var(--apology);
+      text-shadow: 0 0 10px var(--apology-glow);
       margin-bottom: clamp(10px,2vw,16px);
       text-transform: uppercase;
       position: relative;
@@ -595,82 +552,60 @@
       align-items: center;
       gap: 10px;
     }
-    .delay-panel-eyebrow::before {
+    .apology-panel-eyebrow::before {
       content: '';
       display: inline-block;
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--warn);
-      box-shadow: 0 0 10px var(--warn), 0 0 20px var(--warn-glow);
-      animation: warnBlink 1s step-end infinite;
+      background: var(--apology);
+      box-shadow: 0 0 10px var(--apology), 0 0 20px var(--apology-glow);
+      animation: warnBlink 1.5s step-end infinite;
       flex-shrink: 0;
     }
-    .delay-panel-title {
+    .apology-panel-title {
       font-family: 'Orbitron', sans-serif;
       font-weight: 900;
       font-size: clamp(1.1rem,3.5vw,2rem);
       letter-spacing: .02em;
-      color: var(--warn);
-      text-shadow: 0 0 20px var(--warn-glow);
-      margin-bottom: clamp(14px,3vw,22px);
-      line-height: 1.15;
+      color: var(--apology);
+      text-shadow: 0 0 20px var(--apology-glow);
+      margin-bottom: clamp(16px,3vw,24px);
+      line-height: 1.2;
       position: relative;
       z-index: 1;
     }
-    .delay-panel-body {
+    .apology-panel-body {
       font-size: clamp(.9rem,2vw,1.05rem);
-      color: rgba(255,200,80,0.72);
-      line-height: 1.8;
+      color: rgba(200,180,255,0.72);
+      line-height: 1.85;
       position: relative;
       z-index: 1;
-      max-width: 640px;
+      max-width: 660px;
     }
-    .delay-panel-body p + p { margin-top: 1em; }
-    .delay-panel-body .hl { color: var(--warn); font-weight: 700; }
-    .delay-panel-schedule {
-      margin-top: clamp(16px,3vw,24px);
-      display: flex;
-      flex-wrap: wrap;
-      gap: clamp(10px,2vw,16px);
-      align-items: center;
+    .apology-panel-body p + p { margin-top: 1.1em; }
+    .apology-panel-body .hl { color: var(--apology); font-weight: 700; }
+    .apology-panel-body .hl-cyan { color: var(--neon); font-weight: 700; text-shadow: 0 0 8px var(--glow-c); }
+
+    .apology-divider {
+      width: 50px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--apology), var(--neon));
+      margin: clamp(20px,3.5vw,28px) 0;
+      box-shadow: 0 0 10px var(--apology-glow);
       position: relative;
       z-index: 1;
-    }
-    .delay-schedule-item {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .delay-schedule-label {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(7px,1.5vw,9px);
-      letter-spacing: .22em;
-      color: rgba(255,179,0,0.45);
-      text-transform: uppercase;
-    }
-    .delay-schedule-val {
-      font-family: 'Orbitron', sans-serif;
-      font-size: clamp(.78rem,2vw,1rem);
-      font-weight: 700;
-      letter-spacing: .06em;
-    }
-    .delay-schedule-val.old {
-      color: rgba(255,179,0,0.35);
-      text-decoration: line-through;
-    }
-    .delay-schedule-val.new-date {
-      color: var(--warn);
-      text-shadow: 0 0 10px var(--warn-glow);
-    }
-    .delay-arrow-icon {
-      font-size: clamp(1.1rem,3vw,1.5rem);
-      color: var(--warn);
-      opacity: 0.6;
-      align-self: flex-end;
-      padding-bottom: 2px;
     }
 
-    /* ── LAUNCH MESSAGE PANEL ── */
+    .apology-sign {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(9px,1.8vw,12px);
+      letter-spacing: .2em;
+      color: rgba(167,139,250,0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── MESSAGE PANEL ── */
     .message-section {
       position: relative;
       z-index: 2;
@@ -769,14 +704,14 @@
       gap: 10px;
       margin-top: clamp(20px,3.5vw,30px);
       padding: clamp(10px,2vw,14px) clamp(18px,4vw,28px);
-      border: 1px solid rgba(0,240,255,0.25);
+      border: 1px solid rgba(167,139,250,0.3);
       border-radius: 100px;
-      background: rgba(0,240,255,0.05);
+      background: rgba(167,139,250,0.06);
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,1.8vw,11px);
       letter-spacing: .18em;
-      color: var(--neon);
-      text-shadow: 0 0 10px var(--glow-c);
+      color: var(--apology);
+      text-shadow: 0 0 10px var(--apology-glow);
       position: relative;
       z-index: 1;
       animation: badgePulse 2.5s ease-in-out infinite;
@@ -785,18 +720,18 @@
       content: '';
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--success);
-      box-shadow: 0 0 10px var(--success);
+      background: var(--apology);
+      box-shadow: 0 0 10px var(--apology);
       animation: blink 1.5s step-end infinite;
       flex-shrink: 0;
     }
     @keyframes badgePulse {
-      0%,100% { box-shadow: 0 0 10px rgba(0,240,255,0.1) }
-      50% { box-shadow: 0 0 25px rgba(0,240,255,0.25) }
+      0%,100% { box-shadow: 0 0 10px rgba(167,139,250,0.1) }
+      50% { box-shadow: 0 0 25px rgba(167,139,250,0.25) }
     }
     @keyframes blink { 50% { opacity:0 } }
 
-    /* ── FOOTER (message only) ── */
+    /* ── FOOTER ── */
     .cyber-footer {
       position: relative;
       z-index: 5;
@@ -842,8 +777,7 @@
     @media (max-width:480px) {
       .hero-title { font-size:1.8rem; }
       .hero { min-height:60vh; padding-top:36px; }
-      .delay-panel-schedule { flex-direction: column; align-items: flex-start; }
-      .delay-arrow-icon { align-self: flex-start; transform: rotate(90deg); }
+      .tba-box { padding: 28px 24px; }
     }
 
     @media (prefers-reduced-motion:reduce) {
@@ -871,20 +805,20 @@
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
-  <!-- ── HEADER (logo only) ── -->
+  <!-- ── HEADER ── -->
   <header>
     <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
   </header>
 
-  <!-- ── DELAY ALERT BANNER ── -->
+  <!-- ── TBA ALERT BANNER ── -->
   <div class="delay-banner" role="alert" aria-live="polite">
     <div class="delay-banner-inner">
       <span class="delay-tag"><span class="delay-tag-dot"></span>LAUNCH UPDATE</span>
-      <p class="delay-headline">Launch rescheduled to June 14, 2026 at 11:00 AM IST</p>
+      <p class="delay-headline">Launch date not yet scheduled</p>
       <p class="delay-detail">
-        The original June 10 launch has been pushed back to give us more time to get everything right.
-        <strong>New target: June 14, 2026 at 11:00 AM IST.</strong>
-        Worth the wait — we promise.
+        We're taking the time needed to get this right.
+        <strong>A new launch date will be announced here the moment it's confirmed.</strong>
+        Thank you for your patience — it means everything.
       </p>
     </div>
   </div>
@@ -903,7 +837,7 @@
       <span class="line"><span>CONQUER.</span></span>
     </h1>
     <p class="hero-sub">WebArcade is a browser-based arcade gaming platform for fast online play, score chasing, and retro-inspired competition across classic game styles.</p>
-    <div class="hero-warning">LAUNCH DELAYED — NEW WEBSITE NOW LIVE ON JUNE 14, 2026 AT 11:00 AM IST</div>
+    <div class="hero-warning">LAUNCH DATE TO BE ANNOUNCED — WE'LL BE BACK BETTER THAN EVER</div>
   </div>
 
   <!-- ── STATS BAR ── -->
@@ -913,68 +847,40 @@
     <div class="stat"><span class="stat-num" id="cnt-scores">0</span><span class="stat-label">High Scores</span></div>
   </div>
 
-  <!-- ── COUNTDOWN ── -->
-  <section class="countdown-section" aria-label="Launch countdown timer">
-    <p class="countdown-label">Time For A Change</p>
-    <div class="countdown-grid" id="countdownGrid">
-      <div class="countdown-unit">
-        <div class="countdown-box" id="box-days">
-          <span class="countdown-num" id="cd-days">--</span>
-        </div>
-        <span class="countdown-unit-label">Days</span>
-      </div>
-      <span class="countdown-sep" aria-hidden="true">:</span>
-      <div class="countdown-unit">
-        <div class="countdown-box" id="box-hours">
-          <span class="countdown-num" id="cd-hours">--</span>
-        </div>
-        <span class="countdown-unit-label">Hours</span>
-      </div>
-      <span class="countdown-sep" aria-hidden="true">:</span>
-      <div class="countdown-unit">
-        <div class="countdown-box" id="box-mins">
-          <span class="countdown-num" id="cd-mins">--</span>
-        </div>
-        <span class="countdown-unit-label">Minutes</span>
-      </div>
-      <span class="countdown-sep" aria-hidden="true">:</span>
-      <div class="countdown-unit">
-        <div class="countdown-box" id="box-secs">
-          <span class="countdown-num" id="cd-secs">--</span>
-        </div>
-        <span class="countdown-unit-label">Seconds</span>
+  <!-- ── TBA SECTION ── -->
+  <section class="tba-section" aria-label="Launch status">
+    <p class="tba-label">Launch Status</p>
+    <div class="tba-display">
+      <div class="tba-box">
+        <div class="tba-pulse-ring"></div>
+        <div class="tba-icon">⏳</div>
+        <div class="tba-main-text">TBA</div>
+        <div class="tba-sub-text">To Be Announced</div>
       </div>
     </div>
-    <p class="countdown-launch-info">Target: <strong>JUNE 14, 2026 — 11:00 AM IST</strong></p>
-    <div class="progress-track">
-      <div class="progress-bar" id="progressBar" style="width:0%"></div>
-    </div>
-    <p class="progress-label" id="progressLabel">CALCULATING PROGRESS...</p>
+    <p class="tba-info">We'll announce the new date right here. <strong>Stay tuned.</strong></p>
   </section>
 
-  <!-- ── DELAY NOTICE PANEL ── -->
-  <section class="delay-panel" aria-label="Launch delay notice">
-    <p class="delay-panel-eyebrow">SYSTEM DELAY — LAUNCH UPDATE</p>
-    <h2 class="delay-panel-title">We're taking 4 more days.<br>To make it 10× better.</h2>
-    <div class="delay-panel-body">
+  <!-- ── APOLOGY PANEL ── -->
+  <section class="apology-panel" aria-label="Apology message">
+    <p class="apology-panel-eyebrow">A MESSAGE TO OUR COMMUNITY</p>
+    <h2 class="apology-panel-title">We owe you an apology.<br>And we mean it.</h2>
+    <div class="apology-panel-body">
       <p>
-        The June 10 launch was close — but <span class="hl">close isn't good enough</span> for what we're building. We caught a few things that needed fixing before we could put the WebArcade name on it with confidence.
+        We set a date. Then we set another one. And now we're here, telling you the launch isn't happening yet — and we don't have a new date to give you. We understand if that's frustrating. <span class="hl">It's frustrating for us too.</span>
       </p>
       <p>
-        So we pushed the date. Not because we failed — because we give a damn. The new arena goes live on <span class="hl">June 14, 2026 at 11:00 AM IST.</span> That's 4 more days of polish, 4 more days of testing, and 4 more days of making sure the platform you walk into is absolutely worth the wait.
+        But here's what we refuse to do: push something out the door that isn't ready just to hit a deadline. WebArcade deserves better than that. <span class="hl">You deserve better than that.</span> Every delay has been a choice to prioritize quality over convenience — ours or yours.
+      </p>
+      <p>
+        We're still building. Still testing. Still making sure that the moment you walk through that door, everything you see, play, and feel is exactly what we promised. <span class="hl-cyan">When we announce the new date, it will be a date we're certain about.</span> No more moving targets.
+      </p>
+      <p>
+        Thank you for waiting. Genuinely. Your patience is the most generous thing you can give a team that's still pouring everything into getting this right.
       </p>
     </div>
-    <div class="delay-panel-schedule">
-      <div class="delay-schedule-item">
-        <span class="delay-schedule-label">Original Launch</span>
-        <span class="delay-schedule-val old">June 10, 2026 — 1:30 PM IST</span>
-      </div>
-      <span class="delay-arrow-icon">→</span>
-      <div class="delay-schedule-item">
-        <span class="delay-schedule-label">New Launch Date</span>
-        <span class="delay-schedule-val new-date">June 14, 2026 — 11:00 AM IST</span>
-      </div>
-    </div>
+    <div class="apology-divider"></div>
+    <p class="apology-sign">— THE WEBARCADE TEAM</p>
   </section>
 
   <!-- ── MESSAGE PANEL ── -->
@@ -987,23 +893,23 @@
         We didn't just patch a few pixels and call it a day. We went back to the source code — the concept, the feel, the soul of WebArcade — and rebuilt it from the ground up. Every frame. Every interaction. Every line of neon.
       </p>
       <p>
-        What's coming on <span class="highlight">June 14, 2026 at 11:00 AM</span> isn't an update. It's a full system reboot. A new arena built for players who take their scores seriously, their competition personally, and their arcade experience without compromise.
+        What's coming isn't an update. It's a full system reboot. A new arena built for players who take their scores seriously, their competition personally, and their arcade experience without compromise.
       </p>
       <p>
         Faster. Sharper. More alive than anything we've shipped before. The leaderboards are getting upgraded. The games are getting sharper. The platform is getting a soul transplant.
       </p>
       <p>
-        Stay tuned. Stay ready. <span class="highlight">Your new arcade is almost online.</span>
+        <span class="highlight">When we're ready, you'll be the first to know.</span> Stay tuned. Stay ready. Your new arcade is loading.
       </p>
     </div>
-    <div class="msg-badge">● LAUNCHING JUNE 14 AT 11:00 AM IST</div>
+    <div class="msg-badge">● LAUNCH DATE — TO BE ANNOUNCED</div>
     <p class="msg-signature">— THE WEBARCADE TEAM</p>
   </section>
 
   <!-- ── FOOTER ── -->
   <footer class="cyber-footer">
     <div class="footer-bottom">
-      <p>&copy; 2026 WebArcade. All rights reserved. — New website launching June 14, 2026.</p>
+      <p>&copy; 2026 WebArcade. All rights reserved. — New website launch date to be announced.</p>
     </div>
   </footer>
 
@@ -1054,7 +960,16 @@
 
     // ── TICKER ──
     (function () {
-      const items = ['LAUNCH RESCHEDULED TO JUNE 14', 'NEW DATE: JUNE 14 — 11:00 AM IST', 'SYSTEM DELAY — WORTH THE WAIT', 'LEADERBOARDS UPGRADED', 'ALL-NEW ARENA LOADING', 'STAY TUNED FOR LAUNCH', 'JUNE 14 — 11:00 AM IST', 'SOMETHING BIGGER IS LOADING'];
+      const items = [
+        'LAUNCH DATE TO BE ANNOUNCED',
+        'STAY TUNED FOR UPDATES',
+        'WE ARE STILL BUILDING',
+        'LEADERBOARDS UPGRADED',
+        'ALL-NEW ARENA LOADING',
+        'THANK YOU FOR YOUR PATIENCE',
+        'NEW DATE COMING SOON',
+        'SOMETHING BIGGER IS LOADING'
+      ];
       const doubled = [...items, ...items];
       document.getElementById('tickerInner').innerHTML = doubled.map(t => `<span>◆ ${t}</span>`).join('');
     })();
@@ -1079,60 +994,6 @@
         obs.disconnect();
       }, { threshold: 0.3 });
       obs.observe(document.querySelector('.stats-bar'));
-    })();
-
-    // ── COUNTDOWN ──
-    (function () {
-      // Launch: June 14 2026, 11:00 AM IST (UTC+5:30 = UTC 05:30)
-      const launchIST = new Date('2026-06-14T11:00:00+05:30');
-      // Build start reference for progress bar
-      const buildStart = new Date('2026-06-01T00:00:00+05:30');
-      const totalDuration = launchIST - buildStart;
-
-      const pad = n => String(n).padStart(2, '0');
-      let prev = { d: null, h: null, m: null, s: null };
-
-      function flash(id) {
-        const el = document.getElementById(id);
-        el.classList.add('flip');
-        setTimeout(() => el.classList.remove('flip'), 200);
-      }
-
-      function tick() {
-        const now = new Date();
-        const diff = launchIST - now;
-
-        if (diff <= 0) {
-          // Launched!
-          ['cd-days','cd-hours','cd-mins','cd-secs'].forEach(id => document.getElementById(id).textContent = '00');
-          document.getElementById('progressBar').style.width = '100%';
-          document.getElementById('progressLabel').textContent = '▶ SYSTEM ONLINE — WE ARE LIVE';
-          ['box-days','box-hours','box-mins','box-secs'].forEach(id => {
-            document.getElementById(id).classList.add('pulse-red');
-          });
-          document.querySelector('.countdown-label').textContent = '// We are live — WELCOME TO THE NEW WEBARCADE';
-          return;
-        }
-
-        const d = Math.floor(diff / 86400000);
-        const h = Math.floor((diff % 86400000) / 3600000);
-        const m = Math.floor((diff % 3600000) / 60000);
-        const s = Math.floor((diff % 60000) / 1000);
-
-        if (prev.d !== d) { document.getElementById('cd-days').textContent = pad(d); flash('cd-days'); prev.d = d; }
-        if (prev.h !== h) { document.getElementById('cd-hours').textContent = pad(h); flash('cd-hours'); prev.h = h; }
-        if (prev.m !== m) { document.getElementById('cd-mins').textContent = pad(m); flash('cd-mins'); prev.m = m; }
-        if (prev.s !== s) { document.getElementById('cd-secs').textContent = pad(s); flash('cd-secs'); prev.s = s; }
-
-        // Progress bar
-        const elapsed = now - buildStart;
-        const pct = Math.min(100, Math.max(0, (elapsed / totalDuration) * 100));
-        document.getElementById('progressBar').style.width = pct.toFixed(2) + '%';
-        document.getElementById('progressLabel').textContent = `BUILD PROGRESS: ${pct.toFixed(1)}% COMPLETE`;
-      }
-
-      tick();
-      setInterval(tick, 1000);
     })();
   </script>
 </body>
