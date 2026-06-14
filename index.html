@@ -756,6 +756,104 @@
       letter-spacing: .12em;
     }
 
+    /* ── DESKTOP-ONLY NOTICE (mobile / tablet) ── */
+    .desktop-notice {
+      display: none; /* hidden on desktop */
+      position: relative;
+      z-index: 20;
+      background: linear-gradient(135deg, rgba(5,8,20,0.97), rgba(10,13,32,0.99));
+      border-bottom: 3px solid var(--neon);
+      box-shadow: 0 0 0 1px rgba(0,240,255,0.08), 0 6px 40px rgba(0,240,255,0.12);
+      padding: clamp(22px,5vw,36px) clamp(20px,6vw,40px);
+      text-align: center;
+      overflow: hidden;
+    }
+    .desktop-notice::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,240,255,0.07), transparent 65%);
+      pointer-events: none;
+    }
+    .desktop-notice::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon3), var(--neon), var(--neon2));
+      box-shadow: 0 0 18px var(--glow-c);
+    }
+    .desktop-notice-inner {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(10px,2.5vw,16px);
+    }
+    .desktop-notice-icon {
+      font-size: clamp(2.2rem,8vw,3.5rem);
+      filter: drop-shadow(0 0 16px rgba(0,240,255,0.6));
+      animation: iconFloat 3s ease-in-out infinite;
+      line-height: 1;
+    }
+    .desktop-notice-tag {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(7px,2.2vw,10px);
+      letter-spacing: .3em;
+      color: var(--neon2);
+      text-shadow: 0 0 10px var(--glow-m);
+      text-transform: uppercase;
+    }
+    .desktop-notice-headline {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.15rem,5.5vw,2rem);
+      letter-spacing: .03em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff 0%, var(--neon) 60%, var(--neon2) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 0 16px var(--glow-c));
+    }
+    .desktop-notice-body {
+      font-family: 'Inter', sans-serif;
+      font-size: clamp(.88rem,3vw,1.05rem);
+      color: var(--text-secondary);
+      line-height: 1.7;
+      max-width: min(480px, 90vw);
+      letter-spacing: .02em;
+    }
+    .desktop-notice-body strong {
+      color: var(--neon);
+      font-weight: 700;
+    }
+    .desktop-notice-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 4px;
+      padding: clamp(8px,2vw,11px) clamp(16px,4vw,24px);
+      border: 1px solid rgba(0,240,255,0.22);
+      border-radius: 100px;
+      background: rgba(0,240,255,0.05);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(7px,2vw,10px);
+      letter-spacing: .18em;
+      color: var(--neon);
+      text-shadow: 0 0 8px var(--glow-c);
+    }
+    .desktop-notice-chip::before {
+      content: '🖥';
+      font-size: 1.1em;
+    }
+
+    /* Show notice only on screens narrower than 1024px (phones + tablets) */
+    @media (max-width: 1023px) {
+      .desktop-notice { display: block; }
+    }
+
     /* ── CURSOR TRAIL ── */
     #cursor-trail {
       position: fixed;
@@ -799,6 +897,20 @@
 <body>
   <canvas id="starfield"></canvas>
   <div id="cursor-trail"></div>
+
+  <!-- ── DESKTOP / TV ONLY NOTICE ── -->
+  <div class="desktop-notice" role="note" aria-label="Device compatibility notice">
+    <div class="desktop-notice-inner">
+      <div class="desktop-notice-icon">🖥️</div>
+      <p class="desktop-notice-tag">Device Notice</p>
+      <h2 class="desktop-notice-headline">Built for Big Screens</h2>
+      <p class="desktop-notice-body">
+        WebArcade is currently <strong>available on computers and TV screens only.</strong>
+        Mobile and tablet support is on the roadmap — but for the full arcade experience, grab a desktop or plug into your TV.
+      </p>
+      <span class="desktop-notice-chip">Best viewed on Desktop &amp; TV</span>
+    </div>
+  </div>
 
   <div class="corner tl"></div>
   <div class="corner tr"></div>
