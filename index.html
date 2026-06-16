@@ -5,18 +5,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
   <meta name="theme-color" content="#04050f">
-  <meta name="description" content="WebArcade is coming soon. Launch date to be announced. Stay tuned.">
+  <meta name="description" content="WebArcade is almost ready. Launching before the end of June 2026. Stay tuned.">
   <meta name="robots" content="index,follow">
   <link rel="canonical" href="https://webarcade.in/">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="WebArcade">
-  <meta property="og:title" content="WebArcade | Coming Soon — Launch Date TBA">
-  <meta property="og:description" content="Something bigger is loading. WebArcade launch date to be announced.">
+  <meta property="og:title" content="WebArcade | Almost Ready — Launching This Month">
+  <meta property="og:description" content="60% loaded and counting. WebArcade launches before June ends.">
   <meta property="og:url" content="https://webarcade.in/">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="WebArcade | Coming Soon — Launch Date TBA">
-  <meta name="twitter:description" content="Something bigger is loading. WebArcade launch date to be announced.">
-  <title>WebArcade | Coming Soon — Launch Date TBA</title>
+  <meta name="twitter:title" content="WebArcade | Almost Ready — Launching This Month">
+  <meta name="twitter:description" content="60% loaded and counting. WebArcade launches before June ends.">
+  <title>WebArcade | Almost Ready — Launching This Month</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Orbitron:wght@400;700;900&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
 
@@ -121,13 +121,13 @@
 
     @media (max-width:400px) { .corner { display: none; } }
 
-    /* ── TBA ALERT BANNER ── */
+    /* ── ALMOST READY BANNER ── */
     .delay-banner {
       position: relative;
       z-index: 6;
-      background: linear-gradient(90deg, rgba(167,139,250,0.06), rgba(167,139,250,0.12), rgba(167,139,250,0.06));
-      border-top: 2px solid rgba(167,139,250,0.45);
-      border-bottom: 2px solid rgba(167,139,250,0.45);
+      background: linear-gradient(90deg, rgba(0,240,255,0.04), rgba(0,240,255,0.10), rgba(0,240,255,0.04));
+      border-top: 2px solid rgba(0,240,255,0.45);
+      border-bottom: 2px solid rgba(0,240,255,0.45);
       padding: clamp(14px,3vw,20px) clamp(16px,5vw,5%);
       text-align: center;
       overflow: hidden;
@@ -138,8 +138,8 @@
       inset: 0;
       background: repeating-linear-gradient(
         90deg,
-        rgba(167,139,250,0.03) 0px,
-        rgba(167,139,250,0.03) 2px,
+        rgba(0,240,255,0.03) 0px,
+        rgba(0,240,255,0.03) 2px,
         transparent 2px,
         transparent 24px
       );
@@ -160,16 +160,16 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,1.8vw,11px);
       letter-spacing: .28em;
-      color: var(--apology);
-      text-shadow: 0 0 12px var(--apology-glow);
+      color: var(--neon);
+      text-shadow: 0 0 12px var(--glow-c);
       text-transform: uppercase;
     }
     .delay-tag-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: var(--apology);
-      box-shadow: 0 0 10px var(--apology), 0 0 20px var(--apology-glow);
+      background: var(--neon);
+      box-shadow: 0 0 10px var(--neon), 0 0 20px var(--glow-c);
       animation: warnBlink 1s step-end infinite;
       flex-shrink: 0;
     }
@@ -179,20 +179,20 @@
       font-weight: 900;
       font-size: clamp(1rem, 3.5vw, 1.7rem);
       letter-spacing: .04em;
-      color: var(--apology);
-      text-shadow: 0 0 20px var(--apology-glow), 0 0 40px rgba(167,139,250,0.2);
+      color: var(--neon);
+      text-shadow: 0 0 20px var(--glow-c), 0 0 40px rgba(0,240,255,0.2);
       line-height: 1.15;
     }
     .delay-detail {
       font-family: 'Inter', sans-serif;
       font-size: clamp(.82rem, 2vw, 1rem);
-      color: rgba(167,139,250,0.65);
+      color: rgba(0,240,255,0.65);
       letter-spacing: .03em;
       line-height: 1.6;
       max-width: min(600px, 90vw);
     }
     .delay-detail strong {
-      color: var(--apology);
+      color: var(--neon);
       font-weight: 700;
     }
 
@@ -350,12 +350,13 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(7px,1.8vw,10px);
       letter-spacing: .12em;
-      color: var(--apology);
-      border: 1px solid rgba(167,139,250,.3);
+      color: var(--neon);
+      border: 1px solid rgba(0,240,255,.3);
       padding: clamp(6px,1.5vw,8px) clamp(10px,2vw,16px);
       border-radius: 3px;
       text-align: center;
       animation: fadeSlideUp 1s ease both .9s;
+      text-shadow: 0 0 10px var(--glow-c);
     }
     .hero-warning::before { content:'◈'; font-size:.9em; flex-shrink:0; }
 
@@ -387,7 +388,188 @@
     .stat:last-child::after { display:none; }
     @media (max-width:360px) { .stat::after { display:none; } }
 
-    /* ── TBA SECTION ── */
+    /* ── PROGRESS SECTION ── */
+    .progress-section {
+      position: relative;
+      z-index: 2;
+      width: min(820px, calc(100% - 32px));
+      margin: 0 auto clamp(28px,5vw,48px);
+      padding: clamp(28px,5vw,48px) clamp(24px,5vw,52px);
+      border-radius: 12px;
+      border: 1px solid rgba(0,240,255,0.22);
+      background: linear-gradient(180deg, rgba(0,240,255,0.05), rgba(5,8,20,0.80));
+      box-shadow: 0 0 0 1px rgba(0,240,255,0.04), 0 20px 50px rgba(0,0,0,0.4), 0 0 50px rgba(0,240,255,0.07);
+      overflow: hidden;
+      animation: fadeSlideUp 1s ease both .3s;
+    }
+    .progress-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--neon3), var(--neon), var(--neon2));
+      box-shadow: 0 0 18px var(--glow-c);
+    }
+    .progress-section::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% -10%, rgba(0,240,255,0.06), transparent 65%);
+      pointer-events: none;
+    }
+
+    .progress-eyebrow {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(8px,1.8vw,10px);
+      letter-spacing: .3em;
+      color: var(--neon);
+      text-shadow: 0 0 10px var(--glow-c);
+      margin-bottom: clamp(8px,1.5vw,12px);
+      text-transform: uppercase;
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .progress-eyebrow-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--neon);
+      box-shadow: 0 0 10px var(--neon), 0 0 20px var(--glow-c);
+      animation: warnBlink 1.2s step-end infinite;
+      flex-shrink: 0;
+    }
+
+    .progress-headline {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1.1rem,3.5vw,2rem);
+      letter-spacing: .02em;
+      color: #fff;
+      text-shadow: 0 0 20px rgba(255,255,255,0.2);
+      margin-bottom: clamp(6px,1.5vw,10px);
+      line-height: 1.2;
+      position: relative;
+      z-index: 1;
+    }
+    .progress-headline .hl { color: var(--neon); text-shadow: 0 0 14px var(--glow-c); }
+
+    .progress-sub {
+      font-size: clamp(.85rem,1.8vw,1rem);
+      color: rgba(170,184,210,0.75);
+      line-height: 1.6;
+      position: relative;
+      z-index: 1;
+      margin-bottom: clamp(22px,4vw,34px);
+      max-width: 580px;
+    }
+    .progress-sub strong { color: var(--neon); font-weight: 700; }
+
+    /* Bar wrapper */
+    .progress-bar-wrap {
+      position: relative;
+      z-index: 1;
+      margin-bottom: clamp(10px,2vw,16px);
+    }
+
+    .progress-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: clamp(8px,1.5vw,12px);
+    }
+    .progress-bar-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(8px,1.8vw,11px);
+      letter-spacing: .2em;
+      color: rgba(0,240,255,0.55);
+      text-transform: uppercase;
+    }
+    .progress-bar-pct {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 900;
+      font-size: clamp(1rem,3vw,1.6rem);
+      color: var(--neon);
+      text-shadow: 0 0 20px var(--glow-c);
+      letter-spacing: .04em;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: clamp(10px,2.5vw,16px);
+      background: rgba(0,240,255,0.08);
+      border-radius: 100px;
+      border: 1px solid rgba(0,240,255,0.18);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--neon3), var(--neon), #80f8ff);
+      border-radius: 100px;
+      box-shadow: 0 0 18px var(--glow-c), 0 0 40px rgba(0,240,255,0.25);
+      transition: width 2.2s cubic-bezier(.16,1,.3,1);
+      position: relative;
+      overflow: hidden;
+    }
+    /* animated sheen on the bar */
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%);
+      animation: sheen 2.5s ease-in-out infinite;
+      background-size: 60% 100%;
+      background-repeat: no-repeat;
+    }
+    @keyframes sheen {
+      0%   { background-position: -100% 0; }
+      100% { background-position: 250% 0; }
+    }
+
+    /* tick marks */
+    .progress-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: clamp(6px,1.2vw,10px);
+    }
+    .progress-tick {
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(6px,1.4vw,9px);
+      letter-spacing: .1em;
+      color: rgba(0,240,255,0.25);
+    }
+    .progress-tick.active { color: var(--neon); text-shadow: 0 0 8px var(--glow-c); }
+
+    /* Deadline chip */
+    .progress-deadline {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: clamp(18px,3.5vw,28px);
+      padding: clamp(10px,2vw,14px) clamp(18px,4vw,28px);
+      border: 1px solid rgba(0,240,255,0.28);
+      border-radius: 100px;
+      background: rgba(0,240,255,0.06);
+      font-family: 'Orbitron', sans-serif;
+      font-size: clamp(8px,1.8vw,11px);
+      letter-spacing: .18em;
+      color: var(--neon);
+      text-shadow: 0 0 10px var(--glow-c);
+      position: relative;
+      z-index: 1;
+      animation: deadlinePulse 2.5s ease-in-out infinite;
+    }
+    .progress-deadline-icon { font-size: 1.1em; flex-shrink: 0; }
+    @keyframes deadlinePulse {
+      0%,100% { box-shadow: 0 0 10px rgba(0,240,255,0.1) }
+      50% { box-shadow: 0 0 28px rgba(0,240,255,0.28) }
+    }
+
+    /* ── TBA SECTION — repurposed as "Launch Window" ── */
     .tba-section {
       position: relative;
       z-index: 2;
@@ -416,7 +598,7 @@
     .tba-box {
       position: relative;
       background: rgba(10,13,32,0.7);
-      border: 1px solid rgba(167,139,250,0.25);
+      border: 1px solid rgba(0,240,255,0.22);
       border-radius: 12px;
       padding: clamp(30px,6vw,56px) clamp(40px,10vw,100px);
       display: flex;
@@ -424,9 +606,9 @@
       align-items: center;
       gap: clamp(10px,2vw,16px);
       box-shadow:
-        0 0 0 1px rgba(167,139,250,0.06),
-        0 0 50px rgba(167,139,250,0.08),
-        inset 0 1px 0 rgba(167,139,250,0.12);
+        0 0 0 1px rgba(0,240,255,0.06),
+        0 0 50px rgba(0,240,255,0.08),
+        inset 0 1px 0 rgba(0,240,255,0.12);
       overflow: hidden;
     }
 
@@ -435,15 +617,15 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--neon3), var(--apology), var(--neon2));
-      box-shadow: 0 0 14px rgba(167,139,250,0.5);
+      background: linear-gradient(90deg, var(--neon3), var(--neon), var(--neon2));
+      box-shadow: 0 0 14px var(--glow-c);
     }
 
     .tba-box::after {
       content: '';
       position: absolute;
       inset: 0;
-      background: radial-gradient(ellipse at 50% 0%, rgba(167,139,250,0.07), transparent 70%);
+      background: radial-gradient(ellipse at 50% 0%, rgba(0,240,255,0.06), transparent 70%);
       pointer-events: none;
     }
 
@@ -452,7 +634,7 @@
       line-height: 1;
       position: relative;
       z-index: 1;
-      filter: drop-shadow(0 0 20px rgba(167,139,250,0.5));
+      filter: drop-shadow(0 0 20px rgba(0,240,255,0.5));
       animation: iconFloat 3s ease-in-out infinite;
     }
 
@@ -464,10 +646,10 @@
     .tba-main-text {
       font-family: 'Orbitron', sans-serif;
       font-weight: 900;
-      font-size: clamp(2rem,8vw,5rem);
+      font-size: clamp(1.5rem,6vw,3.5rem);
       letter-spacing: .05em;
-      color: var(--apology);
-      text-shadow: 0 0 30px var(--apology-glow), 0 0 60px rgba(167,139,250,0.2);
+      color: var(--neon);
+      text-shadow: 0 0 30px var(--glow-c), 0 0 60px rgba(0,240,255,0.2);
       position: relative;
       z-index: 1;
       line-height: 1;
@@ -477,7 +659,7 @@
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(9px,2vw,13px);
       letter-spacing: .25em;
-      color: rgba(167,139,250,0.5);
+      color: rgba(0,240,255,0.5);
       position: relative;
       z-index: 1;
       text-transform: uppercase;
@@ -500,7 +682,7 @@
       position: absolute;
       inset: -1px;
       border-radius: 12px;
-      border: 1px solid rgba(167,139,250,0.2);
+      border: 1px solid rgba(0,240,255,0.2);
       animation: ringPulse 2.5s ease-in-out infinite;
       pointer-events: none;
     }
@@ -704,14 +886,14 @@
       gap: 10px;
       margin-top: clamp(20px,3.5vw,30px);
       padding: clamp(10px,2vw,14px) clamp(18px,4vw,28px);
-      border: 1px solid rgba(167,139,250,0.3);
+      border: 1px solid rgba(0,240,255,0.3);
       border-radius: 100px;
-      background: rgba(167,139,250,0.06);
+      background: rgba(0,240,255,0.06);
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(8px,1.8vw,11px);
       letter-spacing: .18em;
-      color: var(--apology);
-      text-shadow: 0 0 10px var(--apology-glow);
+      color: var(--neon);
+      text-shadow: 0 0 10px var(--glow-c);
       position: relative;
       z-index: 1;
       animation: badgePulse 2.5s ease-in-out infinite;
@@ -720,14 +902,14 @@
       content: '';
       width: 8px; height: 8px;
       border-radius: 50%;
-      background: var(--apology);
-      box-shadow: 0 0 10px var(--apology);
+      background: var(--neon);
+      box-shadow: 0 0 10px var(--neon);
       animation: blink 1.5s step-end infinite;
       flex-shrink: 0;
     }
     @keyframes badgePulse {
-      0%,100% { box-shadow: 0 0 10px rgba(167,139,250,0.1) }
-      50% { box-shadow: 0 0 25px rgba(167,139,250,0.25) }
+      0%,100% { box-shadow: 0 0 10px rgba(0,240,255,0.1) }
+      50% { box-shadow: 0 0 25px rgba(0,240,255,0.25) }
     }
     @keyframes blink { 50% { opacity:0 } }
 
@@ -756,9 +938,9 @@
       letter-spacing: .12em;
     }
 
-    /* ── DESKTOP-ONLY NOTICE (mobile / tablet) ── */
+    /* ── DESKTOP-ONLY NOTICE ── */
     .desktop-notice {
-      display: none; /* hidden on desktop */
+      display: none;
       position: relative;
       z-index: 20;
       background: linear-gradient(135deg, rgba(5,8,20,0.97), rgba(10,13,32,0.99));
@@ -825,10 +1007,7 @@
       max-width: min(480px, 90vw);
       letter-spacing: .02em;
     }
-    .desktop-notice-body strong {
-      color: var(--neon);
-      font-weight: 700;
-    }
+    .desktop-notice-body strong { color: var(--neon); font-weight: 700; }
     .desktop-notice-chip {
       display: inline-flex;
       align-items: center;
@@ -844,15 +1023,9 @@
       color: var(--neon);
       text-shadow: 0 0 8px var(--glow-c);
     }
-    .desktop-notice-chip::before {
-      content: '🖥';
-      font-size: 1.1em;
-    }
+    .desktop-notice-chip::before { content: '🖥'; font-size: 1.1em; }
 
-    /* Show notice only on screens narrower than 1024px (phones + tablets) */
-    @media (max-width: 1023px) {
-      .desktop-notice { display: block; }
-    }
+    @media (max-width: 1023px) { .desktop-notice { display: block; } }
 
     /* ── CURSOR TRAIL ── */
     #cursor-trail {
@@ -885,6 +1058,7 @@
         transition-duration:.01ms !important;
         transition-delay:0s !important;
       }
+      .progress-fill { transition: none !important; }
     }
 
     @media (max-height:500px) and (orientation:landscape) {
@@ -917,19 +1091,19 @@
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
-  <!-- ── HEADER ── -->
+  <!-- ── HEADER ── */
   <header>
     <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
   </header>
 
-  <!-- ── TBA ALERT BANNER ── -->
+  <!-- ── ALMOST READY BANNER ── -->
   <div class="delay-banner" role="alert" aria-live="polite">
     <div class="delay-banner-inner">
       <span class="delay-tag"><span class="delay-tag-dot"></span>LAUNCH UPDATE</span>
-      <p class="delay-headline">Launch date not yet scheduled</p>
+      <p class="delay-headline">We're almost ready. Launching before June ends.</p>
       <p class="delay-detail">
-        We're taking the time needed to get this right.
-        <strong>A new launch date will be announced here the moment it's confirmed.</strong>
+        The wait is nearly over — WebArcade is in its final stretch.
+        <strong>Expect the launch before the end of June 2026.</strong>
         Thank you for your patience — it means everything.
       </p>
     </div>
@@ -949,7 +1123,7 @@
       <span class="line"><span>CONQUER.</span></span>
     </h1>
     <p class="hero-sub">WebArcade is a browser-based arcade gaming platform for fast online play, score chasing, and retro-inspired competition across classic game styles.</p>
-    <div class="hero-warning">LAUNCH DATE TO BE ANNOUNCED — WE'LL BE BACK BETTER THAN EVER</div>
+    <div class="hero-warning">LAUNCHING BEFORE JUNE 30, 2026 — ALMOST THERE</div>
   </div>
 
   <!-- ── STATS BAR ── -->
@@ -959,43 +1133,76 @@
     <div class="stat"><span class="stat-num" id="cnt-scores">0</span><span class="stat-label">High Scores</span></div>
   </div>
 
-  <!-- ── TBA SECTION ── -->
+  <!-- ── PROGRESS BAR SECTION ── -->
+  <section class="progress-section" aria-label="Build progress">
+    <p class="progress-eyebrow"><span class="progress-eyebrow-dot"></span>BUILD STATUS</p>
+    <h2 class="progress-headline">Almost there — <span class="hl">60% complete</span> and closing fast.</h2>
+    <p class="progress-sub">
+      The arena is being polished, the leaderboards are live, and the final systems are coming online.
+      <strong>We're on track to launch before June ends.</strong>
+    </p>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-labels">
+        <span class="progress-bar-title">Overall Completion</span>
+        <span class="progress-bar-pct" id="pct-display">0%</span>
+      </div>
+      <div class="progress-track" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" aria-label="60% complete">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="progress-ticks">
+        <span class="progress-tick active">0%</span>
+        <span class="progress-tick active">25%</span>
+        <span class="progress-tick active">50%</span>
+        <span class="progress-tick active">60%</span>
+        <span class="progress-tick">75%</span>
+        <span class="progress-tick">100%</span>
+      </div>
+    </div>
+
+    <div class="progress-deadline">
+      <span class="progress-deadline-icon">🗓</span>
+      LAUNCHING BEFORE JUNE 30, 2026
+    </div>
+  </section>
+
+  <!-- ── LAUNCH WINDOW SECTION ── -->
   <section class="tba-section" aria-label="Launch status">
-    <p class="tba-label">Launch Status</p>
+    <p class="tba-label">Launch Window</p>
     <div class="tba-display">
       <div class="tba-box">
         <div class="tba-pulse-ring"></div>
-        <div class="tba-icon">⏳</div>
-        <div class="tba-main-text">TBA</div>
-        <div class="tba-sub-text">To Be Announced</div>
+        <div class="tba-icon">🚀</div>
+        <div class="tba-main-text">JUNE 2026</div>
+        <div class="tba-sub-text">Before Month End — Mark Your Calendar</div>
       </div>
     </div>
-    <p class="tba-info">We'll announce the new date right here. <strong>Stay tuned.</strong></p>
+    <p class="tba-info">The countdown is real this time. <strong>We're launching before June 30.</strong></p>
   </section>
 
   <!-- ── APOLOGY PANEL ── -->
-  <section class="apology-panel" aria-label="Apology message">
+  <section class="apology-panel" aria-label="Message to our community">
     <p class="apology-panel-eyebrow">A MESSAGE TO OUR COMMUNITY</p>
     <h2 class="apology-panel-title">We owe you an apology.<br>And we mean it.</h2>
     <div class="apology-panel-body">
       <p>
-        We set a date. Then we set another one. And now we're here, telling you the launch isn't happening yet — and we don't have a new date to give you. We understand if that's frustrating. <span class="hl">It's frustrating for us too.</span>
+        We set a date. Then we set another one. And now, finally, we can tell you — <span class="hl">we're almost there.</span> The wait is nearly over, and we understand completely if you're cautiously optimistic at this point.
       </p>
       <p>
-        But here's what we refuse to do: push something out the door that isn't ready just to hit a deadline. WebArcade deserves better than that. <span class="hl">You deserve better than that.</span> Every delay has been a choice to prioritize quality over convenience — ours or yours.
+        But here's what we refused to do: push something out the door that wasn't ready just to hit a deadline. WebArcade deserves better than that. <span class="hl">You deserve better than that.</span> Every delay has been a choice to prioritize quality over convenience.
       </p>
       <p>
-        We're still building. Still testing. Still making sure that the moment you walk through that door, everything you see, play, and feel is exactly what we promised. <span class="hl-cyan">When we announce the new date, it will be a date we're certain about.</span> No more moving targets.
+        We're in the final stretch. Still testing. Still making sure that the moment you walk through that door, everything you see, play, and feel is exactly what we promised. <span class="hl-cyan">We're launching before June ends — and this time, we're certain.</span>
       </p>
       <p>
-        Thank you for waiting. Genuinely. Your patience is the most generous thing you can give a team that's still pouring everything into getting this right.
+        Thank you for waiting. Genuinely. Your patience is the most generous thing you can give a team that's been pouring everything into getting this right.
       </p>
     </div>
     <div class="apology-divider"></div>
     <p class="apology-sign">— THE WEBARCADE TEAM</p>
   </section>
 
-  <!-- ── MESSAGE PANEL ── -->
+  <!-- ── MESSAGE PANEL ── */
   <section class="message-section" aria-label="Launch message">
     <p class="msg-eyebrow">FROM THE DEVELOPER</p>
     <h2 class="msg-headline">Something much bigger<br>is loading.</h2>
@@ -1011,17 +1218,17 @@
         Faster. Sharper. More alive than anything we've shipped before. The leaderboards are getting upgraded. The games are getting sharper. The platform is getting a soul transplant.
       </p>
       <p>
-        <span class="highlight">When we're ready, you'll be the first to know.</span> Stay tuned. Stay ready. Your new arcade is loading.
+        <span class="highlight">We're launching before June ends — and you'll be the first to know the moment we go live.</span> Stay ready. Your new arcade is almost here.
       </p>
     </div>
-    <div class="msg-badge">● LAUNCH DATE — TO BE ANNOUNCED</div>
+    <div class="msg-badge">● LAUNCHING BEFORE JUNE 30, 2026</div>
     <p class="msg-signature">— THE WEBARCADE TEAM</p>
   </section>
 
   <!-- ── FOOTER ── -->
   <footer class="cyber-footer">
     <div class="footer-bottom">
-      <p>&copy; 2026 WebArcade. All rights reserved. — New website launch date to be announced.</p>
+      <p>&copy; 2026 WebArcade. All rights reserved. — Launching before the end of June 2026.</p>
     </div>
   </footer>
 
@@ -1073,17 +1280,52 @@
     // ── TICKER ──
     (function () {
       const items = [
-        'LAUNCH DATE TO BE ANNOUNCED',
-        'STAY TUNED FOR UPDATES',
-        'WE ARE STILL BUILDING',
+        'LAUNCHING BEFORE JUNE 30, 2026',
+        '60% COMPLETE AND COUNTING',
+        'ALMOST READY — FINAL STRETCH',
         'LEADERBOARDS UPGRADED',
         'ALL-NEW ARENA LOADING',
         'THANK YOU FOR YOUR PATIENCE',
-        'NEW DATE COMING SOON',
+        'WE ARE ALMOST THERE',
         'SOMETHING BIGGER IS LOADING'
       ];
       const doubled = [...items, ...items];
       document.getElementById('tickerInner').innerHTML = doubled.map(t => `<span>◆ ${t}</span>`).join('');
+    })();
+
+    // ── PROGRESS BAR ──
+    (function () {
+      const fill = document.getElementById('progress-fill');
+      const pctDisplay = document.getElementById('pct-display');
+      const TARGET = 60;
+
+      const obs = new IntersectionObserver(entries => {
+        if (!entries[0].isIntersecting) return;
+        obs.disconnect();
+
+        // Animate fill
+        setTimeout(() => {
+          fill.style.width = TARGET + '%';
+        }, 300);
+
+        // Animate percentage counter
+        let cur = 0;
+        const duration = 2200;
+        const startTime = performance.now();
+        function countUp(now) {
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+          // Ease out cubic
+          const eased = 1 - Math.pow(1 - progress, 3);
+          cur = Math.round(eased * TARGET);
+          pctDisplay.textContent = cur + '%';
+          if (progress < 1) requestAnimationFrame(countUp);
+          else pctDisplay.textContent = TARGET + '%';
+        }
+        requestAnimationFrame(countUp);
+      }, { threshold: 0.3 });
+
+      obs.observe(document.querySelector('.progress-section'));
     })();
 
     // ── COUNTERS ──
