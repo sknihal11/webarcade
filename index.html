@@ -196,6 +196,140 @@
       font-weight: 700;
     }
 
+    /* ── NEWSLETTER SIGNUP ── */
+    .newsletter-section {
+      position: relative;
+      z-index: 5;
+      width: min(600px, calc(100% - 32px));
+      margin: clamp(20px, 4vw, 32px) auto 0;
+      padding: clamp(20px, 4vw, 30px);
+      border-radius: 8px;
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      background: rgba(10, 13, 32, 0.65);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 30px rgba(0, 240, 255, 0.05);
+      text-align: center;
+      overflow: hidden;
+      animation: fadeSlideUp 1s ease both .1s;
+    }
+    
+    .newsletter-section::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, var(--neon), var(--neon3));
+      box-shadow: 0 0 10px var(--glow-c);
+    }
+
+    .newsletter-title {
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: clamp(.95rem, 2.2vw, 1.25rem);
+      letter-spacing: .25em;
+      color: var(--neon);
+      text-shadow: 0 0 10px var(--glow-c);
+      margin-bottom: clamp(8px, 1.5vw, 12px);
+      text-transform: uppercase;
+    }
+
+    .newsletter-desc {
+      font-size: clamp(.8rem, 1.8vw, .95rem);
+      color: var(--text-secondary);
+      line-height: 1.5;
+      margin-bottom: 18px;
+    }
+
+    .newsletter-form {
+      display: flex;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .newsletter-input {
+      flex: 1;
+      background: rgba(5, 8, 20, 0.85);
+      border: 1px solid rgba(0, 240, 255, 0.22);
+      border-radius: 4px;
+      padding: 12px 16px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .95rem;
+      letter-spacing: .05em;
+      transition: all 0.3s ease;
+    }
+
+    .newsletter-input:focus {
+      outline: none;
+      border-color: var(--neon);
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.3);
+    }
+
+    .newsletter-input::placeholder {
+      color: var(--text-muted);
+      font-size: .8rem;
+      letter-spacing: .1em;
+    }
+
+    .newsletter-submit {
+      background: linear-gradient(135deg, var(--neon), var(--neon3));
+      border: none;
+      border-radius: 4px;
+      padding: 0 24px;
+      color: #050814;
+      font-family: 'Orbitron', sans-serif;
+      font-weight: 700;
+      font-size: .85rem;
+      letter-spacing: .15em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+
+    .newsletter-submit:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 20px var(--glow-c);
+    }
+
+    .newsletter-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .newsletter-feedback {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: .85rem;
+      letter-spacing: .05em;
+      margin-top: 10px;
+      min-height: 1.2em;
+      text-align: center;
+    }
+
+    .newsletter-feedback.success {
+      color: var(--success);
+      text-shadow: 0 0 8px rgba(0, 255, 157, 0.3);
+    }
+
+    .newsletter-feedback.error {
+      color: var(--danger);
+      text-shadow: 0 0 8px rgba(255, 0, 85, 0.3);
+    }
+
+    @media (max-width: 520px) {
+      .newsletter-form {
+        flex-direction: column;
+      }
+      .newsletter-submit {
+        padding: 12px;
+      }
+    }
+
     /* ── HEADER ── */
     header {
       position: sticky;
@@ -536,6 +670,7 @@
       justify-content: space-between;
       margin-top: clamp(6px,1.2vw,10px);
     }
+    .progress-track.active { border-color: var(--neon); }
     .progress-tick {
       font-family: 'Orbitron', sans-serif;
       font-size: clamp(6px,1.4vw,9px);
@@ -1091,7 +1226,7 @@
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
-  <!-- ── HEADER ── */
+  <!-- ── HEADER ── -->
   <header>
     <div class="logo">Web<span class="logo-icon">⟳</span>Arcade</div>
   </header>
@@ -1108,6 +1243,17 @@
       </p>
     </div>
   </div>
+
+  <!-- ── NEWSLETTER SIGNUP ── -->
+  <section class="newsletter-section" aria-label="Get Notified">
+    <div class="newsletter-title">GET NOTIFIED</div>
+    <p class="newsletter-desc">Enter your email below to receive instant launch notification and beta updates.</p>
+    <form id="newsletterForm" class="newsletter-form">
+      <input type="email" id="newsletterEmail" class="newsletter-input" placeholder="ENTER YOUR EMAIL ADDRESS" required autocomplete="email">
+      <button type="submit" id="newsletterSubmit" class="newsletter-submit">SUBSCRIBE</button>
+    </form>
+    <div id="newsletterFeedback" class="newsletter-feedback"></div>
+  </section>
 
   <!-- ── TICKER ── -->
   <div class="ticker">
@@ -1202,7 +1348,7 @@
     <p class="apology-sign">— THE WEBARCADE TEAM</p>
   </section>
 
-  <!-- ── MESSAGE PANEL ── */
+  <!-- ── MESSAGE PANEL ── -->
   <section class="message-section" aria-label="Launch message">
     <p class="msg-eyebrow">FROM THE DEVELOPER</p>
     <h2 class="msg-headline">Something much bigger<br>is loading.</h2>
@@ -1349,6 +1495,64 @@
       }, { threshold: 0.3 });
       obs.observe(document.querySelector('.stats-bar'));
     })();
+  </script>
+
+  <!-- ── FIREBASE INTEGRATION & NEWSLETTER SUBMISSION ── -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCzomf89xZhgcPsfYXKsYspCt-CiUVzjBA",
+      authDomain: "webarcade-d4c3d.firebaseapp.com",
+      databaseURL: "https://webarcade-d4c3d-default-rtdb.firebaseio.com",
+      projectId: "webarcade-d4c3d",
+      storageBucket: "webarcade-d4c3d.firebasestorage.app",
+      messagingSenderId: "918209461327",
+      appId: "1:918209461327:web:bd9c1a2431f9b5c66ffe3a"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const form = document.getElementById('newsletterForm');
+    const input = document.getElementById('newsletterEmail');
+    const submitBtn = document.getElementById('newsletterSubmit');
+    const feedback = document.getElementById('newsletterFeedback');
+
+    if (form) {
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = input.value.trim().toLowerCase();
+        
+        if (!email) return;
+
+        submitBtn.disabled = true;
+        feedback.className = 'newsletter-feedback';
+        feedback.textContent = 'Registering your transmission...';
+
+        try {
+          // Write to Firestore newsletter_subscribers collection
+          await setDoc(doc(db, "newsletter_subscribers", email), {
+            email: email,
+            status: "active",
+            source: "Old Website Integration",
+            joinedAt: new Date().toISOString()
+          });
+
+          feedback.className = 'newsletter-feedback success';
+          feedback.textContent = 'ACCESS GRANTED. Welcome to the grid!';
+          input.value = '';
+        } catch (error) {
+          console.error("Subscription failed:", error);
+          feedback.className = 'newsletter-feedback error';
+          feedback.textContent = 'Transmission failed. Please try again.';
+        } finally {
+          submitBtn.disabled = false;
+        }
+      });
+    }
   </script>
 </body>
 </html>
